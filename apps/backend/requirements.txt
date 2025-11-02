@@ -4,7 +4,7 @@
 # ============================================================================
 
 # Django Framework
-Django==5.0.1
+Django==4.2.25
 djangorestframework==3.14.0
 
 # Database
