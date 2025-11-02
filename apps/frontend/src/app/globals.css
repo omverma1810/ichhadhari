@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 210 79% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 33 100% 55%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 78 61% 52%;
+    --accent-foreground: 0 0% 20%;
+    --destructive: 0 84% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 210 79% 56%;
+    --radius: 0.75rem;
+    --dairy-background: #fafafa;
+    --dairy-charcoal: #333333;
+    --dairy-blue: #4a90e2;
+    --dairy-dark-blue: #357abd;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: var(--dairy-background);
+    color: var(--dairy-charcoal);
+    font-family: "Inter", sans-serif;
+  }
+}
+
+/* Custom scrollbar for dairy theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--dairy-blue);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dairy-dark-blue);
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Form input focus styles */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: var(--dairy-blue);
+}
+
+/* Button hover animations */
+button {
+  transition: transform 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+/* ==============================================
+   LOGIN SCREEN & AUTHENTICATION LAYOUT FIXES
+   ============================================== */
+
+/* Ensure proper scrolling */
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Fix for form visibility */
+.auth-form {
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure buttons are always visible */
+button[type="submit"] {
+  position: relative;
+  z-index: 10;
+}
+
+/* Fix for layout issues */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* Ensure proper flex behavior */
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+/* Toast styling */
+[data-sonner-toast] {
+  z-index: 9999 !important;
+}
+
+/* Pointer events for background decorations */
+.pointer-events-none {
+  pointer-events: none;
+}
+
+/* Ensure proper stacking context for auth forms */
+.auth-form-container {
+  position: relative;
+  z-index: 20;
+}
+
+/* Fix for decorative background elements */
+.auth-decoration {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure content is above decorations */
+.auth-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Loading state for disabled inputs */
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Better focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--dairy-blue);
+  outline-offset: 2px;
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

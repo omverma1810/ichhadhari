@@ -1,0 +1,31 @@
+# pnpm Workspace Configuration
+# This file defines the workspace structure for the Ichhadhari Dairy Management monorepo
+# It tells pnpm which directories contain packages that should be part of the workspace
+
+packages:
+  # Frontend Next.js application
+  - "apps/frontend"
+
+  # Backend Django application (no Node dependencies, but included for consistency)
+  - "apps/backend"
+
+  # Shared packages (TypeScript types, utilities, etc.)
+  - "packages/*"
+
+# Catalog configuration for shared dependency versions across the workspace
+# This ensures consistent versions of common dependencies
+catalog:
+  # React ecosystem
+  react: ^18.3.1
+  react-dom: ^18.3.1
+
+  # Next.js
+  next: ^14.2.0
+
+  # TypeScript
+  typescript: ^5.3.3
+
+  # Common dev dependencies
+  "@types/react": ^18.3.1
+  "@types/react-dom": ^18.3.0
+  "@types/node": ^20.11.0

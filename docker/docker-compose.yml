@@ -1,0 +1,157 @@
+# ============================================================================
+# Docker Compose Configuration
+# Ichhadhari Dairy Management System
+# ============================================================================
+# This file orchestrates the multi-container setup for local development
+# and production deployment.
+# ============================================================================
+
+version: "3.8"
+
+services:
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: ichhadhari-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ichhadhari_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ichhadhari-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
+  # Redis (for caching and Celery)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: ichhadhari-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ichhadhari-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
+  # Django Backend
+  # ==========================================================================
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: ../../docker/backend.Dockerfile
+    container_name: ichhadhari-backend
+    restart: unless-stopped
+    command: gunicorn dairy_management.wsgi:application --bind 0.0.0.0:8000 --workers 4
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ichhadhari_db}
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=backend,localhost,127.0.0.1
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/backend:/app
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ichhadhari-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================================================
+  # Next.js Frontend
+  # ==========================================================================
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: ../../docker/frontend.Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    container_name: ichhadhari-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - ichhadhari-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================================================
+  # Nginx Reverse Proxy (Production)
+  # ==========================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: ichhadhari-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - backend_static:/var/www/static:ro
+      - backend_media:/var/www/media:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - ichhadhari-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  ichhadhari-network:
+    driver: bridge
+    name: ichhadhari-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    name: ichhadhari-postgres-data
+  redis_data:
+    name: ichhadhari-redis-data
+  backend_static:
+    name: ichhadhari-backend-static
+  backend_media:
+    name: ichhadhari-backend-media

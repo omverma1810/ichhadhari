@@ -1,0 +1,49 @@
+# ==============================================================================
+# Development Requirements
+# ==============================================================================
+# These are additional tools for development only.
+# Install with: pip install -r requirements/development.txt
+
+# Include base requirements
+-r base.txt
+
+# Django Debug Toolbar
+django-debug-toolbar==4.2.0
+
+# Django Extensions (shell_plus, runserver_plus, etc.)
+django-extensions==3.2.3
+Werkzeug==3.0.1  # For runserver_plus
+
+# Code Quality
+black==23.12.1
+flake8==7.0.0
+isort==5.13.2
+pylint==3.0.3
+pylint-django==2.5.5
+
+# Type Checking
+mypy==1.8.0
+django-stubs==4.2.7
+djangorestframework-stubs==3.14.5
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+pytest-xdist==3.5.0
+factory-boy==3.3.0
+faker==22.0.0
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# API Testing
+httpie==3.2.2
+
+# Database Management
+ipython==8.18.1
+ipdb==0.13.13
+
+# Pre-commit hooks
+pre-commit==3.6.0

@@ -1,0 +1,52 @@
+{
+  "name": "ichhadhari-dairy-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Ichhadhari Dairy Management System - Frontend (Next.js) and Backend (Django)",
+  "author": "Ichhadhari Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "install:all": "pnpm install && pnpm run install:backend",
+    "install:backend": "cd apps/backend && pip install -r requirements.txt || echo 'Backend requirements.txt not found'",
+    "dev:frontend": "pnpm --filter @ichhadhari/frontend dev",
+    "dev:backend": "cd apps/backend && python manage.py runserver",
+    "dev:all": "pnpm run dev:frontend & pnpm run dev:backend",
+    "build:frontend": "pnpm --filter @ichhadhari/frontend build",
+    "build:all": "pnpm run build:frontend",
+    "start:frontend": "pnpm --filter @ichhadhari/frontend start",
+    "start:backend": "cd apps/backend && gunicorn --bind 0.0.0.0:8000 dairy_management.wsgi:application",
+    "lint:frontend": "pnpm --filter @ichhadhari/frontend lint",
+    "lint:all": "pnpm run lint:frontend",
+    "test:frontend": "pnpm --filter @ichhadhari/frontend test",
+    "test:backend": "cd apps/backend && python manage.py test",
+    "test:all": "pnpm run test:frontend && pnpm run test:backend",
+    "type-check": "pnpm --filter @ichhadhari/frontend type-check && pnpm --filter @ichhadhari/shared type-check",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "clean:backend": "cd apps/backend && find . -type d -name '__pycache__' -exec rm -rf {} + && find . -type f -name '*.pyc' -delete",
+    "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f docker/docker-compose.yml down",
+    "docker:build": "docker-compose -f docker/docker-compose.yml build",
+    "setup": "bash scripts/setup.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "turbo": "^1.12.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "keywords": [
+    "monorepo",
+    "dairy-management",
+    "nextjs",
+    "django",
+    "pnpm-workspace"
+  ]
+}

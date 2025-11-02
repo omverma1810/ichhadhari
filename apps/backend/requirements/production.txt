@@ -1,0 +1,38 @@
+# ==============================================================================
+# Production Requirements
+# ==============================================================================
+# These are additional dependencies for production deployment.
+# Install with: pip install -r requirements/production.txt
+
+# Include base requirements
+-r base.txt
+
+# Production Web Server
+gunicorn==21.2.0
+gevent==23.9.1
+
+# Cache with Redis
+django-redis==5.4.0
+hiredis==2.3.2
+
+# Cloud Storage (AWS S3)
+boto3==1.34.10
+django-storages==1.14.2
+
+# Error Tracking (Sentry)
+sentry-sdk==1.39.2
+
+# Production Utilities
+whitenoise==6.6.0  # Static file serving
+
+# Security
+django-ratelimit==4.1.0
+
+# Monitoring
+django-prometheus==2.3.1
+
+# JSON Logging
+python-json-logger==2.0.7
+
+# Environment validation
+environs==10.3.0

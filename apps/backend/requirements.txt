@@ -1,0 +1,65 @@
+# ============================================================================
+# Python Dependencies for Django Backend
+# Ichhadhari Dairy Management System
+# ============================================================================
+
+# Django Framework
+Django==5.0.1
+djangorestframework==3.14.0
+
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter (use in production)
+
+# Authentication & Security
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+python-decouple==3.8
+
+# API Documentation
+drf-spectacular==0.27.0
+
+# Date & Time Utilities
+python-dateutil==2.8.2
+
+# Image Processing (if needed for product images)
+Pillow==10.2.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Excel/CSV Export (for reports)
+openpyxl==3.1.2
+pandas==2.1.4
+
+# Task Queue (optional, for background jobs)
+# celery==5.3.4
+# redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# Code Quality
+black==23.12.1
+flake8==7.0.0
+isort==5.13.2
+
+# Production Server
+gunicorn==21.2.0
+
+# Monitoring & Logging
+# sentry-sdk==1.39.2
+
+# ============================================================================
+# Development Dependencies
+# ============================================================================
+
+# Django Debug Toolbar
+django-debug-toolbar==4.2.0
+
+# API Testing
+requests==2.31.0
+
+# Fake Data Generation
+Faker==22.0.0
