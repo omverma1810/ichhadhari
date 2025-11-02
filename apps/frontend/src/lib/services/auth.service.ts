@@ -109,7 +109,7 @@ class AuthService {
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: `${API_BASE_URL}/api/v1`,
+      baseURL: `${API_BASE_URL}/api`,
       headers: {
         "Content-Type": "application/json",
       },

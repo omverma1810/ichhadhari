@@ -31,7 +31,7 @@ bun install
 3. Create a `.env.local` file (copy from `.env.example`):
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_APP_NAME=Dairy Management System
 ```
 

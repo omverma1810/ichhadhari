@@ -421,7 +421,7 @@ import type {
 ## Environment Variables
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000
 NODE_ENV=development
 ```
 

@@ -105,7 +105,7 @@ All API integration files have been successfully created in `apps/frontend/src/l
 ### Configuration
 
 11. **.env.local** (Updated)
-    - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    - NEXT_PUBLIC_API_URL=http://localhost:8000
     - Ready for production use
 
 ## 🎯 Key Features Implemented

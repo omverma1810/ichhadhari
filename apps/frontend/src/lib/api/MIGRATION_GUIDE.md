@@ -597,10 +597,10 @@ await authAPI.login("username", "password");
 
 ```bash
 # Check .env.local
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # Verify Django is running
-curl http://localhost:8000/api/v1/milk/suppliers/
+curl http://localhost:8000/api/milk/suppliers/
 ```
 
 ### Issue: Type Errors

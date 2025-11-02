@@ -36,7 +36,7 @@
                         ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      Django REST API                                 │
-│                   http://localhost:8000/api/v1/                     │
+│                   http://localhost:8000/api/                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌──────────────────────────────────────────────────────────────┐  │
@@ -94,7 +94,7 @@
 │  └──────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  /dashboard/                                                  │  │
+│  │  /v1/dashboard/                                               │  │
 │  │  ├─ /stats/                 - Dashboard statistics          │  │
 │  │  ├─ /recent-activity/       - Recent activities             │  │
 │  │  ├─ /charts/                - Chart data                    │  │
@@ -320,17 +320,17 @@ import type {
 └─────────────────────────────────────────────────────────────┘
 
 Development (.env.local)
-├─ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+├─ NEXT_PUBLIC_API_URL=http://localhost:8000
 ├─ NODE_ENV=development
 └─ NEXT_PUBLIC_APP_NAME=Ichhadhari Dairy Management
 
 Production (.env.production)
-├─ NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api/v1
+├─ NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 ├─ NODE_ENV=production
 └─ NEXT_PUBLIC_APP_NAME=Ichhadhari Dairy Management
 
 Staging (.env.staging)
-├─ NEXT_PUBLIC_API_URL=https://api-staging.yourdomain.com/api/v1
+├─ NEXT_PUBLIC_API_URL=https://api-staging.yourdomain.com
 ├─ NODE_ENV=production
 └─ NEXT_PUBLIC_APP_NAME=Ichhadhari Dairy Management (Staging)
 ```

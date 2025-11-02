@@ -5,7 +5,7 @@
 
 import { http, HttpResponse } from "msw";
 
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "http://localhost:8000/api";
 
 // ============ MOCK DATA ============
 
@@ -276,23 +276,23 @@ const mockCollections = {
 
 export const handlers = [
   // Dashboard
-  http.get(`${API_BASE_URL}/dashboard/stats/`, () => {
+  http.get(`${API_BASE_URL}/v1/dashboard/stats/`, () => {
     return HttpResponse.json(mockDashboardStats);
   }),
 
-  http.get(`${API_BASE_URL}/dashboard/activities/`, () => {
+  http.get(`${API_BASE_URL}/v1/dashboard/activities/`, () => {
     return HttpResponse.json(mockDashboardActivities);
   }),
 
-  http.get(`${API_BASE_URL}/dashboard/milk-collection-chart/`, () => {
+  http.get(`${API_BASE_URL}/v1/dashboard/milk-collection-chart/`, () => {
     return HttpResponse.json(mockMilkCollectionChart);
   }),
 
-  http.get(`${API_BASE_URL}/dashboard/production-chart/`, () => {
+  http.get(`${API_BASE_URL}/v1/dashboard/production-chart/`, () => {
     return HttpResponse.json(mockProductionChart);
   }),
 
-  http.get(`${API_BASE_URL}/dashboard/alerts/`, () => {
+  http.get(`${API_BASE_URL}/v1/dashboard/alerts/`, () => {
     return HttpResponse.json(mockDashboardAlerts);
   }),
 
