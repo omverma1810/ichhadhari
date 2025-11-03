@@ -10,7 +10,9 @@ packages:
   - "apps/backend"
 
   # Shared packages (TypeScript types, utilities, etc.)
+  - 'apps/*'
   - "packages/*"
+
 
 # Catalog configuration for shared dependency versions across the workspace
 # This ensures consistent versions of common dependencies
