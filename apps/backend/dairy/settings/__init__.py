@@ -1,6 +1,5 @@
 """Django settings package initialization."""
 
-# Import settings based on environment
 import os
 from decouple import config
 

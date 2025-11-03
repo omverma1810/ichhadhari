@@ -1,16 +1,15 @@
 # ============================================================================
-# Backend Dockerfile (Django)
-# Multi-stage build for optimized production image
+# Backend Dockerfile - Production Optimized for Cloud Run
 # ============================================================================
 
-# Stage 1: Base
-FROM python:3.11-slim as base
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=8000
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -23,45 +22,23 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /app
 
-# ============================================================================
-# Stage 2: Dependencies
-# ============================================================================
-FROM base as dependencies
-
-# Copy requirements
+# Copy requirements and install dependencies
 COPY requirements.txt .
-
-# Create virtual environment and install dependencies
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# ============================================================================
-# Stage 3: Runtime
-# ============================================================================
-FROM base as runtime
-
-# Copy virtual environment from dependencies stage
-COPY --from=dependencies /opt/venv /opt/venv
-
-# Set the virtual environment path
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Create a non-root user
-RUN useradd -m -u 1000 django && \
-    mkdir -p /app/staticfiles /app/media && \
-    chown -R django:django /app
-
 # Copy application code
-COPY --chown=django:django . .
+COPY . .
 
-# Switch to non-root user
-USER django
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || echo "No static files to collect"
+# Create directories
+RUN mkdir -p /tmp/staticfiles /tmp/media
+
+# Collect static files (will run again in entrypoint, but good for caching)
+RUN python manage.py collectstatic --noinput || echo "Static files will be collected at startup"
 
 # Expose port
 EXPOSE 8000
@@ -70,11 +47,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Start the application
-CMD ["gunicorn", "dairy_management.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "4", \
-     "--threads", "2", \
-     "--timeout", "60", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# Run entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]

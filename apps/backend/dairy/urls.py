@@ -16,6 +16,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from apps.core.views import health_check
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -63,6 +64,10 @@ def api_root(request):
     })
 
 urlpatterns = [
+    # Health check endpoint
+    path('health/', health_check, name='health-check'),
+    path('api/health/', health_check, name='api-health-check'),
+    
     # Root endpoint
     path('', api_root, name='api-root'),
     
