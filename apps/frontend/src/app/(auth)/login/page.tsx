@@ -283,27 +283,34 @@ export default function LoginPage() {
           </Link>
         </motion.div>
 
-        {/* Submit Button - FIXED TO BE ALWAYS VISIBLE */}
+        {/* Submit Button - FIXED WITH INLINE STYLES */}
         <motion.div variants={staggerItem} className="pt-2">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
+            <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-dairy-blue/20 bg-dairy-blue text-base font-semibold text-white shadow-dairy-lg transition-all hover:bg-dairy-darkBlue hover:shadow-lg disabled:cursor-not-allowed disabled:bg-dairy-blue/60 disabled:text-white/80"
+              style={{
+                backgroundColor: loginMutation.isPending
+                  ? "#4A90E2"
+                  : "#4A90E2",
+                color: "#FFFFFF",
+                opacity: loginMutation.isPending ? 0.7 : 1,
+              }}
+              className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-[#4A90E2] text-base font-semibold shadow-lg transition-all hover:bg-[#357ABD] hover:border-[#357ABD] hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed"
             >
               {loginMutation.isPending ? (
                 <>
                   <LoadingSpinner size="sm" className="text-white" />
-                  <span>Signing in...</span>
+                  <span className="text-white">Signing in...</span>
                 </>
               ) : (
                 <>
-                  <Shield className="h-5 w-5" />
-                  <span>Sign In Securely</span>
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <Shield className="h-5 w-5 text-white" />
+                  <span className="text-white">Sign In Securely</span>
+                  <ArrowRight className="h-5 w-5 text-white transition-transform group-hover:translate-x-1" />
                 </>
               )}
-            </Button>
+            </button>
           </motion.div>
         </motion.div>
       </motion.form>
