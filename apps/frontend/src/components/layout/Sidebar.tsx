@@ -61,7 +61,9 @@ export function Sidebar({ className }: SidebarProps) {
             <Milk className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-dairy-charcoal">Ichhadhari</h1>
+            <h1 className="text-lg font-bold text-dairy-charcoal">
+              Ichhadhari
+            </h1>
             <p className="text-xs text-gray-500">Dairy Management System</p>
           </div>
         </Link>
@@ -135,11 +137,17 @@ function NavItem({
       >
         <motion.button
           onClick={onToggle}
+          style={
+            hasActiveChild
+              ? {
+                  backgroundColor: "rgba(74, 144, 226, 0.1)",
+                  color: "#4A90E2",
+                }
+              : undefined
+          }
           className={cn(
             "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            hasActiveChild
-              ? "bg-dairy-blue/10 text-dairy-blue"
-              : "text-gray-700 hover:bg-gray-100"
+            !hasActiveChild && "text-gray-700 hover:bg-gray-100"
           )}
           whileHover={{ x: 4 }}
           whileTap={{ scale: 0.98 }}
@@ -181,10 +189,18 @@ function NavItem({
                   >
                     <Link
                       href={child.href ?? "#"}
+                      style={
+                        childActive
+                          ? {
+                              backgroundColor: "#4A90E2",
+                              color: "#FFFFFF",
+                            }
+                          : undefined
+                      }
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                         childActive
-                          ? "bg-dairy-blue text-white shadow-lg shadow-dairy-blue/30"
+                          ? "shadow-lg shadow-dairy-blue/30"
                           : "text-gray-600 hover:translate-x-1 hover:bg-gray-100"
                       )}
                     >
@@ -192,9 +208,16 @@ function NavItem({
                         whileHover={{ scale: 1.2, rotate: 5 }}
                         transition={{ type: "spring", stiffness: 400 }}
                       >
-                        <child.icon className="h-4 w-4" />
+                        <child.icon
+                          className="h-4 w-4"
+                          style={childActive ? { color: "#FFFFFF" } : undefined}
+                        />
                       </motion.div>
-                      <span>{child.title}</span>
+                      <span
+                        style={childActive ? { color: "#FFFFFF" } : undefined}
+                      >
+                        {child.title}
+                      </span>
                       {child.badge ? (
                         <motion.span
                           initial={{ scale: 0 }}
@@ -223,10 +246,18 @@ function NavItem({
     >
       <Link
         href={item.href ?? "#"}
+        style={
+          isActive
+            ? {
+                backgroundColor: "#4A90E2",
+                color: "#FFFFFF",
+              }
+            : undefined
+        }
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
           isActive
-            ? "bg-dairy-blue text-white shadow-lg shadow-dairy-blue/30"
+            ? "shadow-lg shadow-dairy-blue/30"
             : "text-gray-700 hover:translate-x-1 hover:bg-gray-100"
         )}
       >
@@ -234,9 +265,14 @@ function NavItem({
           whileHover={{ scale: 1.2, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400 }}
         >
-          <item.icon className="h-5 w-5" />
+          <item.icon
+            className="h-5 w-5"
+            style={isActive ? { color: "#FFFFFF" } : undefined}
+          />
         </motion.div>
-        <span>{item.title}</span>
+        <span style={isActive ? { color: "#FFFFFF" } : undefined}>
+          {item.title}
+        </span>
         {item.badge ? (
           <motion.span
             initial={{ scale: 0 }}
