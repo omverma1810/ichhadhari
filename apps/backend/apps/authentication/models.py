@@ -154,8 +154,7 @@ class RefreshToken(models.Model):
         help_text='User this token belongs to'
     )
     
-    token = models.CharField(
-        max_length=255,
+    token = models.TextField(
         unique=True,
         help_text='The refresh token string'
     )

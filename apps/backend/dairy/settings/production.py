@@ -92,11 +92,17 @@ if IS_CLOUD_RUN:
     }
     
     # ==============================================================================
-    # STATIC & MEDIA FILES - Cloud Run
+    # STATIC & MEDIA FILES - Cloud Run with WhiteNoise
     # ==============================================================================
     
     STATIC_ROOT = '/tmp/staticfiles'
     STATIC_URL = '/static/'
+    
+    # WhiteNoise configuration for serving static files
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_AUTOREFRESH = False
+    WHITENOISE_MAX_AGE = 31536000  # Cache static files for 1 year
     
     MEDIA_ROOT = '/tmp/media'
     MEDIA_URL = '/media/'
