@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { mockPurchaseOrders, mockVendors } from "@/lib/api/mockData";
+import { useVendors, usePurchaseOrders, useDeleteVendor } from "@/hooks/api/useVendorsEmployees";
 import type { Vendor, VendorStatus, VendorType } from "@/types/vendor";
 
 const ITEMS_PER_PAGE = 10;
@@ -255,31 +255,33 @@ export default function VendorsOverviewPage() {
     direction: "desc",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [vendors, setVendors] = useState<Vendor[]>(() => clone(mockVendors));
   const [deleteCandidate, setDeleteCandidate] = useState<Vendor | null>(null);
+
+  // Fetch vendors from API
+  const { data: vendorsData, isLoading: vendorsLoading, error: vendorsError } = useVendors();
+  const { data: purchaseOrdersData } = usePurchaseOrders();
+  const deleteMutation = useDeleteVendor();
+
+  const vendors = useMemo(() => vendorsData?.results || [], [vendorsData]);
+  const isLoading = vendorsLoading;
 
   const recentOrderMap = useMemo(() => {
     const map = new Map<string, string>();
-    mockPurchaseOrders.forEach((order) => {
+    const orders = purchaseOrdersData?.results || [];
+    orders.forEach((order) => {
       if (!order.vendor_id || !order.order_date) {
         return;
       }
-      const current = map.get(order.vendor_id);
+      const current = map.get(order.vendor_id.toString());
       if (
         !current ||
         new Date(order.order_date).getTime() > new Date(current).getTime()
       ) {
-        map.set(order.vendor_id, order.order_date);
+        map.set(order.vendor_id.toString(), order.order_date);
       }
     });
     return map;
-  }, []);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => setIsLoading(false), 520);
-    return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [purchaseOrdersData]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -475,13 +477,13 @@ export default function VendorsOverviewPage() {
   }, []);
 
   const confirmDelete = useCallback(() => {
-    if (deleteCandidate) {
-      setVendors((previous) =>
-        previous.filter((entry) => entry.id !== deleteCandidate.id)
-      );
+    if (deleteCandidate && deleteCandidate.id) {
+      // Convert string ID to number if needed
+      const vendorId = typeof deleteCandidate.id === 'string' ? parseInt(deleteCandidate.id, 10) : deleteCandidate.id;
+      deleteMutation.mutate(vendorId);
     }
     closeDeleteDialog();
-  }, [closeDeleteDialog, deleteCandidate]);
+  }, [closeDeleteDialog, deleteCandidate, deleteMutation]);
 
   const currentSortValue = useMemo(() => {
     const preset = sortPresets.find(
