@@ -64,13 +64,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
-  mockInvoices,
-  mockOutstandingBalances,
-  mockPayments,
-  mockPurchaseOrders,
-  mockVendorPerformance,
-  mockVendors,
-} from "@/lib/api/mockData";
+  useVendor,
+  useVendorPurchaseOrders,
+  useVendorStats,
+  useVendorPayments
+} from "@/hooks/api/useVendorsEmployees";
 import type {
   Address,
   BankDetails,

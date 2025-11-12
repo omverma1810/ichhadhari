@@ -73,10 +73,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDate, formatNumber } from "@/lib/utils/formatters";
-import {
-  mockEmployeeAttendanceSnapshot,
-  mockEmployees,
-} from "@/lib/api/mockData";
+import { useEmployees, useDeleteEmployee, useUpdateEmployee } from "@/hooks/api/useVendorsEmployees";
 import type { Employee, EmployeeStatus } from "@/types/employee";
 
 const PAGE_SIZE = 8;
@@ -251,10 +248,14 @@ function exportEmployeesToCsv(employeesToExport: Employee[]) {
 }
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>(() =>
-    mockEmployees.map((employee) => ({ ...employee }))
-  );
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch employees from API
+  const { data: employeesData, isLoading: employeesLoading, error: employeesError } = useEmployees();
+  const deleteEmployeeMutation = useDeleteEmployee();
+  const updateEmployeeMutation = useUpdateEmployee();
+
+  const employees = useMemo(() => employeesData?.results || [], [employeesData]);
+  const isLoading = employeesLoading;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -266,11 +267,6 @@ export default function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [dialogConfig, setDialogConfig] = useState<DialogConfig | null>(null);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setIsLoading(false), 420);
-    return () => window.clearTimeout(timeout);
-  }, []);
 
   const departments = useMemo(
     () =>
@@ -313,10 +309,13 @@ export default function EmployeesPage() {
 
   const attendanceSnapshot = useMemo(() => {
     return {
-      ...mockEmployeeAttendanceSnapshot,
+      date: new Date().toISOString(),
+      present: employees.filter(e => e.status === 'active').length,
       onLeave: liveStatusSummary.on_leave,
+      absent: Math.max(0, liveStatusSummary.total - liveStatusSummary.active - liveStatusSummary.on_leave),
+      wfh: 0,
     };
-  }, [liveStatusSummary]);
+  }, [liveStatusSummary, employees]);
 
   const averageAttendance = useMemo(() => {
     if (employees.length === 0) {
@@ -588,27 +587,22 @@ export default function EmployeesPage() {
 
     if (dialogConfig.type === "status") {
       const { employee, nextStatus } = dialogConfig;
-      setEmployees((previous) =>
-        previous.map((item) =>
-          item.id === employee.id ? { ...item, status: nextStatus } : item
-        )
-      );
-      toast.success(
-        `${employee.first_name} ${employee.last_name} is now ${statusMeta[nextStatus].label}.`
-      );
+      // Convert string ID to number if needed
+      const employeeId = typeof employee.id === 'string' ? parseInt(employee.id, 10) : employee.id;
+      updateEmployeeMutation.mutate({
+        id: employeeId,
+        data: { status: nextStatus },
+      });
     } else {
       const { employee } = dialogConfig;
-      setEmployees((previous) =>
-        previous.filter((item) => item.id !== employee.id)
-      );
+      // Convert string ID to number if needed
+      const employeeId = typeof employee.id === 'string' ? parseInt(employee.id, 10) : employee.id;
+      deleteEmployeeMutation.mutate(employeeId);
       setSelectedRowIds((previous) => {
         const next = new Set(previous);
         next.delete(employee.id);
         return next;
       });
-      toast.success(
-        `${employee.first_name} ${employee.last_name} has been removed from the roster.`
-      );
     }
 
     setDialogConfig(null);

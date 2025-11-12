@@ -42,7 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { mockVendorPerformance, mockVendors } from "@/lib/api/mockData";
+import { useVendor, useCreateVendor, useUpdateVendor } from "@/hooks/api/useVendorsEmployees";
 import type {
   Address,
   BankDetails,
