@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Droplet, Thermometer, MapPin, Calendar, FileText, DollarSign } from 'lucide-react';
 import { milkService } from '@/services/milkService';
 import { handleApiError } from '@/lib/api-client';
+import toast from 'react-hot-toast';
 import type { MilkType, CollectionShift } from '@/types/api';
 
 interface RecordMilkIntakeModalProps {
@@ -88,7 +89,7 @@ export function RecordMilkIntakeModal({
       console.log('✅ Milk collection created successfully:', result);
 
       // Show success message
-      alert('✅ Milk collection recorded successfully!');
+      toast.success('Milk collection recorded successfully!');
 
       // Reset form
       setFormData({
@@ -115,7 +116,7 @@ export function RecordMilkIntakeModal({
       const errorMessage =
         err.message || 'Failed to record milk collection. Please try again.';
       setError(errorMessage);
-      alert(`❌ Error: ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

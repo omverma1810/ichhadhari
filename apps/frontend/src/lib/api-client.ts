@@ -375,12 +375,20 @@ export function handleApiError(error: any): string {
 
 // Helper function to show toast notifications
 export function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-  // For now, just console.log
-  // Can integrate with sonner toast library later
-  console.log(`[${type.toUpperCase()}] ${message}`);
-
-  // Temporary alert for critical errors
-  if (type === 'error' && typeof window !== 'undefined') {
-    alert(message);
+  // Dynamically import toast to avoid SSR issues
+  if (typeof window !== 'undefined') {
+    import('react-hot-toast').then(({ default: toast }) => {
+      switch (type) {
+        case 'success':
+          toast.success(message);
+          break;
+        case 'error':
+          toast.error(message);
+          break;
+        case 'info':
+          toast(message);
+          break;
+      }
+    });
   }
 }
