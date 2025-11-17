@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Droplet, Thermometer, MapPin, Calendar, FileText, DollarSign } from 'lucide-react';
 import { milkService } from '@/services/milkService';
 import { handleApiError } from '@/lib/api-client';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import type { MilkType, CollectionShift } from '@/types/api';
 
 interface RecordMilkIntakeModalProps {

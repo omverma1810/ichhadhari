@@ -377,7 +377,7 @@ export function handleApiError(error: any): string {
 export function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
   // Dynamically import toast to avoid SSR issues
   if (typeof window !== 'undefined') {
-    import('react-hot-toast').then(({ default: toast }) => {
+    import('sonner').then(({ toast }) => {
       switch (type) {
         case 'success':
           toast.success(message);
@@ -386,7 +386,7 @@ export function showToast(message: string, type: 'success' | 'error' | 'info' = 
           toast.error(message);
           break;
         case 'info':
-          toast(message);
+          toast.info(message);
           break;
       }
     });
