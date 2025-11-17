@@ -7,12 +7,12 @@ import { AuditFields, CommonFilters } from "./common";
 // ============ INVENTORY ITEMS ============
 
 export type ItemType =
+  | "raw_milk"
   | "raw_material"
-  | "packaging"
-  | "finished_product"
-  | "consumable"
-  | "equipment";
-export type ItemStatus = "active" | "inactive" | "discontinued";
+  | "finished_good"
+  | "packaging";
+
+export type ItemUnit = "kg" | "liter" | "piece" | "pack" | "bag" | "box";
 
 export interface InventoryItem extends AuditFields {
   id: number;
@@ -20,38 +20,37 @@ export interface InventoryItem extends AuditFields {
   name: string;
   item_type: ItemType;
   description?: string;
-  unit: string;
+  unit: ItemUnit;
+  cost_per_unit: number;
   current_stock: number;
-  minimum_stock: number;
-  maximum_stock: number;
+  min_stock_level: number;
+  max_stock_level: number;
   reorder_point: number;
-  unit_price: number;
-  total_value: number;
-  location?: string;
-  supplier_name?: string;
+  storage_location?: string;
+  storage_temperature?: string;
   is_active: boolean;
-  last_restocked_date?: string;
-  notes?: string;
+  product?: number; // OneToOne FK
+  product_name?: string; // read-only
+  is_below_min_stock: boolean; // read-only
+  is_below_reorder_point: boolean; // read-only
 }
 
 export interface CreateInventoryItemPayload {
-  item_id: string;
   name: string;
   item_type: ItemType;
   description?: string;
-  unit: string;
+  unit: ItemUnit;
+  cost_per_unit: number;
   current_stock: number;
-  minimum_stock: number;
-  maximum_stock: number;
+  min_stock_level: number;
+  max_stock_level: number;
   reorder_point: number;
-  unit_price: number;
-  location?: string;
-  supplier_name?: string;
-  notes?: string;
+  storage_location?: string;
+  storage_temperature?: string;
+  product?: number;
 }
 
-export interface UpdateInventoryItemPayload
-  extends Partial<CreateInventoryItemPayload> {
+export interface UpdateInventoryItemPayload extends Partial<CreateInventoryItemPayload> {
   is_active?: boolean;
 }
 
@@ -110,44 +109,49 @@ export interface TransactionHistory {
 // ============ STOCK TRANSACTIONS ============
 
 export type TransactionType =
-  | "in"
-  | "out"
+  | "purchase"
+  | "production"
+  | "sale"
+  | "wastage"
   | "adjustment"
   | "return"
-  | "damage"
-  | "expired";
+  | "transfer";
 
 export interface StockTransaction extends AuditFields {
   id: number;
   transaction_id: string;
-  item: {
-    id: number;
-    item_id: string;
-    name: string;
-    unit: string;
-  };
+  item: number;
+  item_name: string; // read-only
   transaction_type: TransactionType;
-  quantity: number;
-  unit_price: number;
-  total_value: number;
   transaction_date: string;
+  quantity: number;
+  is_addition: boolean; // True for IN, False for OUT
+  stock_before: number;
+  stock_after: number;
+  unit_cost: number;
+  total_cost: number;
   reference_type?: string;
   reference_id?: string;
-  from_location?: string;
-  to_location?: string;
-  performed_by: {
-    id: number;
-    name: string;
-  };
+  batch_number?: string;
+  expiry_date?: string;
+  performed_by?: number;
+  performed_by_name?: string; // read-only
   notes?: string;
 }
 
 export interface CreateStockTransactionPayload {
   item: number;
   transaction_type: TransactionType;
-  quantity: number;
-  unit_price: number;
   transaction_date: string;
+  quantity: number;
+  is_addition: boolean;
+  unit_cost: number;
+  reference_type?: string;
+  reference_id?: string;
+  batch_number?: string;
+  expiry_date?: string;
+  notes?: string;
+}
   reference_type?: string;
   reference_id?: string;
   from_location?: string;

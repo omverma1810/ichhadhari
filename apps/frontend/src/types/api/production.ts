@@ -6,17 +6,8 @@ import { AuditFields, CommonFilters } from "./common";
 
 // ============ PRODUCTS ============
 
-export type ProductCategory =
-  | "milk"
-  | "curd"
-  | "paneer"
-  | "ghee"
-  | "butter"
-  | "cheese"
-  | "ice_cream"
-  | "other";
-export type ProductStatus = "active" | "inactive" | "discontinued";
-export type UnitType = "liters" | "kg" | "grams" | "pieces" | "packets";
+export type ProductCategory = "dairy" | "sweets" | "beverages";
+export type UnitType = "kg" | "liter" | "piece" | "pack";
 
 export interface Product extends AuditFields {
   id: number;
@@ -25,33 +16,30 @@ export interface Product extends AuditFields {
   category: ProductCategory;
   description?: string;
   unit: UnitType;
-  standard_quantity: number;
-  shelf_life_days: number;
-  storage_temperature?: number;
-  production_cost: number;
+  cost_price: number;
   selling_price: number;
-  status: ProductStatus;
-  total_batches: number;
-  total_quantity_produced: number;
-  notes?: string;
+  profit_margin: number; // read-only, auto-calculated
+  shelf_life_days: number;
+  storage_temperature?: string;
+  milk_required_per_unit: number;
+  is_active: boolean;
+  image?: string;
 }
 
 export interface CreateProductPayload {
-  product_id: string;
   name: string;
   category: ProductCategory;
   description?: string;
   unit: UnitType;
-  standard_quantity: number;
-  shelf_life_days: number;
-  storage_temperature?: number;
-  production_cost: number;
+  cost_price: number;
   selling_price: number;
-  notes?: string;
+  shelf_life_days: number;
+  storage_temperature?: string;
+  milk_required_per_unit: number;
 }
 
 export interface UpdateProductPayload extends Partial<CreateProductPayload> {
-  status?: ProductStatus;
+  is_active?: boolean;
 }
 
 export interface ProductFilters extends CommonFilters {
@@ -62,63 +50,57 @@ export interface ProductFilters extends CommonFilters {
 
 // ============ PRODUCTION BATCHES ============
 
-export type BatchStatus =
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "cancelled"
-  | "on_hold";
+export type BatchStatus = "planned" | "in_progress" | "completed" | "cancelled";
 
 export interface ProductionBatch extends AuditFields {
   id: number;
-  batch_number: string;
-  product: {
-    id: number;
-    product_id: string;
-    name: string;
-    unit: UnitType;
-  };
+  batch_id: string;
+  product: number;
+  product_name: string; // read-only
+  product_id: string; // read-only
   batch_date: string;
-  planned_quantity: number;
-  actual_quantity: number;
-  status: BatchStatus;
   start_time?: string;
   end_time?: string;
-  duration_minutes?: number;
-  raw_materials_used: {
-    material_name: string;
-    quantity: number;
-    unit: string;
-  }[];
-  production_cost: number;
-  quality_check_status?: "pending" | "passed" | "failed";
-  supervisor: {
-    id: number;
-    name: string;
-  };
+  duration_minutes: number; // read-only
+  planned_quantity: number;
+  actual_quantity: number;
+  wastage_quantity: number;
+  milk_allocated: number;
+  milk_used: number;
+  status: BatchStatus;
+  quality_check_passed: boolean;
+  quality_notes?: string;
+  yield_percentage: number; // read-only
+  efficiency_score: number; // read-only
+  supervisor?: number;
+  supervisor_name?: string; // read-only
+  operators: number[];
+  operator_names: string[]; // read-only
   notes?: string;
+  recipe_details?: Record<string, any>;
 }
 
 export interface CreateProductionBatchPayload {
   product: number;
   batch_date: string;
-  planned_quantity: number;
   start_time?: string;
-  supervisor: number;
-  raw_materials_used?: {
-    material_name: string;
-    quantity: number;
-    unit: string;
-  }[];
+  planned_quantity: number;
+  milk_allocated: number;
+  supervisor?: number;
+  operators?: number[];
   notes?: string;
+  recipe_details?: Record<string, any>;
 }
 
 export interface UpdateProductionBatchPayload
   extends Partial<CreateProductionBatchPayload> {
-  actual_quantity?: number;
-  status?: BatchStatus;
   end_time?: string;
-  production_cost?: number;
+  actual_quantity?: number;
+  wastage_quantity?: number;
+  milk_used?: number;
+  status?: BatchStatus;
+  quality_check_passed?: boolean;
+  quality_notes?: string;
 }
 
 export interface ProductionBatchFilters extends CommonFilters {

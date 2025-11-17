@@ -1,5 +1,9 @@
-import { apiClient, handleApiError } from '@/lib/api-client';
-import type { PaginatedResponse, InventoryItem, StockTransaction } from '@/types/api';
+import { apiClient, handleApiError } from "@/lib/api-client";
+import type {
+  PaginatedResponse,
+  InventoryItem,
+  StockTransaction,
+} from "@/types/api";
 
 export const inventoryService = {
   // ==================== INVENTORY ITEMS ====================
@@ -16,7 +20,7 @@ export const inventoryService = {
   }): Promise<PaginatedResponse<InventoryItem>> => {
     try {
       return await apiClient.get<PaginatedResponse<InventoryItem>>(
-        '/api/inventory/items/',
+        "/api/inventory/items/",
         params
       );
     } catch (error) {
@@ -40,34 +44,44 @@ export const inventoryService = {
    */
   createItem: async (data: {
     name: string;
-    category: string;
+    item_type: string;
     unit: string;
+    cost_per_unit: string | number;
     current_stock: string | number;
-    minimum_stock: string | number;
-    reorder_level: string | number;
-    unit_cost: string | number;
-    location?: string;
+    min_stock_level: string | number;
+    max_stock_level: string | number;
+    reorder_point: string | number;
+    storage_location?: string;
+    storage_temperature?: string;
+    description?: string;
+    product?: number;
   }): Promise<InventoryItem> => {
     try {
       const formattedData = {
         name: data.name,
-        category: data.category,
+        item_type: data.item_type,
         unit: data.unit,
+        cost_per_unit: String(data.cost_per_unit),
         current_stock: String(data.current_stock),
-        minimum_stock: String(data.minimum_stock),
-        maximum_stock: String(parseFloat(String(data.minimum_stock)) * 3),
-        reorder_level: String(data.reorder_level),
-        unit_cost: String(data.unit_cost),
-        location: data.location || '',
+        min_stock_level: String(data.min_stock_level),
+        max_stock_level: String(data.max_stock_level),
+        reorder_point: String(data.reorder_point),
+        storage_location: data.storage_location || "",
+        storage_temperature: data.storage_temperature || "",
+        description: data.description || "",
         is_active: true,
+        ...(data.product && { product: data.product }),
       };
 
-      console.log('📤 Creating inventory item:', formattedData);
-      const response = await apiClient.post<InventoryItem>('/api/inventory/items/', formattedData);
-      console.log('✅ Inventory item created:', response);
+      console.log("📤 Creating inventory item:", formattedData);
+      const response = await apiClient.post<InventoryItem>(
+        "/api/inventory/items/",
+        formattedData
+      );
+      console.log("✅ Inventory item created:", response);
       return response;
     } catch (error) {
-      console.error('❌ Failed to create inventory item:', error);
+      console.error("❌ Failed to create inventory item:", error);
       throw new Error(handleApiError(error));
     }
   },
@@ -75,23 +89,44 @@ export const inventoryService = {
   /**
    * Update inventory item
    */
-  updateItem: async (id: number, data: Partial<InventoryItem>): Promise<InventoryItem> => {
+  updateItem: async (
+    id: number,
+    data: Partial<InventoryItem>
+  ): Promise<InventoryItem> => {
     try {
       const formattedData: any = {};
       if (data.name !== undefined) formattedData.name = data.name;
-      if (data.category !== undefined) formattedData.category = data.category;
-      if (data.current_stock !== undefined) formattedData.current_stock = String(data.current_stock);
-      if (data.minimum_stock !== undefined) formattedData.minimum_stock = String(data.minimum_stock);
-      if (data.unit_cost !== undefined) formattedData.unit_cost = String(data.unit_cost);
-      if (data.location !== undefined) formattedData.location = data.location;
-      if (data.is_active !== undefined) formattedData.is_active = data.is_active;
+      if (data.item_type !== undefined)
+        formattedData.item_type = data.item_type;
+      if (data.current_stock !== undefined)
+        formattedData.current_stock = String(data.current_stock);
+      if (data.min_stock_level !== undefined)
+        formattedData.min_stock_level = String(data.min_stock_level);
+      if (data.max_stock_level !== undefined)
+        formattedData.max_stock_level = String(data.max_stock_level);
+      if (data.reorder_point !== undefined)
+        formattedData.reorder_point = String(data.reorder_point);
+      if (data.cost_per_unit !== undefined)
+        formattedData.cost_per_unit = String(data.cost_per_unit);
+      if (data.storage_location !== undefined)
+        formattedData.storage_location = data.storage_location;
+      if (data.storage_temperature !== undefined)
+        formattedData.storage_temperature = data.storage_temperature;
+      if (data.description !== undefined)
+        formattedData.description = data.description;
+      if (data.is_active !== undefined)
+        formattedData.is_active = data.is_active;
+      if (data.product !== undefined) formattedData.product = data.product;
 
-      console.log('📤 Updating inventory item:', formattedData);
-      const response = await apiClient.put<InventoryItem>(`/api/inventory/items/${id}/`, formattedData);
-      console.log('✅ Inventory item updated:', response);
+      console.log("📤 Updating inventory item:", formattedData);
+      const response = await apiClient.put<InventoryItem>(
+        `/api/inventory/items/${id}/`,
+        formattedData
+      );
+      console.log("✅ Inventory item updated:", response);
       return response;
     } catch (error) {
-      console.error('❌ Failed to update inventory item:', error);
+      console.error("❌ Failed to update inventory item:", error);
       throw new Error(handleApiError(error));
     }
   },
@@ -101,11 +136,11 @@ export const inventoryService = {
    */
   deleteItem: async (id: number): Promise<void> => {
     try {
-      console.log('🗑️ Deleting inventory item:', id);
+      console.log("🗑️ Deleting inventory item:", id);
       await apiClient.delete(`/api/inventory/items/${id}/`);
-      console.log('✅ Inventory item deleted');
+      console.log("✅ Inventory item deleted");
     } catch (error) {
-      console.error('❌ Failed to delete inventory item:', error);
+      console.error("❌ Failed to delete inventory item:", error);
       throw new Error(handleApiError(error));
     }
   },
@@ -125,7 +160,7 @@ export const inventoryService = {
   }): Promise<PaginatedResponse<StockTransaction>> => {
     try {
       return await apiClient.get<PaginatedResponse<StockTransaction>>(
-        '/api/inventory/transactions/',
+        "/api/inventory/transactions/",
         params
       );
     } catch (error) {
@@ -138,7 +173,12 @@ export const inventoryService = {
    */
   createTransaction: async (data: {
     item: number;
-    transaction_type: 'purchase' | 'production' | 'sale' | 'adjustment' | 'transfer';
+    transaction_type:
+      | "purchase"
+      | "production"
+      | "sale"
+      | "adjustment"
+      | "transfer";
     quantity: string | number;
     unit_price: string | number;
     transaction_date: string;
@@ -151,18 +191,24 @@ export const inventoryService = {
         transaction_type: data.transaction_type,
         quantity: String(data.quantity),
         unit_price: String(data.unit_price),
-        total_amount: String(parseFloat(String(data.quantity)) * parseFloat(String(data.unit_price))),
+        total_amount: String(
+          parseFloat(String(data.quantity)) *
+            parseFloat(String(data.unit_price))
+        ),
         transaction_date: data.transaction_date,
-        reference_number: data.reference_number || '',
-        notes: data.notes || '',
+        reference_number: data.reference_number || "",
+        notes: data.notes || "",
       };
 
-      console.log('📤 Creating stock transaction:', formattedData);
-      const response = await apiClient.post<StockTransaction>('/api/inventory/transactions/', formattedData);
-      console.log('✅ Stock transaction created:', response);
+      console.log("📤 Creating stock transaction:", formattedData);
+      const response = await apiClient.post<StockTransaction>(
+        "/api/inventory/transactions/",
+        formattedData
+      );
+      console.log("✅ Stock transaction created:", response);
       return response;
     } catch (error) {
-      console.error('❌ Failed to create stock transaction:', error);
+      console.error("❌ Failed to create stock transaction:", error);
       throw new Error(handleApiError(error));
     }
   },
@@ -172,7 +218,9 @@ export const inventoryService = {
    */
   getStockAlerts: async (): Promise<InventoryItem[]> => {
     try {
-      return await apiClient.get<InventoryItem[]>('/api/inventory/stock-alerts/');
+      return await apiClient.get<InventoryItem[]>(
+        "/api/inventory/stock-alerts/"
+      );
     } catch (error) {
       throw new Error(handleApiError(error));
     }
