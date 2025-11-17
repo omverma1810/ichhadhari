@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tailwindcss/utilities";
+@import "../styles/invoice-print.css";
 
 @layer base {
   :root {

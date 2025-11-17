@@ -109,7 +109,7 @@ class AuthService {
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: `${API_BASE_URL}/api`,
+      baseURL: API_BASE_URL,
       headers: {
         "Content-Type": "application/json",
       },
@@ -254,7 +254,7 @@ class AuthService {
       if (refreshToken) {
         // Call backend logout endpoint to blacklist token
         try {
-          await this.axiosInstance.post(`${API_BASE_URL}/api/auth/logout/`, {
+          await this.axiosInstance.post(`/api/auth/logout/`, {
             refresh: refreshToken,
           });
         } catch (error) {
@@ -453,14 +453,14 @@ class AuthService {
    * Verify email (for registration)
    */
   async verifyEmail(token: string): Promise<void> {
-    await this.axiosInstance.post("/auth/verify-email/", { token });
+    await this.axiosInstance.post("/api/auth/verify-email/", { token });
   }
 
   /**
    * Request password reset
    */
   async requestPasswordReset(email: string): Promise<void> {
-    await this.axiosInstance.post("/auth/password-reset/", { email });
+    await this.axiosInstance.post("/api/auth/password-reset/", { email });
   }
 
   /**
@@ -470,7 +470,7 @@ class AuthService {
     token: string,
     newPassword: string
   ): Promise<void> {
-    await this.axiosInstance.post("/auth/password-reset/confirm/", {
+    await this.axiosInstance.post("/api/auth/password-reset/confirm/", {
       token,
       new_password: newPassword,
     });
@@ -482,7 +482,7 @@ class AuthService {
   async getMe(): Promise<User> {
     try {
       const response = await this.axiosInstance.get<{ user: User }>(
-        `${API_BASE_URL}/api/auth/me/`
+        "/api/auth/me/"
       );
       const user = response.data.user;
       this.setUserData(user);
@@ -511,7 +511,7 @@ class AuthService {
       const response = await this.axiosInstance.patch<{
         user: User;
         message: string;
-      }>(`${API_BASE_URL}/api/auth/me/`, data);
+      }>("/api/auth/me/", data);
       const user = response.data.user;
       this.setUserData(user);
       return user;
@@ -537,7 +537,7 @@ class AuthService {
   async changePassword(data: ChangePasswordData): Promise<{ message: string }> {
     try {
       const response = await this.axiosInstance.post<{ message: string }>(
-        `${API_BASE_URL}/api/auth/change-password/`,
+        "/api/auth/change-password/",
         data
       );
       return response.data;
@@ -563,7 +563,7 @@ class AuthService {
   async checkPermission(permission: string): Promise<PermissionCheckResponse> {
     try {
       const response = await this.axiosInstance.get<PermissionCheckResponse>(
-        `${API_BASE_URL}/api/auth/check-permission/`,
+        "/api/auth/check-permission/",
         { params: { permission } }
       );
       return response.data;

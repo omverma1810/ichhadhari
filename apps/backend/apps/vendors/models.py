@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 from decimal import Decimal
 from apps.core.models import TimeStampedModel
 from apps.inventory.models import InventoryItem
@@ -381,3 +382,157 @@ class GRNItem(models.Model):
     
     def __str__(self):
         return f"{self.grn.grn_number} - {self.po_item.item_name}"
+
+
+class VendorInvoice(TimeStampedModel):
+    """Vendor Invoice Model"""
+    
+    INVOICE_STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('sent', 'Sent'),
+        ('paid', 'Paid'),
+        ('overdue', 'Overdue'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    PAYMENT_STATUS_CHOICES = [
+        ('unpaid', 'Unpaid'),
+        ('partially_paid', 'Partially Paid'),
+        ('paid', 'Paid'),
+    ]
+    
+    # Primary Fields
+    invoice_number = models.CharField(
+        max_length=50, 
+        unique=True, 
+        editable=False,
+        help_text="Auto-generated invoice number"
+    )
+    vendor = models.ForeignKey(
+        'Vendor', 
+        on_delete=models.CASCADE, 
+        related_name='invoices'
+    )
+    
+    # Dates
+    invoice_date = models.DateField(default=timezone.now)
+    due_date = models.DateField()
+    
+    # Status
+    status = models.CharField(
+        max_length=20, 
+        choices=INVOICE_STATUS_CHOICES, 
+        default='draft'
+    )
+    payment_status = models.CharField(
+        max_length=20, 
+        choices=PAYMENT_STATUS_CHOICES, 
+        default='unpaid'
+    )
+    
+    # Financial Fields
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    amount_due = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    # Additional Info
+    notes = models.TextField(blank=True, null=True)
+    terms_and_conditions = models.TextField(blank=True, null=True)
+    reference_number = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Tracking
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True,
+        related_name='created_invoices'
+    )
+    
+    class Meta:
+        db_table = 'vendor_invoices'
+        ordering = ['-invoice_date', '-created_at']
+        indexes = [
+            models.Index(fields=['vendor', 'status']),
+            models.Index(fields=['invoice_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.invoice_number} - {self.vendor.company_name}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate invoice number
+        if not self.invoice_number:
+            last_invoice = VendorInvoice.objects.order_by('-id').first()
+            if last_invoice:
+                last_num = int(last_invoice.invoice_number.split('-')[-1])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            
+            date_str = timezone.now().strftime('%Y%m')
+            self.invoice_number = f"INV-{date_str}-{new_num:05d}"
+        
+        # Calculate amount due
+        self.amount_due = self.total_amount - self.amount_paid
+        
+        # Update payment status
+        if self.amount_paid == 0:
+            self.payment_status = 'unpaid'
+        elif self.amount_paid >= self.total_amount:
+            self.payment_status = 'paid'
+        else:
+            self.payment_status = 'partially_paid'
+        
+        super().save(*args, **kwargs)
+
+
+class VendorInvoiceItem(models.Model):
+    """Invoice Line Items"""
+    
+    invoice = models.ForeignKey(
+        VendorInvoice, 
+        on_delete=models.CASCADE, 
+        related_name='items'
+    )
+    
+    # Item Details
+    item_description = models.CharField(max_length=255)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.CharField(max_length=50, default='piece')
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Calculated
+    line_total = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    # Optional
+    tax_rate = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0,
+        help_text="Tax rate in percentage"
+    )
+    discount_percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0
+    )
+    
+    class Meta:
+        db_table = 'vendor_invoice_items'
+        ordering = ['id']
+    
+    def __str__(self):
+        return f"{self.item_description} - {self.quantity} {self.unit}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate line total
+        subtotal = self.quantity * self.unit_price
+        discount = subtotal * (self.discount_percentage / 100)
+        after_discount = subtotal - discount
+        tax = after_discount * (self.tax_rate / 100)
+        self.line_total = after_discount + tax
+        
+        super().save(*args, **kwargs)

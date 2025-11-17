@@ -12853,3 +12853,35 @@ INFO 2025-11-03 04:41:42,856 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1
 INFO 2025-11-03 04:50:11,464 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1.1" 200 476
 INFO 2025-11-17 23:12:20,609 autoreload 38955 8325603456 Watching for file changes with StatReloader
 INFO 2025-11-17 23:14:03,102 autoreload 39854 8325603456 Watching for file changes with StatReloader
+INFO 2025-11-18 00:54:48,846 autoreload 47778 8325603456 Watching for file changes with StatReloader
+INFO 2025-11-18 00:57:01,128 autoreload 47995 8325603456 Watching for file changes with StatReloader
+INFO 2025-11-18 01:00:04,814 basehttp 48349 6140456960 "GET / HTTP/1.1" 200 547
+WARNING 2025-11-18 01:00:05,268 basehttp 48349 6140456960 "GET /favicon.ico HTTP/1.1" 404 13638
+INFO 2025-11-18 01:10:25,935 basehttp 49430 6177304576 "GET / HTTP/1.1" 200 547
+INFO 2025-11-18 01:11:34,729 basehttp 49430 6177304576 "OPTIONS /api/auth/login/ HTTP/1.1" 200 0
+WARNING 2025-11-18 01:11:35,055 basehttp 49430 6177304576 "POST /api/auth/login/ HTTP/1.1" 400 81
+WARNING 2025-11-18 01:11:40,493 basehttp 49430 6177304576 "POST /api/auth/login/ HTTP/1.1" 400 81
+INFO 2025-11-18 01:11:49,565 basehttp 49430 6177304576 "GET / HTTP/1.1" 200 547
+WARNING 2025-11-18 01:12:14,043 basehttp 49430 6177304576 "POST /api/auth/login/ HTTP/1.1" 400 81
+INFO 2025-11-18 01:12:23,007 basehttp 49430 6177304576 "POST /api/auth/login/ HTTP/1.1" 200 1225
+INFO 2025-11-18 01:12:23,259 basehttp 49430 6177304576 "OPTIONS /api/auth/me/ HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,262 basehttp 49430 6177304576 "OPTIONS /v1/dashboard/stats/ HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,300 basehttp 49430 6227783680 "OPTIONS /v1/dashboard/production-chart/?year=2025 HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,300 basehttp 49430 6210957312 "OPTIONS /v1/dashboard/milk-collection-chart/?start_date=2025-10-19&end_date=2025-11-18 HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,302 basehttp 49430 6177304576 "OPTIONS /v1/dashboard/activities/?limit=10 HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,308 basehttp 49430 6244610048 "OPTIONS /v1/dashboard/alerts/ HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:23,515 basehttp 49430 6194130944 "GET /api/auth/me/ HTTP/1.1" 200 476
+WARNING 2025-11-18 01:12:23,570 basehttp 49430 6244610048 "GET /v1/dashboard/alerts/ HTTP/1.1" 404 13678
+WARNING 2025-11-18 01:12:23,575 basehttp 49430 6227783680 "GET /v1/dashboard/production-chart/?year=2025 HTTP/1.1" 404 13738
+WARNING 2025-11-18 01:12:23,580 basehttp 49430 6210957312 "GET /v1/dashboard/milk-collection-chart/?start_date=2025-10-19&end_date=2025-11-18 HTTP/1.1" 404 13830
+WARNING 2025-11-18 01:12:23,585 basehttp 49430 6177304576 "GET /v1/dashboard/activities/?limit=10 HTTP/1.1" 404 13712
+WARNING 2025-11-18 01:12:23,591 basehttp 49430 6261436416 "GET /v1/dashboard/stats/ HTTP/1.1" 404 13674
+INFO 2025-11-18 01:12:30,395 basehttp 49430 6177304576 "OPTIONS /milk/collections/?page=1&search=&page_size=20 HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:30,403 basehttp 49430 6210957312 "OPTIONS /milk/collections/stats/?days=1 HTTP/1.1" 200 0
+INFO 2025-11-18 01:12:30,404 basehttp 49430 6194130944 "OPTIONS /milk/collections/today/ HTTP/1.1" 200 0
+WARNING 2025-11-18 01:12:30,516 basehttp 49430 6194130944 "GET /milk/collections/today/ HTTP/1.1" 404 13689
+WARNING 2025-11-18 01:12:30,522 basehttp 49430 6210957312 "GET /milk/collections/stats/?days=1 HTTP/1.1" 404 13703
+WARNING 2025-11-18 01:12:30,526 basehttp 49430 6177304576 "GET /milk/collections/?page=1&search=&page_size=20 HTTP/1.1" 404 13738
+WARNING 2025-11-18 01:12:31,586 basehttp 49430 6177304576 "GET /milk/collections/today/ HTTP/1.1" 404 13688
+WARNING 2025-11-18 01:12:31,610 basehttp 49430 6194130944 "GET /milk/collections/?page=1&search=&page_size=20 HTTP/1.1" 404 13736
+WARNING 2025-11-18 01:12:31,614 basehttp 49430 6210957312 "GET /milk/collections/stats/?days=1 HTTP/1.1" 404 13702

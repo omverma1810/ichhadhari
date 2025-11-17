@@ -335,3 +335,96 @@ export interface GoodsReceiptNoteFilters extends CommonFilters {
   start_date?: string;
   end_date?: string;
 }
+
+// ============ VENDOR INVOICES ============
+
+export type VendorInvoiceStatus =
+  | "draft"
+  | "sent"
+  | "paid"
+  | "overdue"
+  | "cancelled";
+export type VendorPaymentStatus = "unpaid" | "partially_paid" | "paid";
+
+export interface VendorInvoiceItem {
+  id?: number;
+  item_description: string;
+  quantity: string | number;
+  unit: string;
+  unit_price: string | number;
+  line_total: string;
+  tax_rate?: string | number;
+  discount_percentage?: string | number;
+}
+
+export interface VendorInvoice extends AuditFields {
+  id: number;
+  invoice_number: string;
+  vendor: number;
+  vendor_name: string;
+  invoice_date: string;
+  due_date: string;
+  status: VendorInvoiceStatus;
+  payment_status: VendorPaymentStatus;
+  subtotal: string;
+  tax_amount: string;
+  discount_amount: string;
+  total_amount: string;
+  amount_paid: string;
+  amount_due: string;
+  notes?: string;
+  terms_and_conditions?: string;
+  reference_number?: string;
+  items: VendorInvoiceItem[];
+  created_by?: number;
+  created_by_name?: string;
+}
+
+export interface VendorInvoiceListItem {
+  id: number;
+  invoice_number: string;
+  vendor: number;
+  vendor_name: string;
+  invoice_date: string;
+  due_date: string;
+  status: string;
+  payment_status: string;
+  total_amount: string;
+  amount_paid: string;
+  amount_due: string;
+  items_count: number;
+  created_at: string;
+}
+
+export interface CreateVendorInvoicePayload {
+  vendor: number;
+  invoice_date: string;
+  due_date: string;
+  total_amount: string | number;
+  items: Array<{
+    item_description: string;
+    quantity: string | number;
+    unit: string;
+    unit_price: string | number;
+    tax_rate?: string | number;
+    discount_percentage?: string | number;
+  }>;
+  notes?: string;
+  terms_and_conditions?: string;
+  reference_number?: string;
+}
+
+export interface UpdateVendorInvoicePayload
+  extends Partial<CreateVendorInvoicePayload> {
+  status?: VendorInvoiceStatus;
+  payment_status?: VendorPaymentStatus;
+  amount_paid?: string | number;
+}
+
+export interface VendorInvoiceFilters extends CommonFilters {
+  vendor?: number;
+  status?: VendorInvoiceStatus;
+  payment_status?: VendorPaymentStatus;
+  date_from?: string;
+  date_to?: string;
+}

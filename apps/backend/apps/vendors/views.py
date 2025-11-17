@@ -10,14 +10,16 @@ from decimal import Decimal
 
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
-    VendorPayment, GoodsReceiptNote, GRNItem
+    VendorPayment, GoodsReceiptNote, GRNItem,
+    VendorInvoice
 )
 from .serializers import (
     VendorSerializer, VendorListSerializer,
     PurchaseOrderSerializer, PurchaseOrderListSerializer,
     PurchaseOrderCreateSerializer, PurchaseOrderItemSerializer,
     VendorPaymentSerializer, GoodsReceiptNoteSerializer,
-    GoodsReceiptNoteCreateSerializer
+    GoodsReceiptNoteCreateSerializer,
+    VendorInvoiceSerializer, VendorInvoiceListSerializer
 )
 from apps.inventory.models import StockTransaction
 
@@ -445,3 +447,113 @@ class GoodsReceiptNoteViewSet(viewsets.ModelViewSet):
         # Update inventory item stock
         item.current_stock = stock_after
         item.save(update_fields=['current_stock', 'updated_at'])
+
+
+class VendorInvoiceViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing vendor invoices
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = VendorInvoice.objects.select_related('vendor', 'created_by').prefetch_related('items')
+        
+        # Filters
+        vendor_id = self.request.query_params.get('vendor')
+        status = self.request.query_params.get('status')
+        payment_status = self.request.query_params.get('payment_status')
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        
+        if vendor_id:
+            queryset = queryset.filter(vendor_id=vendor_id)
+        if status:
+            queryset = queryset.filter(status=status)
+        if payment_status:
+            queryset = queryset.filter(payment_status=payment_status)
+        if date_from:
+            queryset = queryset.filter(invoice_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(invoice_date__lte=date_to)
+        
+        return queryset
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return VendorInvoiceListSerializer
+        return VendorInvoiceSerializer
+    
+    @action(detail=True, methods=['post'])
+    def mark_as_paid(self, request, pk=None):
+        """Mark invoice as fully paid"""
+        invoice = self.get_object()
+        invoice.amount_paid = invoice.total_amount
+        invoice.payment_status = 'paid'
+        invoice.status = 'paid'
+        invoice.save()
+        
+        serializer = self.get_serializer(invoice)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def record_payment(self, request, pk=None):
+        """Record a partial or full payment"""
+        invoice = self.get_object()
+        amount = request.data.get('amount')
+        
+        if not amount:
+            return Response(
+                {'error': 'Amount is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            amount = Decimal(str(amount))
+        except:
+            return Response(
+                {'error': 'Invalid amount'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        invoice.amount_paid += amount
+        if invoice.amount_paid >= invoice.total_amount:
+            invoice.payment_status = 'paid'
+            invoice.status = 'paid'
+        else:
+            invoice.payment_status = 'partially_paid'
+        
+        invoice.save()
+        
+        serializer = self.get_serializer(invoice)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def print_format(self, request, pk=None):
+        """Return invoice data in dot matrix print format"""
+        invoice = self.get_object()
+        
+        # Generate dot matrix formatted text
+        lines = []
+        lines.append("=" * 40)
+        lines.append("ICHHADHARI PREMIUM PUNJABI DAIRY".center(40))
+        lines.append("=" * 40)
+        lines.append(f"Invoice: {invoice.invoice_number}".ljust(40))
+        lines.append(f"Date: {invoice.invoice_date.strftime('%d-%b-%Y')}".ljust(40))
+        lines.append(f"Vendor: {invoice.vendor.company_name}".ljust(40))
+        lines.append("-" * 40)
+        lines.append("Item                   Qty    Price")
+        lines.append("-" * 40)
+        
+        for item in invoice.items.all():
+            desc = item.item_description[:20].ljust(20)
+            qty = f"{item.quantity:>5.1f}".rjust(7)
+            price = f"{item.line_total:>8.2f}".rjust(8)
+            lines.append(f"{desc} {qty} {price}")
+        
+        lines.append("-" * 40)
+        lines.append(f"Subtotal:                 {invoice.subtotal:>10.2f}")
+        lines.append(f"Tax:                      {invoice.tax_amount:>10.2f}")
+        lines.append(f"Total:                    {invoice.total_amount:>10.2f}")
+        lines.append("=" * 40)
+        
+        return Response({'text': '\n'.join(lines)})

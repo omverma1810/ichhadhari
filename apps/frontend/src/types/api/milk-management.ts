@@ -137,15 +137,17 @@ export interface MilkCollection extends AuditFields {
 export interface CreateMilkCollectionPayload {
   supplier: number;
   collection_date: string;
-  shift: CollectionShift;
+  collection_time?: string; // HH:MM:SS format or will use current time
+  shift?: CollectionShift; // Optional, backend can auto-determine from time
   milk_type: MilkType;
   quantity: number;
   fat_percentage: number;
   snf_percentage: number;
   temperature: number;
   quality_status?: QualityStatus;
-  quality_score?: number;
+  rejection_reason?: string; // Required if quality_status is 'rejected'
   rate_per_liter: number;
+  collected_by?: number; // Optional, defaults to current user
   notes?: string;
 }
 

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
-    VendorPayment, GoodsReceiptNote, GRNItem
+    VendorPayment, GoodsReceiptNote, GRNItem,
+    VendorInvoice, VendorInvoiceItem
 )
 from decimal import Decimal
 
@@ -306,3 +307,95 @@ class GoodsReceiptNoteCreateSerializer(serializers.ModelSerializer):
             GRNItem.objects.create(**item_data)
         
         return grn
+
+
+class VendorInvoiceItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorInvoiceItem
+        fields = [
+            'id', 'item_description', 'quantity', 'unit', 
+            'unit_price', 'line_total', 'tax_rate', 'discount_percentage'
+        ]
+        read_only_fields = ['line_total']
+
+
+class VendorInvoiceSerializer(serializers.ModelSerializer):
+    items = VendorInvoiceItemSerializer(many=True, required=False)
+    vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
+    created_by_name = serializers.CharField(
+        source='created_by.get_full_name', 
+        read_only=True,
+        allow_null=True
+    )
+    
+    class Meta:
+        model = VendorInvoice
+        fields = [
+            'id', 'invoice_number', 'vendor', 'vendor_name',
+            'invoice_date', 'due_date', 'status', 'payment_status',
+            'subtotal', 'tax_amount', 'discount_amount', 
+            'total_amount', 'amount_paid', 'amount_due',
+            'notes', 'terms_and_conditions', 'reference_number',
+            'items', 'created_by', 'created_by_name',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'invoice_number', 'amount_due', 'created_by', 'created_at', 'updated_at'
+        ]
+    
+    def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
+        validated_data['created_by'] = self.context['request'].user
+        
+        invoice = VendorInvoice.objects.create(**validated_data)
+        
+        # Create invoice items
+        for item_data in items_data:
+            VendorInvoiceItem.objects.create(invoice=invoice, **item_data)
+        
+        # Recalculate totals
+        invoice.subtotal = sum(item.line_total for item in invoice.items.all())
+        invoice.save()
+        
+        return invoice
+    
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+        
+        # Update invoice fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update items if provided
+        if items_data is not None:
+            # Delete existing items
+            instance.items.all().delete()
+            
+            # Create new items
+            for item_data in items_data:
+                VendorInvoiceItem.objects.create(invoice=instance, **item_data)
+            
+            # Recalculate totals
+            instance.subtotal = sum(item.line_total for item in instance.items.all())
+            instance.save()
+        
+        return instance
+
+
+class VendorInvoiceListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for list views"""
+    vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
+    items_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VendorInvoice
+        fields = [
+            'id', 'invoice_number', 'vendor', 'vendor_name',
+            'invoice_date', 'due_date', 'status', 'payment_status',
+            'total_amount', 'amount_paid', 'amount_due',
+            'items_count', 'created_at'
+        ]
+    
+    def get_items_count(self, obj):
+        return obj.items.count()

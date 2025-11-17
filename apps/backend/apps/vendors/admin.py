@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
-    VendorPayment, GoodsReceiptNote, GRNItem
+    VendorPayment, GoodsReceiptNote, GRNItem,
+    VendorInvoice, VendorInvoiceItem
 )
 
 
@@ -268,3 +269,63 @@ class GRNItemAdmin(admin.ModelAdmin):
     search_fields = [
         'grn__grn_number', 'po_item__item_name', 'batch_number'
     ]
+
+
+class VendorInvoiceItemInline(admin.TabularInline):
+    """
+    Inline admin for VendorInvoiceItem.
+    """
+    model = VendorInvoiceItem
+    extra = 1
+    fields = [
+        'item_description', 'quantity', 'unit', 'unit_price',
+        'tax_rate', 'discount_percentage', 'line_total'
+    ]
+    readonly_fields = ['line_total']
+
+
+@admin.register(VendorInvoice)
+class VendorInvoiceAdmin(admin.ModelAdmin):
+    """
+    Admin interface for VendorInvoice model.
+    """
+    list_display = [
+        'invoice_number', 'vendor', 'invoice_date', 'due_date',
+        'total_amount', 'amount_paid', 'amount_due',
+        'status', 'payment_status'
+    ]
+    list_filter = ['status', 'payment_status', 'invoice_date']
+    search_fields = [
+        'invoice_number', 'vendor__company_name', 'reference_number'
+    ]
+    readonly_fields = [
+        'invoice_number', 'amount_due', 'created_by',
+        'created_at', 'updated_at'
+    ]
+    date_hierarchy = 'invoice_date'
+    inlines = [VendorInvoiceItemInline]
+    fieldsets = (
+        ('Invoice Information', {
+            'fields': (
+                'invoice_number', 'vendor', 'invoice_date', 'due_date',
+                'reference_number'
+            )
+        }),
+        ('Status', {
+            'fields': ('status', 'payment_status')
+        }),
+        ('Financial Information', {
+            'fields': (
+                'subtotal', 'tax_amount', 'discount_amount',
+                'total_amount', 'amount_paid', 'amount_due'
+            )
+        }),
+        ('Additional Information', {
+            'fields': ('notes', 'terms_and_conditions'),
+            'classes': ('collapse',)
+        }),
+        ('Tracking', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
