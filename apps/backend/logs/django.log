@@ -12851,3 +12851,5 @@ INFO 2025-11-03 04:25:34,626 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1
 INFO 2025-11-03 04:35:36,342 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1.1" 200 476
 INFO 2025-11-03 04:41:42,856 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1.1" 200 476
 INFO 2025-11-03 04:50:11,464 basehttp 15443 6153908224 "GET /api/auth/me/ HTTP/1.1" 200 476
+INFO 2025-11-17 23:12:20,609 autoreload 38955 8325603456 Watching for file changes with StatReloader
+INFO 2025-11-17 23:14:03,102 autoreload 39854 8325603456 Watching for file changes with StatReloader
