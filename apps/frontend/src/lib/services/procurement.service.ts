@@ -9,41 +9,61 @@ import api from "@/lib/api/client";
 
 export interface Vendor {
   id: number;
-  vendor_code: string;
-  name: string;
+  vendor_id: string;
+  company_name: string;
+  category: string;
+  status: "active" | "inactive" | "suspended";
   contact_person: string;
   phone: string;
+  alternate_phone?: string;
   email: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  milk_type: "cow" | "buffalo" | "mixed";
-  rate_per_liter: number;
-  bank_account_number?: string;
-  ifsc_code?: string;
+  website?: string;
+  billing_address?: string;
+  shipping_address?: string;
+  gst_number?: string;
   pan_number?: string;
-  status: "active" | "inactive" | "suspended";
+  company_registration_number?: string;
+  bank_name?: string;
+  account_number?: string;
+  ifsc_code?: string;
+  account_holder_name?: string;
+  credit_period_days?: number;
+  credit_limit?: string;
+  payment_method?: string;
+  discount_percentage?: string;
   rating?: number;
+  total_purchases?: string;
+  total_payments?: string;
+  outstanding_balance?: string;
+  documents?: any;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface VendorFormData {
-  name: string;
+  company_name: string;
+  category: string;
   contact_person: string;
   phone: string;
+  alternate_phone?: string;
   email: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  milk_type: "cow" | "buffalo" | "mixed";
-  rate_per_liter: number;
-  bank_account_number?: string;
-  ifsc_code?: string;
+  website?: string;
+  billing_address?: string;
+  shipping_address?: string;
+  gst_number?: string;
   pan_number?: string;
+  company_registration_number?: string;
+  bank_name?: string;
+  account_number?: string;
+  ifsc_code?: string;
+  account_holder_name?: string;
+  credit_period_days?: number;
+  credit_limit?: number;
+  payment_method?: string;
+  discount_percentage?: number;
   status?: "active" | "inactive" | "suspended";
+  notes?: string;
 }
 
 export interface MilkCollection {

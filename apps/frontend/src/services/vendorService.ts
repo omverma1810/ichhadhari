@@ -14,7 +14,7 @@ export const vendorService = {
   }): Promise<PaginatedResponse<Vendor>> => {
     try {
       return await apiClient.get<PaginatedResponse<Vendor>>(
-        "/api/vendors/",
+        "/api/vendors/vendors/",
         params
       );
     } catch (error) {
@@ -27,7 +27,7 @@ export const vendorService = {
    */
   getVendor: async (id: number): Promise<Vendor> => {
     try {
-      return await apiClient.get<Vendor>(`/api/vendors/${id}/`);
+      return await apiClient.get<Vendor>(`/api/vendors/vendors/${id}/`);
     } catch (error) {
       throw new Error(handleApiError(error));
     }
@@ -89,7 +89,7 @@ export const vendorService = {
 
       console.log("📤 Creating vendor:", formattedData);
       const response = await apiClient.post<Vendor>(
-        "/api/vendors/",
+        "/api/vendors/vendors/",
         formattedData
       );
       console.log("✅ Vendor created:", response);
@@ -149,7 +149,7 @@ export const vendorService = {
 
       console.log("📤 Updating vendor:", formattedData);
       const response = await apiClient.put<Vendor>(
-        `/api/vendors/${id}/`,
+        `/api/vendors/vendors/${id}/`,
         formattedData
       );
       console.log("✅ Vendor updated:", response);
@@ -166,7 +166,7 @@ export const vendorService = {
   deleteVendor: async (id: number): Promise<void> => {
     try {
       console.log("🗑️ Deleting vendor:", id);
-      await apiClient.delete(`/api/vendors/${id}/`);
+      await apiClient.delete(`/api/vendors/vendors/${id}/`);
       console.log("✅ Vendor deleted");
     } catch (error) {
       console.error("❌ Failed to delete vendor:", error);

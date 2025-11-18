@@ -35,79 +35,6 @@ export const procurementKeys = {
   qualityTest: (id: number) => [...procurementKeys.qualityTests(), id] as const,
 };
 
-// ==================== MOCK DATA ====================
-
-const mockVendors = {
-  count: 10,
-  next: null,
-  previous: null,
-  results: [
-    {
-      id: 1,
-      vendor_code: "V-001",
-      name: "Ramesh Dairy Farm",
-      contact_person: "Ramesh Kumar",
-      phone: "+91 98765 43210",
-      email: "ramesh@dairyfarm.com",
-      address: "Village Palampur",
-      city: "Palampur",
-      state: "Himachal Pradesh",
-      pincode: "176061",
-      milk_type: "cow" as const,
-      status: "active" as const,
-      rate_per_liter: 45.0,
-      bank_account_number: "1234567890",
-      ifsc_code: "SBIN0001234",
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 180
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      vendor_code: "V-002",
-      name: "Lakshmi Farms",
-      contact_person: "Lakshmi Devi",
-      phone: "+91 98765 43211",
-      email: "lakshmi@farms.com",
-      address: "Village Dharampur",
-      city: "Mandi",
-      state: "Himachal Pradesh",
-      pincode: "175001",
-      milk_type: "buffalo" as const,
-      status: "active" as const,
-      rate_per_liter: 55.0,
-      bank_account_number: "0987654321",
-      ifsc_code: "HDFC0001234",
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 150
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 3,
-      vendor_code: "V-003",
-      name: "Gopal Dairy",
-      contact_person: "Gopal Singh",
-      phone: "+91 98765 43212",
-      email: "gopal@dairy.com",
-      address: "Village Baijnath",
-      city: "Kangra",
-      state: "Himachal Pradesh",
-      pincode: "176125",
-      milk_type: "cow" as const,
-      status: "active" as const,
-      rate_per_liter: 42.0,
-      bank_account_number: "5678901234",
-      ifsc_code: "ICIC0001234",
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 120
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ],
-};
-
 // ==================== VENDOR HOOKS ====================
 
 /**
@@ -122,33 +49,17 @@ export function useVendors(filters?: {
   return useQuery({
     queryKey: procurementKeys.vendorsList(filters),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Filter mock data
-      let filteredResults = [...mockVendors.results];
-
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredResults = filteredResults.filter(
-          (v) =>
-            v.name.toLowerCase().includes(searchLower) ||
-            v.vendor_code.toLowerCase().includes(searchLower) ||
-            v.contact_person.toLowerCase().includes(searchLower)
-        );
+      try {
+        const response = await procurementService.getVendors(filters);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch vendors:", error);
+        throw error;
       }
-
-      if (filters?.status) {
-        filteredResults = filteredResults.filter(
-          (v) => v.status === filters.status
-        );
-      }
-
-      if (filters?.milk_type) {
-        filteredResults = filteredResults.filter(
-          (v) => v.milk_type === filters.milk_type
-        );
-      }
+    },
+    staleTime: 30000, // 30 seconds
+  });
+}
 
       return {
         count: filteredResults.length,
@@ -245,146 +156,6 @@ export function useDeleteVendor() {
 
 // ==================== MILK COLLECTION HOOKS ====================
 
-// Mock data for milk collections until backend is fully functional
-const mockMilkCollections = {
-  count: 15,
-  next: null,
-  previous: null,
-  results: [
-    {
-      id: 1,
-      collection_id: "MC-2025-001",
-      vendor: {
-        id: 1,
-        vendor_code: "V-001",
-        name: "Ramesh Dairy Farm",
-        contact_person: "Ramesh Kumar",
-        phone: "+91 98765 43210",
-        email: "ramesh@dairyfarm.com",
-        address: "Village Palampur",
-        city: "Palampur",
-        state: "Himachal Pradesh",
-        pincode: "176061",
-        milk_type: "cow" as const,
-        status: "active" as const,
-        rate_per_liter: 45.0,
-        bank_account_number: "1234567890",
-        ifsc_code: "SBIN0001234",
-        created_at: new Date(
-          Date.now() - 1000 * 60 * 60 * 24 * 180
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      collection_date: new Date().toISOString().split("T")[0],
-      shift: "morning" as const,
-      milk_type: "cow" as const,
-      quantity_liters: 450.5,
-      fat_percentage: 4.2,
-      snf_percentage: 8.5,
-      temperature: 4.0,
-      rate_per_liter: 45.0,
-      total_amount: 20272.5,
-      quality_status: "approved" as const,
-      payment_status: "pending" as const,
-      collected_by: {
-        id: 1,
-        first_name: "Rajesh",
-        last_name: "Kumar",
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      collection_id: "MC-2025-002",
-      vendor: {
-        id: 2,
-        vendor_code: "V-002",
-        name: "Lakshmi Farms",
-        contact_person: "Lakshmi Devi",
-        phone: "+91 98765 43211",
-        email: "lakshmi@farms.com",
-        address: "Village Dharampur",
-        city: "Mandi",
-        state: "Himachal Pradesh",
-        pincode: "175001",
-        milk_type: "buffalo" as const,
-        status: "active" as const,
-        rate_per_liter: 55.0,
-        bank_account_number: "0987654321",
-        ifsc_code: "HDFC0001234",
-        created_at: new Date(
-          Date.now() - 1000 * 60 * 60 * 24 * 150
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      collection_date: new Date().toISOString().split("T")[0],
-      shift: "evening" as const,
-      milk_type: "buffalo" as const,
-      quantity_liters: 320.0,
-      fat_percentage: 6.5,
-      snf_percentage: 9.2,
-      temperature: 4.5,
-      rate_per_liter: 55.0,
-      total_amount: 17600.0,
-      quality_status: "approved" as const,
-      payment_status: "paid" as const,
-      collected_by: {
-        id: 1,
-        first_name: "Rajesh",
-        last_name: "Kumar",
-      },
-      created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      updated_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    },
-    {
-      id: 3,
-      collection_id: "MC-2025-003",
-      vendor: {
-        id: 3,
-        vendor_code: "V-003",
-        name: "Gopal Dairy",
-        contact_person: "Gopal Singh",
-        phone: "+91 98765 43212",
-        email: "gopal@dairy.com",
-        address: "Village Baijnath",
-        city: "Kangra",
-        state: "Himachal Pradesh",
-        pincode: "176125",
-        milk_type: "cow" as const,
-        status: "active" as const,
-        rate_per_liter: 42.0,
-        bank_account_number: "5678901234",
-        ifsc_code: "ICIC0001234",
-        created_at: new Date(
-          Date.now() - 1000 * 60 * 60 * 24 * 120
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      collection_date: new Date(Date.now() - 1000 * 60 * 60 * 24)
-        .toISOString()
-        .split("T")[0],
-      shift: "morning" as const,
-      milk_type: "cow" as const,
-      quantity_liters: 280.0,
-      fat_percentage: 3.8,
-      snf_percentage: 8.3,
-      temperature: 5.0,
-      rate_per_liter: 42.0,
-      total_amount: 11760.0,
-      quality_status: "pending" as const,
-      payment_status: "pending" as const,
-      collected_by: {
-        id: 2,
-        first_name: "Priya",
-        last_name: "Sharma",
-      },
-      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    },
-  ],
-};
-
 /**
  * Hook to fetch milk collections list with optional filters
  */
@@ -400,41 +171,15 @@ export function useMilkCollections(filters?: {
   return useQuery({
     queryKey: procurementKeys.collectionsList(filters),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Filter mock data based on filters
-      let filteredResults = [...mockMilkCollections.results];
-
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredResults = filteredResults.filter(
-          (c) =>
-            c.collection_id.toLowerCase().includes(searchLower) ||
-            c.vendor.name.toLowerCase().includes(searchLower)
-        );
+      try {
+        const response = await procurementService.getMilkCollections(filters);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch milk collections:", error);
+        throw error;
       }
-
-      if (filters?.quality_status) {
-        filteredResults = filteredResults.filter(
-          (c) => c.quality_status === filters.quality_status
-        );
-      }
-
-      if (filters?.payment_status) {
-        filteredResults = filteredResults.filter(
-          (c) => c.payment_status === filters.payment_status
-        );
-      }
-
-      return {
-        count: filteredResults.length,
-        next: null,
-        previous: null,
-        results: filteredResults,
-      };
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30000, // 30 seconds
   });
 }
 

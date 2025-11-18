@@ -149,8 +149,10 @@ function VendorCard({ vendor, onDelete }: any) {
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{vendor.name}</h3>
-          <p className="text-sm text-gray-600">{vendor.vendor_code}</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {vendor.company_name}
+          </h3>
+          <p className="text-sm text-gray-600">{vendor.vendor_id}</p>
         </div>
         <span
           className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -172,23 +174,21 @@ function VendorCard({ vendor, onDelete }: any) {
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <MapPin className="w-4 h-4" />
-          <span>
-            {vendor.city}, {vendor.state}
-          </span>
+          <span className="capitalize">{vendor.category}</span>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-4 pb-4 border-b">
         <div>
-          <p className="text-xs text-gray-500">Rate/Liter</p>
+          <p className="text-xs text-gray-500">Outstanding</p>
           <p className="text-lg font-bold text-gray-900">
-            ₹{vendor.rate_per_liter}
+            ₹{vendor.outstanding_balance || "0.00"}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">Milk Type</p>
-          <p className="text-sm font-semibold text-gray-700 capitalize">
-            {vendor.milk_type}
+          <p className="text-xs text-gray-500">Total Purchases</p>
+          <p className="text-sm font-semibold text-gray-700">
+            ₹{vendor.total_purchases || "0.00"}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -209,7 +209,7 @@ function VendorCard({ vendor, onDelete }: any) {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onDelete(vendor.id, vendor.name)}
+          onClick={() => onDelete(vendor.id, vendor.company_name)}
         >
           <Trash2 className="w-4 h-4" />
         </Button>

@@ -85,16 +85,18 @@ export default function MilkIntakePage() {
       ),
     },
     {
-      key: "supplier",
+      key: "supplier_name",
       label: "Supplier",
-      render: (val) => (val as { name?: string })?.name || "—",
+      render: (val) => (
+        <span className="font-medium">{String(val) || "—"}</span>
+      ),
     },
     {
-      key: "shift",
-      label: "Shift",
+      key: "collection_time",
+      label: "Time",
       render: (val) => (
         <Badge variant="outline" className="capitalize">
-          {String(val)}
+          {String(val).substring(0, 5)}
         </Badge>
       ),
     },

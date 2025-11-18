@@ -26,17 +26,18 @@ export interface Supplier extends AuditFields {
   bank_name?: string | null;
   account_number?: string | null;
   ifsc_code?: string | null;
+  account_holder_name?: string | null;
   avg_quality_score: number | string;
   total_milk_supplied: number | string;
   total_amount_paid: number | string;
   outstanding_balance: number | string;
   total_collections?: number;
   total_quantity?: number;
+  documents?: any;
   notes?: string;
 }
 
 export interface CreateSupplierPayload {
-  supplier_id: string;
   name: string;
   supplier_type: SupplierType;
   phone: string;
@@ -45,11 +46,12 @@ export interface CreateSupplierPayload {
   email?: string;
   address: string;
   route_name: string;
-  collection_time: string;
+  collection_time: string; // HH:MM:SS format
   payment_cycle: PaymentCycle;
   bank_name?: string;
   account_number?: string;
   ifsc_code?: string;
+  account_holder_name?: string;
   notes?: string;
 }
 
@@ -105,50 +107,49 @@ export interface SupplierCollectionFilters {
 
 export type MilkType = "cow" | "buffalo" | "mixed";
 export type QualityStatus =
-  | "excellent"
-  | "good"
-  | "average"
-  | "poor"
-  | "rejected";
+  | "accepted" // Default status
+  | "rejected" // Rejected milk
+  | "pending"; // Pending quality check
 export type CollectionShift = "morning" | "evening";
 
 export interface MilkCollection extends AuditFields {
   id: number;
   collection_id: string;
-  supplier: {
-    id: number;
-    supplier_id: string;
-    name: string;
-  };
+  supplier: number; // Foreign key ID
+  supplier_name: string; // Read-only from backend
+  collected_by?: number | null;
+  collected_by_name?: string | null; // Read-only from backend
   collection_date: string;
-  shift: CollectionShift;
+  collection_time: string; // HH:MM:SS format
   milk_type: MilkType;
-  quantity: number;
-  fat_percentage: number;
-  snf_percentage: number;
-  temperature: number;
+  quantity: number | string; // Decimal field
+  fat_percentage: number | string; // Decimal field
+  snf_percentage: number | string; // Decimal field
+  temperature: number | string; // Decimal field
   quality_status: QualityStatus;
-  quality_score: number;
-  rate_per_liter: number;
-  total_amount: number;
-  notes?: string;
+  quality_score: number | string; // Auto-calculated by backend
+  rejection_reason?: string | null;
+  rate_per_liter: number | string; // Decimal field
+  total_amount: number | string; // Auto-calculated by backend
+  notes?: string | null;
+  bmc_integration_data?: any;
 }
 
 export interface CreateMilkCollectionPayload {
   supplier: number;
-  collection_date: string;
-  collection_time?: string; // HH:MM:SS format or will use current time
-  shift?: CollectionShift; // Optional, backend can auto-determine from time
+  collection_date: string; // YYYY-MM-DD format
+  collection_time?: string; // HH:MM:SS format, defaults to current time
   milk_type: MilkType;
-  quantity: number;
-  fat_percentage: number;
-  snf_percentage: number;
-  temperature: number;
-  quality_status?: QualityStatus;
+  quantity: number | string; // Decimal value
+  fat_percentage: number | string; // Decimal value
+  snf_percentage: number | string; // Decimal value
+  temperature: number | string; // Decimal value
+  quality_status?: QualityStatus; // Defaults to 'accepted'
   rejection_reason?: string; // Required if quality_status is 'rejected'
-  rate_per_liter: number;
+  rate_per_liter: number | string; // Decimal value
   collected_by?: number; // Optional, defaults to current user
   notes?: string;
+  bmc_integration_data?: any;
 }
 
 export type UpdateMilkCollectionPayload = Partial<CreateMilkCollectionPayload>;
