@@ -198,16 +198,46 @@ button:disabled {
   z-index: 51;
 }
 
-/* Ensure dropdowns appear above modals */
+/* Ensure dropdowns appear above modals with proper backgrounds */
 [data-slot="select-content"],
 [data-radix-select-content] {
   z-index: 100 !important;
+  background-color: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0.5rem;
 }
 
-/* Popover z-index */
+/* Popover z-index and background */
 [data-slot="popover-content"],
 [data-radix-popper-content-wrapper] {
   z-index: 100 !important;
+}
+
+[data-slot="popover-content"] {
+  background-color: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0.5rem;
+}
+
+/* Calendar picker styling */
+[data-slot="calendar"] {
+  background-color: white !important;
+}
+
+/* Dropdown menu styling */
+[data-slot="dropdown-menu-content"] {
+  background-color: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0.5rem;
+  z-index: 100 !important;
+}
+
+/* Button visibility fix */
+button:not(:disabled) {
+  opacity: 1 !important;
 }
 
 /* Prevent body scroll when modal is open */
