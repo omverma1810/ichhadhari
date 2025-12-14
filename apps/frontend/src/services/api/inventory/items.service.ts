@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class InventoryItemsService {
-  private readonly BASE_PATH = "/inventory/items";
+  private readonly BASE_PATH = "/api/inventory/items";
 
   /**
    * Get list of inventory items with optional filters

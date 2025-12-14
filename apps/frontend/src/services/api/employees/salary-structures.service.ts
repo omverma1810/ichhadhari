@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class SalaryStructuresService {
-  private readonly BASE_PATH = "/employees/salary-structures";
+  private readonly BASE_PATH = "/api/employees/salary-structures";
 
   /**
    * Get list of salary structures with optional filters

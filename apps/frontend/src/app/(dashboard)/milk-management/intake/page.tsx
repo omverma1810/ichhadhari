@@ -43,8 +43,8 @@ export default function MilkIntakePage() {
     totalLiters: todayData?.total_quantity ?? 0,
     avgFat: statsData?.average_fat ?? 0,
     count:
-      (todayData?.morning.total_suppliers ?? 0) +
-      (todayData?.evening.total_suppliers ?? 0),
+      (todayData?.morning?.total_suppliers ?? 0) +
+      (todayData?.evening?.total_suppliers ?? 0),
   };
 
   const getQualityBadge = (status: QualityStatus | string) => {

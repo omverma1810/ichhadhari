@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class AlertsService {
-  private readonly BASE_PATH = "/inventory/alerts";
+  private readonly BASE_PATH = "/api/inventory/alerts";
 
   /**
    * Get list of stock alerts with optional filters

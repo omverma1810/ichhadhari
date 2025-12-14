@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class LeaveBalancesService {
-  private readonly BASE_PATH = "/employees/leave-balances";
+  private readonly BASE_PATH = "/api/employees/leave-balances";
 
   /**
    * Get list of leave balances with optional filters

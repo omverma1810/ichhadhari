@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class VendorsService {
-  private readonly BASE_PATH = "/vendors/vendors";
+  private readonly BASE_PATH = "/api/vendors/vendors";
 
   /**
    * Get list of vendors with optional filters

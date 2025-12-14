@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class AttendanceService {
-  private readonly BASE_PATH = "/employees/attendance";
+  private readonly BASE_PATH = "/api/employees/attendance";
 
   /**
    * Get list of attendance records with optional filters

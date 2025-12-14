@@ -12944,3 +12944,5 @@ WARNING 2025-11-18 13:52:34,605 basehttp 67086 6250721280 "GET /milk/collections
 WARNING 2025-11-18 13:52:35,711 basehttp 67086 6217068544 "GET /milk/collections/?page=1&search=&page_size=20 HTTP/1.1" 404 13736
 WARNING 2025-11-18 13:52:35,718 basehttp 67086 6200242176 "GET /milk/collections/stats/?days=1 HTTP/1.1" 404 13704
 WARNING 2025-11-18 13:52:35,724 basehttp 67086 6250721280 "GET /milk/collections/today/ HTTP/1.1" 404 13690
+WARNING 2025-11-18 14:16:35,873 basehttp 67086 6149763072 "GET /milk/collections/today/ HTTP/1.1" 404 13688
+WARNING 2025-11-18 14:20:05,331 basehttp 67086 6149763072 "GET /milk/collections/today/ HTTP/1.1" 404 13688

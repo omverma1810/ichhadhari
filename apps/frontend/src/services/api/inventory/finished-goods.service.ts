@@ -11,7 +11,7 @@ import type {
 } from "@/types/api";
 
 class FinishedGoodsService {
-  private readonly BASE_PATH = "/inventory/finished-goods";
+  private readonly BASE_PATH = "/api/inventory/finished-goods";
 
   /**
    * Get list of finished goods stock with optional filters

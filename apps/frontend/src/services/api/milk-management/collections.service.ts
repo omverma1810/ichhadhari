@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class CollectionsService {
-  private readonly BASE_PATH = "/milk/collections";
+  private readonly BASE_PATH = "/api/milk/collections";
 
   /**
    * Get list of collections with optional filters

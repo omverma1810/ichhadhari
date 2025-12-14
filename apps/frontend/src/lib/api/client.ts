@@ -19,7 +19,7 @@ class APIClient {
 
   constructor() {
     const configuredBaseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app/api";
 
     this.client = axios.create({
       baseURL: configuredBaseUrl.replace(/\/+$/, ""),
@@ -154,7 +154,7 @@ class APIClient {
 
             // Attempt to refresh token - use full URL for auth endpoints
             const API_BASE_URL =
-              process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+              process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
             const response = await axios.post(
               `${API_BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken }
@@ -282,27 +282,104 @@ export type ApiErrorResponse = {
   message?: unknown;
   error?: unknown;
   detail?: unknown;
+  non_field_errors?: unknown;
   [key: string]: unknown;
 };
 
 export type ApiError = {
   response?: {
-    data?: ApiErrorResponse;
+    data?: ApiErrorResponse | string;
   };
+  message?: string;
 };
 
-const getErrorMessage = (error: ApiError): string => {
-  if (error.response?.data) {
-    const data = error.response.data;
-    if (typeof data.message === "string") return data.message;
-    if (typeof data.error === "string") return data.error;
-    if (typeof data.detail === "string") return data.detail;
+const DEFAULT_ERROR_MESSAGE = "An unexpected error occurred";
+
+const parseErrorPayload = (
+  payload: ApiErrorResponse | string | undefined
+): string | undefined => {
+  if (!payload) return undefined;
+
+  if (typeof payload === "string") {
+    return payload;
   }
-  return "An unexpected error occurred";
+
+  if (
+    typeof payload.message === "string" &&
+    payload.message.trim().length > 0
+  ) {
+    return payload.message;
+  }
+
+  if (typeof payload.error === "string" && payload.error.trim().length > 0) {
+    return payload.error;
+  }
+
+  if (typeof payload.detail === "string" && payload.detail.trim().length > 0) {
+    return payload.detail;
+  }
+
+  if (
+    Array.isArray(payload.non_field_errors) &&
+    payload.non_field_errors.length > 0
+  ) {
+    const first = payload.non_field_errors[0];
+    if (typeof first === "string") {
+      return first;
+    }
+  }
+
+  const firstValue = Object.values(payload)[0];
+  if (Array.isArray(firstValue) && firstValue.length > 0) {
+    const candidate = firstValue[0];
+    if (typeof candidate === "string") {
+      return candidate;
+    }
+  }
+
+  return undefined;
 };
 
-export const handleApiError = (error: ApiError): void => {
+const getErrorMessage = (error: unknown): string => {
+  if (!error) return DEFAULT_ERROR_MESSAGE;
+
+  if (axios.isAxiosError(error)) {
+    const payloadMessage = parseErrorPayload(
+      error.response?.data as ApiErrorResponse | string
+    );
+    if (payloadMessage) return payloadMessage;
+    if (typeof error.message === "string" && error.message.trim().length > 0) {
+      return error.message;
+    }
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const maybeApiError = error as ApiError;
+    const payloadMessage = parseErrorPayload(maybeApiError.response?.data);
+    if (payloadMessage) return payloadMessage;
+    if (
+      typeof maybeApiError.message === "string" &&
+      maybeApiError.message.trim().length > 0
+    ) {
+      return maybeApiError.message;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+
+  return DEFAULT_ERROR_MESSAGE;
+};
+
+export const handleApiError = (error: unknown): string => {
   const message = getErrorMessage(error);
-  console.error("API Error:", message);
-  throw new Error(message);
+  if (process.env.NODE_ENV === "development") {
+    console.error("API Error:", message, error);
+  }
+  return message;
 };

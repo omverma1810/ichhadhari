@@ -12,7 +12,7 @@ import type {
 } from "@/types/api";
 
 class QualityControlService {
-  private readonly BASE_PATH = "/production/quality-control";
+  private readonly BASE_PATH = "/api/production/quality-control";
 
   /**
    * Get list of quality control records with optional filters

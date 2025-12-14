@@ -16,7 +16,7 @@ import type {
 } from "@/types/api";
 
 class SuppliersService {
-  private readonly BASE_PATH = "/milk/suppliers";
+  private readonly BASE_PATH = "/api/milk/suppliers";
 
   /**
    * Get list of suppliers with optional filters

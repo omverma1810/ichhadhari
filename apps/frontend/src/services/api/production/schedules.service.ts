@@ -12,7 +12,7 @@ import type {
 } from "@/types/api";
 
 class SchedulesService {
-  private readonly BASE_PATH = "/production/schedules";
+  private readonly BASE_PATH = "/api/production/schedules";
 
   async getSchedules(
     filters?: ProductionScheduleFilters

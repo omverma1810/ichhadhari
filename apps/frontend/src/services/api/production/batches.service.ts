@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class BatchesService {
-  private readonly BASE_PATH = "/production/batches";
+  private readonly BASE_PATH = "/api/production/batches";
 
   /**
    * Get list of production batches with optional filters

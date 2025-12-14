@@ -12,7 +12,7 @@ import type {
 } from "@/types/api";
 
 class TransactionsService {
-  private readonly BASE_PATH = "/inventory/transactions";
+  private readonly BASE_PATH = "/api/inventory/transactions";
 
   /**
    * Get list of stock transactions with optional filters

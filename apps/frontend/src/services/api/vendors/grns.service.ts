@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class GRNsService {
-  private readonly BASE_PATH = "/vendors/grns";
+  private readonly BASE_PATH = "/api/vendors/grns";
 
   /**
    * Get list of GRNs with optional filters

@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class PerformanceReviewsService {
-  private readonly BASE_PATH = "/employees/performance-reviews";
+  private readonly BASE_PATH = "/api/employees/performance-reviews";
 
   /**
    * Get list of performance reviews with optional filters

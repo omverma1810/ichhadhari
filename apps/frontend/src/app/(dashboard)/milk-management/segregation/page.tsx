@@ -17,7 +17,10 @@ import {
 import { Split, TrendingUp, Droplet, Package, Milk } from "lucide-react";
 
 import { StatsCard } from "@/components/cards/StatsCard";
-import { useSegregationStats, useMilkTrends } from "@/lib/hooks/useMilk";
+import {
+  useSegregationStats,
+  useMilkTrends,
+} from "@/hooks/api/useMilkManagement";
 import { formatNumber, formatDateTime } from "@/lib/utils/formatters";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
 

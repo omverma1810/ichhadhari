@@ -24,7 +24,9 @@ import type {
   CreatePaymentPayload,
   UpdatePaymentPayload,
   SupplierCollectionFilters,
+  MilkCollection,
 } from "@/types/api";
+import type { SegregationStats, MilkTrendData } from "@/types/milk";
 
 // ============ QUERY KEYS ============
 
@@ -56,6 +58,8 @@ export const milkManagementKeys = {
     [...milkManagementKeys.collections(), "by-supplier", days] as const,
   todayCollections: () =>
     [...milkManagementKeys.collections(), "today"] as const,
+  collectionAnalytics: (days?: number) =>
+    [...milkManagementKeys.collections(), "analytics", days] as const,
 
   // Payments
   payments: () => [...milkManagementKeys.all, "payments"] as const,
@@ -252,6 +256,35 @@ export const useTodayCollections = () => {
     queryFn: () => collectionsService.getTodayCollections(),
     staleTime: 1 * 60 * 1000, // 1 minute
     refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+  });
+};
+
+// ============ COLLECTION ANALYTICS (Segregation & Trends) ============
+
+/**
+ * Get milk segregation stats derived from raw collections data
+ */
+export const useSegregationStats = (days: number = 7) => {
+  return useQuery({
+    queryKey: milkManagementKeys.collectionAnalytics(days),
+    queryFn: () => fetchCollectionsForAnalytics(days),
+    select: ({ collections }) => buildSegregationStats(collections),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+/**
+ * Get milk trend data for charts derived from raw collections data
+ */
+export const useMilkTrends = (days: number = 7) => {
+  return useQuery({
+    queryKey: milkManagementKeys.collectionAnalytics(days),
+    queryFn: () => fetchCollectionsForAnalytics(days),
+    select: ({ collections, range }) =>
+      buildTrendData(collections, range.startDate, range.endDate),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
   });
 };
 
@@ -503,4 +536,182 @@ export const useMarkPaymentFailed = () => {
       toast.error(getErrorMessage(error));
     },
   });
+};
+
+// ============ INTERNAL HELPERS ============
+
+type SegregationCategory = "premium" | "standard" | "other";
+
+const ANALYTICS_PAGE_SIZE = 250;
+const MAX_ANALYTICS_PAGES = 5;
+
+const formatDateParam = (date: Date): string =>
+  date.toISOString().split("T")[0];
+
+const getDateRangeForDays = (days: number) => {
+  const safeDays = Math.max(days, 1);
+  const endDate = new Date();
+  const startDate = new Date();
+  endDate.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  startDate.setDate(endDate.getDate() - (safeDays - 1));
+  return { startDate, endDate };
+};
+
+const fetchCollectionsForAnalytics = async (days: number) => {
+  const range = getDateRangeForDays(days);
+  const baseFilters: MilkCollectionFilters = {
+    start_date: formatDateParam(range.startDate),
+    end_date: formatDateParam(range.endDate),
+    page_size: ANALYTICS_PAGE_SIZE,
+    ordering: "-collection_date",
+  };
+
+  let page = 1;
+  let hasMore = true;
+  let total = 0;
+  const collections: MilkCollection[] = [];
+
+  while (hasMore && page <= MAX_ANALYTICS_PAGES) {
+    const response = await collectionsService.getCollections({
+      ...baseFilters,
+      page,
+    });
+
+    collections.push(...response.results);
+    total = response.count ?? collections.length;
+    page += 1;
+    hasMore = Boolean(response.next) && collections.length < total;
+  }
+
+  return { collections, range };
+};
+
+const toNumber = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const round = (value: number, decimals: number = 2): number => {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+};
+
+const resolveCategory = (fatPercentage: unknown): SegregationCategory => {
+  const fat = toNumber(fatPercentage);
+  if (fat >= 8) return "premium";
+  if (fat >= 4) return "standard";
+  return "other";
+};
+
+const buildSegregationStats = (
+  collections: MilkCollection[]
+): SegregationStats => {
+  const buckets: Record<
+    SegregationCategory,
+    {
+      liters: number;
+      batches: number;
+      fatSum: number;
+    }
+  > = {
+    premium: { liters: 0, batches: 0, fatSum: 0 },
+    standard: { liters: 0, batches: 0, fatSum: 0 },
+    other: { liters: 0, batches: 0, fatSum: 0 },
+  };
+
+  collections.forEach((collection) => {
+    const liters = toNumber(collection.quantity);
+    if (liters <= 0) return;
+
+    const category = resolveCategory(collection.fat_percentage);
+    const bucket = buckets[category];
+    bucket.liters += liters;
+    bucket.batches += 1;
+    bucket.fatSum += toNumber(collection.fat_percentage);
+  });
+
+  const totalLiters =
+    buckets.premium.liters + buckets.standard.liters + buckets.other.liters;
+  const totalBatches =
+    buckets.premium.batches + buckets.standard.batches + buckets.other.batches;
+
+  const buildCategory = (category: SegregationCategory) => {
+    const bucket = buckets[category];
+    const averageFat = bucket.batches
+      ? round(bucket.fatSum / bucket.batches)
+      : 0;
+    const percentage = totalLiters
+      ? round((bucket.liters / totalLiters) * 100, 1)
+      : 0;
+
+    return {
+      totalLiters: round(bucket.liters),
+      batches: bucket.batches,
+      averageFat,
+      percentage,
+    };
+  };
+
+  return {
+    premium: buildCategory("premium"),
+    standard: buildCategory("standard"),
+    other: buildCategory("other"),
+    totalLiters: round(totalLiters),
+    totalBatches,
+    lastUpdated: new Date().toISOString(),
+  };
+};
+
+const buildTrendData = (
+  collections: MilkCollection[],
+  startDate: Date,
+  endDate: Date
+): MilkTrendData[] => {
+  type TrendBucket = Record<SegregationCategory, number>;
+  const buckets = new Map<string, TrendBucket>();
+
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    buckets.set(formatDateParam(cursor), {
+      premium: 0,
+      standard: 0,
+      other: 0,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  collections.forEach((collection) => {
+    const dateKey = collection.collection_date ?? collection.created_at;
+    if (!dateKey) return;
+
+    const normalizedDate = dateKey.split("T")[0];
+    if (!buckets.has(normalizedDate)) {
+      buckets.set(normalizedDate, { premium: 0, standard: 0, other: 0 });
+    }
+
+    const bucket = buckets.get(normalizedDate)!;
+    const category = resolveCategory(collection.fat_percentage);
+    bucket[category] += toNumber(collection.quantity);
+  });
+
+  return Array.from(buckets.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, bucket]) => {
+      const premium = round(bucket.premium);
+      const standard = round(bucket.standard);
+      const other = round(bucket.other);
+      const total = round(premium + standard + other);
+      return {
+        date,
+        premium,
+        standard,
+        other,
+        total,
+      };
+    });
 };

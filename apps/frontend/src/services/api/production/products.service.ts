@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class ProductsService {
-  private readonly BASE_PATH = "/production/products";
+  private readonly BASE_PATH = "/api/production/products";
 
   /**
    * Get list of products with optional filters

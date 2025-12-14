@@ -61,17 +61,6 @@ export function useVendors(filters?: {
   });
 }
 
-      return {
-        count: filteredResults.length,
-        next: null,
-        previous: null,
-        results: filteredResults,
-      };
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
 /**
  * Hook to fetch a single vendor
  */
@@ -79,13 +68,15 @@ export function useVendor(id: number) {
   return useQuery({
     queryKey: procurementKeys.vendor(id),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const vendor = mockVendors.results.find((v) => v.id === id);
-      if (!vendor) throw new Error("Vendor not found");
-      return vendor;
+      try {
+        const vendor = await procurementService.getVendor(id);
+        return vendor;
+      } catch (error) {
+        console.error("Failed to fetch vendor:", error);
+        throw error;
+      }
     },
-    enabled: !!id,
+    enabled: !!id && id > 0,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -190,13 +181,15 @@ export function useMilkCollection(id: number) {
   return useQuery({
     queryKey: procurementKeys.collection(id),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const collection = mockMilkCollections.results.find((c) => c.id === id);
-      if (!collection) throw new Error("Collection not found");
-      return collection;
+      try {
+        const collection = await procurementService.getMilkCollection(id);
+        return collection;
+      } catch (error) {
+        console.error("Failed to fetch milk collection:", error);
+        throw error;
+      }
     },
-    enabled: !!id,
+    enabled: !!id && id > 0,
     staleTime: 2 * 60 * 1000,
   });
 }

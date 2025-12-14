@@ -34,185 +34,19 @@ export const productionKeys = {
     [...productionKeys.schedules(), "list", filters] as const,
 };
 
-// ==================== MOCK DATA ====================
-
-const mockProducts = {
-  count: 8,
-  next: null,
-  previous: null,
-  results: [
-    {
-      id: 1,
-      product_code: "PROD-001",
-      name: "Full Cream Milk",
-      description: "Fresh full cream milk - 1L pack",
-      category: "milk" as const,
-      unit_of_measurement: "liters" as const,
-      shelf_life_days: 5,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 365
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      product_code: "PROD-002",
-      name: "Toned Milk",
-      description: "Toned milk - 1L pack",
-      category: "milk" as const,
-      unit_of_measurement: "liters" as const,
-      shelf_life_days: 5,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 365
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 3,
-      product_code: "PROD-003",
-      name: "Fresh Paneer",
-      description: "Fresh paneer made from pure milk - 200g pack",
-      category: "paneer" as const,
-      unit_of_measurement: "kg" as const,
-      shelf_life_days: 3,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 300
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 4,
-      product_code: "PROD-004",
-      name: "Fresh Curd",
-      description: "Fresh curd - 500g pack",
-      category: "curd" as const,
-      unit_of_measurement: "kg" as const,
-      shelf_life_days: 4,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 300
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 5,
-      product_code: "PROD-005",
-      name: "Pure Ghee",
-      description: "Pure cow ghee - 500ml jar",
-      category: "ghee" as const,
-      unit_of_measurement: "kg" as const,
-      shelf_life_days: 180,
-      storage_temperature_min: 15,
-      storage_temperature_max: 25,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 250
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 6,
-      product_code: "PROD-006",
-      name: "Table Butter",
-      description: "Premium table butter - 100g pack",
-      category: "butter" as const,
-      unit_of_measurement: "kg" as const,
-      shelf_life_days: 60,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 200
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 7,
-      product_code: "PROD-007",
-      name: "Cheese Slices",
-      description: "Premium cheese slices - 200g pack",
-      category: "cheese" as const,
-      unit_of_measurement: "kg" as const,
-      shelf_life_days: 90,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 150
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 8,
-      product_code: "PROD-008",
-      name: "Lassi",
-      description: "Sweet lassi - 200ml bottle",
-      category: "other" as const,
-      unit_of_measurement: "liters" as const,
-      shelf_life_days: 2,
-      storage_temperature_min: 2,
-      storage_temperature_max: 6,
-      is_active: true,
-      created_at: new Date(
-        Date.now() - 1000 * 60 * 60 * 24 * 100
-      ).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ],
-};
-
 // ==================== PRODUCTS ====================
 
 export function useProducts(filters?: ProductionFilters) {
   return useQuery({
     queryKey: productionKeys.productsList(filters),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Filter mock data
-      let filteredResults = [...mockProducts.results];
-
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredResults = filteredResults.filter(
-          (p) =>
-            p.name.toLowerCase().includes(searchLower) ||
-            p.product_code.toLowerCase().includes(searchLower) ||
-            p.category.toLowerCase().includes(searchLower)
-        );
+      try {
+        const response = await productionService.getProducts(filters);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        throw error;
       }
-
-      if (filters?.category) {
-        filteredResults = filteredResults.filter(
-          (p) => p.category === filters.category
-        );
-      }
-
-      if (filters?.status) {
-        const isActive = filters.status === "active";
-        filteredResults = filteredResults.filter(
-          (p) => p.is_active === isActive
-        );
-      }
-
-      return {
-        count: filteredResults.length,
-        next: null,
-        previous: null,
-        results: filteredResults,
-      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -222,11 +56,13 @@ export function useProduct(id: number) {
   return useQuery({
     queryKey: productionKeys.product(id),
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const product = mockProducts.results.find((p) => p.id === id);
-      if (!product) throw new Error("Product not found");
-      return product;
+      try {
+        const product = await productionService.getProduct(id);
+        return product;
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+        throw error;
+      }
     },
     enabled: !!id && id > 0,
     staleTime: 5 * 60 * 1000,

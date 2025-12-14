@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { jwtDecode } from "jwt-decode";
 
 // API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = "access_token";

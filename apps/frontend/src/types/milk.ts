@@ -17,13 +17,17 @@ export interface MilkIntake {
   status: "approved" | "pending" | "rejected";
 }
 
+import type { MilkType } from "./api/milk-management";
+
 export interface MilkIntakeFormData {
+  supplierId: number;
+  milkType: MilkType;
   quantity: number;
   fatPercentage: number;
   snfPercentage?: number;
   temperature?: number;
-  source?: string;
-  supplierName?: string;
+  ratePerLiter: number;
+  collectionTime?: string; // HH:MM from time input
   notes?: string;
   recordedAt: Date;
 }

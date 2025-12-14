@@ -14,7 +14,7 @@ import type {
 } from "@/types/api";
 
 class LeaveRequestsService {
-  private readonly BASE_PATH = "/employees/leave-requests";
+  private readonly BASE_PATH = "/api/employees/leave-requests";
 
   /**
    * Get list of leave requests with optional filters

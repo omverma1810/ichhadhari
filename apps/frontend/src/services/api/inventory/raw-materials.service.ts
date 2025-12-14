@@ -11,7 +11,7 @@ import type {
 } from "@/types/api";
 
 class RawMaterialsService {
-  private readonly BASE_PATH = "/inventory/raw-materials";
+  private readonly BASE_PATH = "/api/inventory/raw-materials";
 
   /**
    * Get list of raw material stock with optional filters

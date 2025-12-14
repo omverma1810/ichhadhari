@@ -15,7 +15,7 @@ import type {
 } from "@/types/api";
 
 class PaymentsService {
-  private readonly BASE_PATH = "/milk/payments";
+  private readonly BASE_PATH = "/api/milk/payments";
 
   /**
    * Get list of payments with optional filters

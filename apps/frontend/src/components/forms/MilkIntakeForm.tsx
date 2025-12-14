@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -11,8 +11,8 @@ import {
   Thermometer,
   Droplet,
   Scale,
-  User,
   FileText,
+  Milk as MilkIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,20 +20,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils/cn";
-import { useCreateMilkIntake } from "@/lib/hooks/useMilk";
+import {
+  useCreateCollection,
+  useSuppliers,
+} from "@/hooks/api/useMilkManagement";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { MilkDrop } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
+import type { CreateMilkCollectionPayload, MilkType } from "@/types/api";
 import type { MilkIntakeFormData } from "@/types/milk";
 
 const milkIntakeSchema = z.object({
-  quantity: z.number().min(1, "Quantity must be at least 1 liter"),
+  supplierId: z
+    .number({ required_error: "Supplier is required" })
+    .min(1, "Supplier is required"),
+  milkType: z.enum(["cow", "buffalo", "mixed"]),
+  ratePerLiter: z
+    .number({ required_error: "Rate per liter is required" })
+    .positive("Rate per liter is required"),
+  collectionTime: z
+    .string()
+    .regex(/^[0-2]?\d:[0-5]\d$/, "Invalid time format")
+    .optional(),
+  quantity: z.number().min(0.1, "Quantity must be at least 0.1 liter"),
   fatPercentage: z
     .number()
     .min(0)
@@ -48,8 +70,6 @@ const milkIntakeSchema = z.object({
     .min(0)
     .max(50, "Temperature must be between 0 and 50°C")
     .optional(),
-  source: z.string().optional(),
-  supplierName: z.string().optional(),
   notes: z.string().optional(),
   recordedAt: z.date(),
 });
@@ -63,7 +83,17 @@ export function MilkIntakeForm({
   onSuccess,
   initialData,
 }: MilkIntakeFormProps) {
-  const createMutation = useCreateMilkIntake();
+  const createCollectionMutation = useCreateCollection();
+  const { data: suppliersData, isLoading: suppliersLoading } = useSuppliers({
+    page_size: 50,
+    ordering: "name",
+  });
+  const supplierOptions = suppliersData?.results ?? [];
+  const milkTypeOptions = [
+    { value: "cow", label: "Cow milk" },
+    { value: "buffalo", label: "Buffalo milk" },
+    { value: "mixed", label: "Mixed milk" },
+  ] as const satisfies { value: MilkType; label: string }[];
 
   const {
     register,
@@ -71,11 +101,21 @@ export function MilkIntakeForm({
     watch,
     formState: { errors },
     setValue,
+    control,
   } = useForm<MilkIntakeFormData>({
     resolver: zodResolver(milkIntakeSchema),
     defaultValues: {
-      recordedAt: new Date(),
-      ...initialData,
+      supplierId: initialData?.supplierId,
+      milkType: initialData?.milkType ?? "cow",
+      ratePerLiter: initialData?.ratePerLiter ?? 0,
+      collectionTime:
+        initialData?.collectionTime ?? format(new Date(), "HH:mm"),
+      quantity: initialData?.quantity ?? 0,
+      fatPercentage: initialData?.fatPercentage ?? 0,
+      snfPercentage: initialData?.snfPercentage,
+      temperature: initialData?.temperature,
+      notes: initialData?.notes,
+      recordedAt: initialData?.recordedAt ?? new Date(),
     },
   });
 
@@ -102,7 +142,22 @@ export function MilkIntakeForm({
   } as const;
 
   const onSubmit = async (data: MilkIntakeFormData) => {
-    await createMutation.mutateAsync(data);
+    const payload: CreateMilkCollectionPayload = {
+      supplier: data.supplierId,
+      collection_date: format(data.recordedAt, "yyyy-MM-dd"),
+      collection_time: data.collectionTime
+        ? `${data.collectionTime}:00`
+        : format(data.recordedAt, "HH:mm:ss"),
+      milk_type: data.milkType,
+      quantity: data.quantity.toFixed(2),
+      fat_percentage: data.fatPercentage.toFixed(2),
+      snf_percentage: (data.snfPercentage ?? 0).toFixed(2),
+      temperature: (data.temperature ?? 0).toFixed(1),
+      rate_per_liter: data.ratePerLiter.toFixed(2),
+      notes: data.notes,
+    };
+
+    await createCollectionMutation.mutateAsync(payload);
     onSuccess?.();
   };
 
@@ -138,6 +193,79 @@ export function MilkIntakeForm({
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <motion.div className="space-y-2" variants={staggerItem}>
+          <Label className="flex items-center gap-2">
+            <MilkIcon className="h-4 w-4 text-dairy-blue" />
+            Supplier *
+          </Label>
+          <Controller
+            name="supplierId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={suppliersLoading}
+              >
+                <SelectTrigger className="h-12 w-full">
+                  <SelectValue
+                    placeholder={
+                      suppliersLoading
+                        ? "Loading suppliers..."
+                        : supplierOptions.length > 0
+                        ? "Select supplier"
+                        : "No suppliers found"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {supplierOptions.map((supplier) => (
+                    <SelectItem key={supplier.id} value={String(supplier.id)}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{supplier.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {supplier.supplier_id}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.supplierId ? (
+            <p className="text-sm text-red-600">{errors.supplierId.message}</p>
+          ) : null}
+        </motion.div>
+
+        <motion.div className="space-y-2" variants={staggerItem}>
+          <Label className="flex items-center gap-2">
+            <Droplet className="h-4 w-4 text-dairy-orange" />
+            Milk type *
+          </Label>
+          <Controller
+            name="milkType"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={(value) => field.onChange(value as MilkType)}
+              >
+                <SelectTrigger className="h-12 w-full">
+                  <SelectValue placeholder="Select milk type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {milkTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </motion.div>
+
+        <motion.div className="space-y-2" variants={staggerItem}>
           <Label htmlFor="quantity" className="flex items-center gap-2">
             <Scale className="h-4 w-4 text-dairy-blue" />
             Quantity (liters) *
@@ -152,6 +280,26 @@ export function MilkIntakeForm({
           />
           {errors.quantity ? (
             <p className="text-sm text-red-600">{errors.quantity.message}</p>
+          ) : null}
+        </motion.div>
+
+        <motion.div className="space-y-2" variants={staggerItem}>
+          <Label htmlFor="ratePerLiter" className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-dairy-charcoal" />
+            Rate per liter (₹) *
+          </Label>
+          <Input
+            id="ratePerLiter"
+            type="number"
+            step="0.1"
+            placeholder="0.0"
+            {...register("ratePerLiter", { valueAsNumber: true })}
+            className="h-12"
+          />
+          {errors.ratePerLiter ? (
+            <p className="text-sm text-red-600">
+              {errors.ratePerLiter.message}
+            </p>
           ) : null}
         </motion.div>
 
@@ -213,34 +361,6 @@ export function MilkIntakeForm({
           ) : null}
         </motion.div>
 
-        <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="source" className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-dairy-charcoal" />
-            Source / Location
-          </Label>
-          <Input
-            id="source"
-            type="text"
-            placeholder="e.g., Farm A, Route 1"
-            {...register("source")}
-            className="h-12"
-          />
-        </motion.div>
-
-        <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="supplierName" className="flex items-center gap-2">
-            <User className="h-4 w-4 text-dairy-blue" />
-            Supplier name
-          </Label>
-          <Input
-            id="supplierName"
-            type="text"
-            placeholder="Enter supplier name"
-            {...register("supplierName")}
-            className="h-12"
-          />
-        </motion.div>
-
         <motion.div className="space-y-2 md:col-span-2" variants={staggerItem}>
           <Label className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4 text-dairy-blue" />
@@ -271,24 +391,41 @@ export function MilkIntakeForm({
               />
             </PopoverContent>
           </Popover>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div>
+              <Label htmlFor="collectionTime" className="text-sm text-gray-600">
+                Collection time
+              </Label>
+              <Input
+                id="collectionTime"
+                type="time"
+                step="60"
+                {...register("collectionTime")}
+                className="h-12"
+              />
+              {errors.collectionTime ? (
+                <p className="text-sm text-red-600">
+                  {errors.collectionTime.message}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <Label htmlFor="notes" className="text-sm text-gray-600">
+                Notes (optional)
+              </Label>
+              <Textarea
+                id="notes"
+                placeholder="Any additional information..."
+                {...register("notes")}
+                className="min-h-24"
+              />
+            </div>
+          </div>
           {errors.recordedAt ? (
             <p className="text-sm text-red-600">{errors.recordedAt.message}</p>
           ) : null}
         </motion.div>
       </div>
-
-      <motion.div className="space-y-2" variants={staggerItem}>
-        <Label htmlFor="notes" className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-gray-600" />
-          Notes (optional)
-        </Label>
-        <Textarea
-          id="notes"
-          placeholder="Any additional information..."
-          {...register("notes")}
-          className="min-h-24"
-        />
-      </motion.div>
 
       <motion.div className="flex gap-3 pt-4" variants={staggerItem}>
         <motion.div
@@ -298,10 +435,10 @@ export function MilkIntakeForm({
         >
           <Button
             type="submit"
-            disabled={createMutation.isPending}
-            className="h-12 w-full bg-gradient-to-r from-dairy-blue to-dairy-darkBlue text-white hover:from-dairy-darkBlue hover:to-dairy-blue"
+            disabled={createCollectionMutation.isPending}
+            className="h-12 w-full bg-linear-to-r from-dairy-blue to-dairy-darkBlue text-white hover:from-dairy-darkBlue hover:to-dairy-blue"
           >
-            {createMutation.isPending ? (
+            {createCollectionMutation.isPending ? (
               <span className="flex items-center justify-center gap-2">
                 <LoadingSpinner size="sm" className="text-white" />
                 Recording...

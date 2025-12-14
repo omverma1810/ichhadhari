@@ -14,7 +14,7 @@ import type {
 } from "@/types/api";
 
 class PayrollRecordsService {
-  private readonly BASE_PATH = "/employees/payroll-records";
+  private readonly BASE_PATH = "/api/employees/payroll-records";
 
   /**
    * Get list of payroll records with optional filters

@@ -13,7 +13,7 @@ import type {
 } from "@/types/api";
 
 class PurchaseOrdersService {
-  private readonly BASE_PATH = "/vendors/purchase-orders";
+  private readonly BASE_PATH = "/api/vendors/purchase-orders";
 
   /**
    * Get list of purchase orders with optional filters
