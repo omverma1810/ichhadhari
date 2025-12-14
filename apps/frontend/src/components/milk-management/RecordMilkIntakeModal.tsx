@@ -2,12 +2,17 @@
 
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Droplet, Thermometer, MapPin, Calendar, FileText, DollarSign } from 'lucide-react';
+import { Droplet, Thermometer, Calendar, FileText, DollarSign } from 'lucide-react';
 import { milkService } from '@/services/milkService';
-import { handleApiError } from '@/lib/api-client';
 import { toast } from 'sonner';
 import type { MilkType, CollectionShift } from '@/types/api';
 
@@ -74,9 +79,8 @@ export function RecordMilkIntakeModal({
 
       // Create collection via API
       const result = await milkService.createCollection({
-        supplier: supplierId || 1, // Use provided supplierId or default to 1
+        supplier: supplierId || 1,
         milk_type: formData.milkType,
-        shift: formData.shift,
         quantity: parseFloat(formData.quantity),
         fat_percentage: parseFloat(formData.fatPercentage),
         snf_percentage: parseFloat(formData.snfPercentage),
@@ -134,123 +138,156 @@ export function RecordMilkIntakeModal({
         {/* Error Alert */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">{error}</p>
-              </div>
-            </div>
+            <p className="text-sm font-medium text-red-800">{error}</p>
           </div>
         )}
 
         {/* Milk Type and Shift */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Milk Type"
-            options={MILK_TYPES}
-            value={formData.milkType}
-            onChange={(value) => setFormData({ ...formData, milkType: value as MilkType })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Milk Type *
+            </label>
+            <Select
+              value={formData.milkType}
+              onValueChange={(value) => setFormData({ ...formData, milkType: value as MilkType })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select milk type" />
+              </SelectTrigger>
+              <SelectContent>
+                {MILK_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            label="Shift"
-            options={SHIFT_OPTIONS}
-            value={formData.shift}
-            onChange={(value) => setFormData({ ...formData, shift: value as CollectionShift })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Shift *
+            </label>
+            <Select
+              value={formData.shift}
+              onValueChange={(value) => setFormData({ ...formData, shift: value as CollectionShift })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select shift" />
+              </SelectTrigger>
+              <SelectContent>
+                {SHIFT_OPTIONS.map((shift) => (
+                  <SelectItem key={shift.value} value={shift.value}>
+                    {shift.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Row 1: Quantity and Fat Percentage */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Quantity (liters)"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="e.g., 15.50"
-            icon={<Droplet className="h-5 w-5" />}
-            value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <Droplet className="inline h-4 w-4 mr-1" />
+              Quantity (liters) *
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g., 15.50"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              required
+            />
+          </div>
 
-          <Input
-            label="Fat percentage (%)"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            placeholder="e.g., 4.50"
-            icon={<Droplet className="h-5 w-5" />}
-            value={formData.fatPercentage}
-            onChange={(e) => setFormData({ ...formData, fatPercentage: e.target.value })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <Droplet className="inline h-4 w-4 mr-1" />
+              Fat percentage (%) *
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              placeholder="e.g., 4.50"
+              value={formData.fatPercentage}
+              onChange={(e) => setFormData({ ...formData, fatPercentage: e.target.value })}
+              required
+            />
+          </div>
         </div>
 
         {/* Row 2: SNF and Temperature */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="SNF percentage (%)"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            placeholder="e.g., 8.50"
-            value={formData.snfPercentage}
-            onChange={(e) => setFormData({ ...formData, snfPercentage: e.target.value })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SNF percentage (%) *
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              placeholder="e.g., 8.50"
+              value={formData.snfPercentage}
+              onChange={(e) => setFormData({ ...formData, snfPercentage: e.target.value })}
+              required
+            />
+          </div>
 
-          <Input
-            label="Temperature (°C)"
-            type="number"
-            step="0.1"
-            placeholder="e.g., 4.0"
-            icon={<Thermometer className="h-5 w-5" />}
-            value={formData.temperature}
-            onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <Thermometer className="inline h-4 w-4 mr-1" />
+              Temperature (°C) *
+            </label>
+            <Input
+              type="number"
+              step="0.1"
+              placeholder="e.g., 4.0"
+              value={formData.temperature}
+              onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+              required
+            />
+          </div>
         </div>
 
         {/* Row 3: Rate Per Liter */}
-        <Input
-          label="Rate per liter (₹)"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="e.g., 45.00"
-          icon={<DollarSign className="h-5 w-5" />}
-          value={formData.ratePerLiter}
-          onChange={(e) => setFormData({ ...formData, ratePerLiter: e.target.value })}
-          required
-          helperText="Price per liter of milk"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <DollarSign className="inline h-4 w-4 mr-1" />
+            Rate per liter (₹) *
+          </label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="e.g., 45.00"
+            value={formData.ratePerLiter}
+            onChange={(e) => setFormData({ ...formData, ratePerLiter: e.target.value })}
+            required
+          />
+          <p className="mt-1 text-sm text-gray-500">Price per liter of milk</p>
+        </div>
 
         {/* Row 4: Collection Date */}
-        <Input
-          label="Collection Date"
-          type="date"
-          icon={<Calendar className="h-5 w-5" />}
-          value={formData.collectionDate}
-          onChange={(e) => setFormData({ ...formData, collectionDate: e.target.value })}
-          required
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Calendar className="inline h-4 w-4 mr-1" />
+            Collection Date *
+          </label>
+          <Input
+            type="date"
+            value={formData.collectionDate}
+            onChange={(e) => setFormData({ ...formData, collectionDate: e.target.value })}
+            required
+          />
+        </div>
 
         {/* Row 5: Notes */}
         <div>
@@ -277,7 +314,7 @@ export function RecordMilkIntakeModal({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
+          <Button type="submit" variant="default" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

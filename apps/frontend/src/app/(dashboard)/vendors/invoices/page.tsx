@@ -145,12 +145,12 @@ export default function InvoicesPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Link href="/vendors/invoices/create">
-            <Button variant="default" size="sm">
+          <Button asChild variant="default" size="sm">
+            <Link href="/vendors/invoices/create">
               <Plus className="h-4 w-4 mr-2" />
               Create Invoice
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -158,12 +158,12 @@ export default function InvoicesPage() {
       {invoices.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <p className="text-gray-500 mb-4">No invoices found</p>
-          <Link href="/vendors/invoices/create">
-            <Button variant="default">
+          <Button asChild variant="default">
+            <Link href="/vendors/invoices/create">
               <Plus className="h-4 w-4 mr-2" />
               Create First Invoice
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -209,11 +209,11 @@ export default function InvoicesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/vendors/invoices/${invoice.id}`}>
-                          <Button variant="ghost" size="sm">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/vendors/invoices/${invoice.id}`}>
                             <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

@@ -1,0 +1,24 @@
+# Ignore files for Docker build
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.env
+.env.local
+*.sqlite3
+db.sqlite3
+.git/
+.gitignore
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+logs/
+*.log
+.DS_Store
+*.egg-info/
+dist/
+build/
