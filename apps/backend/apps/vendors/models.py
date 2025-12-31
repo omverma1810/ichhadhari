@@ -84,7 +84,11 @@ class Vendor(TimeStampedModel):
     outstanding_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
     # Additional Information
-    documents = models.JSONField(default=dict)
+    documents = models.JSONField(
+        default=dict, 
+        blank=True,
+        help_text='Optional. Leave empty or enter valid JSON (e.g., {} for empty, or {"license": "ABC123"})'
+    )
     notes = models.TextField(blank=True)
     
     class Meta:

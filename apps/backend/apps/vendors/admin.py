@@ -91,15 +91,36 @@ class VendorAdmin(admin.ModelAdmin):
                 'outstanding_balance'
             )
         }),
-        ('Additional Information', {
-            'fields': ('documents', 'notes'),
-            'classes': ('collapse',)
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',),
+            'description': 'Add any additional notes about this vendor.'
+        }),
+        ('Documents (Advanced)', {
+            'fields': ('documents',),
+            'classes': ('collapse',),
+            'description': 'Optional JSON field for storing document references. Leave empty if not needed.'
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+    
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        """Customize form field for documents JSONField."""
+        from django import forms
+        
+        if db_field.name == 'documents':
+            kwargs['widget'] = forms.Textarea(attrs={
+                'rows': 3,
+                'cols': 40,
+                'placeholder': '{}',
+                'style': 'font-family: monospace;'
+            })
+            kwargs['initial'] = '{}'
+            kwargs['required'] = False
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
 @admin.register(PurchaseOrder)
