@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
     VendorPayment, GoodsReceiptNote, GRNItem,
-    VendorInvoice, VendorInvoiceItem
+    VendorInvoice, VendorInvoiceItem, VendorProductPrice
 )
 
 
@@ -33,6 +33,26 @@ class GRNItemInline(admin.TabularInline):
     ]
 
 
+class VendorProductPriceInline(admin.TabularInline):
+    """
+    Inline admin for VendorProductPrice.
+    Allows setting custom prices for products directly on the Vendor page.
+    """
+    model = VendorProductPrice
+    extra = 1
+    fields = [
+        'product', 'vendor_price', 'min_quantity',
+        'is_active', 'valid_from', 'valid_until', 'notes'
+    ]
+    autocomplete_fields = ['product']
+    verbose_name = "Product Price"
+    verbose_name_plural = "Vendor Product Prices (Special Pricing)"
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Show market price as read-only for reference."""
+        return []
+
+
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
     """
@@ -52,6 +72,7 @@ class VendorAdmin(admin.ModelAdmin):
         'total_purchases', 'total_payments', 'outstanding_balance',
         'created_at', 'updated_at'
     ]
+    inlines = [VendorProductPriceInline]
     fieldsets = (
         ('Basic Information', {
             'fields': (
@@ -350,3 +371,61 @@ class VendorInvoiceAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(VendorProductPrice)
+class VendorProductPriceAdmin(admin.ModelAdmin):
+    """
+    Admin interface for VendorProductPrice model.
+    Allows managing vendor-specific product pricing directly.
+    """
+    list_display = [
+        'vendor', 'product', 'vendor_price', 'get_market_price',
+        'get_discount_percentage', 'min_quantity', 'is_active',
+        'valid_from', 'valid_until'
+    ]
+    list_filter = ['is_active', 'vendor', 'product__category']
+    search_fields = [
+        'vendor__vendor_id', 'vendor__company_name',
+        'product__product_id', 'product__name', 'notes'
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+    autocomplete_fields = ['vendor', 'product']
+    
+    fieldsets = (
+        ('Vendor & Product', {
+            'fields': ('vendor', 'product')
+        }),
+        ('Pricing', {
+            'fields': (
+                'vendor_price', 'min_quantity'
+            ),
+            'description': 'Set the special price for this vendor. Min quantity is optional.'
+        }),
+        ('Validity', {
+            'fields': ('is_active', 'valid_from', 'valid_until'),
+            'description': 'Control when this pricing is active. Leave dates empty for indefinite validity.'
+        }),
+        ('Additional Information', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_market_price(self, obj):
+        """Display market price for comparison."""
+        return f"₹{obj.product.selling_price}"
+    get_market_price.short_description = "Market Price"
+    
+    def get_discount_percentage(self, obj):
+        """Display discount percentage."""
+        discount = obj.discount_percentage
+        if discount > 0:
+            return f"{discount:.1f}%"
+        return "-"
+    get_discount_percentage.short_description = "Discount"
+

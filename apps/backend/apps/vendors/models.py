@@ -524,6 +524,32 @@ class VendorInvoiceItem(models.Model):
         default=0
     )
     
+    # Vendor-specific pricing fields
+    market_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Standard market price per unit"
+    )
+    applied_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Actual price applied (vendor-specific or market)"
+    )
+    is_vendor_price = models.BooleanField(
+        default=False,
+        help_text="True if vendor-specific pricing was applied"
+    )
+    price_savings = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Total savings vs market price"
+    )
+    
     class Meta:
         db_table = 'vendor_invoice_items'
         ordering = ['id']
@@ -540,3 +566,142 @@ class VendorInvoiceItem(models.Model):
         self.line_total = after_discount + tax
         
         super().save(*args, **kwargs)
+
+
+class VendorProductPrice(TimeStampedModel):
+    """
+    Vendor-specific product pricing.
+    
+    Allows setting custom prices for each vendor-product combination,
+    enabling bulk deals and special pricing arrangements.
+    """
+    from apps.production.models import Product
+    
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.CASCADE,
+        related_name='product_prices',
+        help_text="Vendor receiving special pricing"
+    )
+    product = models.ForeignKey(
+        'production.Product',
+        on_delete=models.CASCADE,
+        related_name='vendor_prices',
+        help_text="Product with special pricing"
+    )
+    
+    # Pricing
+    vendor_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="Special price for this vendor (per unit)"
+    )
+    min_quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Minimum order quantity to qualify for this price"
+    )
+    
+    # Validity Period
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this pricing is currently active"
+    )
+    valid_from = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Start date for this pricing (optional)"
+    )
+    valid_until = models.DateField(
+        null=True,
+        blank=True,
+        help_text="End date for this pricing (optional)"
+    )
+    
+    # Additional Info
+    notes = models.TextField(
+        blank=True,
+        help_text="Notes about this pricing arrangement (e.g., 'Bulk deal for Q1 2026')"
+    )
+    
+    class Meta:
+        db_table = 'vendor_product_prices'
+        ordering = ['vendor', 'product']
+        unique_together = ['vendor', 'product']
+        verbose_name = 'Vendor Product Price'
+        verbose_name_plural = 'Vendor Product Prices'
+        indexes = [
+            models.Index(fields=['vendor', 'is_active']),
+            models.Index(fields=['product', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.vendor.company_name} - {self.product.name}: ₹{self.vendor_price}"
+    
+    @property
+    def market_price(self):
+        """Get the standard market price from product."""
+        return self.product.selling_price
+    
+    @property
+    def discount_amount(self):
+        """Calculate discount amount per unit vs market price."""
+        return self.market_price - self.vendor_price
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage vs market price."""
+        if self.market_price > 0:
+            return ((self.market_price - self.vendor_price) / self.market_price) * 100
+        return Decimal('0.00')
+    
+    def is_valid_on_date(self, date=None):
+        """Check if this pricing is valid on a given date."""
+        if date is None:
+            date = timezone.now().date()
+        
+        if not self.is_active:
+            return False
+        
+        if self.valid_from and date < self.valid_from:
+            return False
+        
+        if self.valid_until and date > self.valid_until:
+            return False
+        
+        return True
+    
+    @classmethod
+    def get_price_for_vendor(cls, vendor, product, quantity=None, date=None):
+        """
+        Get the applicable price for a vendor-product combination.
+        
+        Returns (price, is_vendor_price) tuple.
+        If vendor-specific price exists and is valid, returns it.
+        Otherwise returns the market price.
+        """
+        if date is None:
+            date = timezone.now().date()
+        
+        try:
+            vendor_price = cls.objects.get(
+                vendor=vendor,
+                product=product,
+                is_active=True
+            )
+            
+            # Check validity
+            if not vendor_price.is_valid_on_date(date):
+                return (product.selling_price, False)
+            
+            # Check minimum quantity if specified
+            if quantity is not None and vendor_price.min_quantity > 0:
+                if quantity < vendor_price.min_quantity:
+                    return (product.selling_price, False)
+            
+            return (vendor_price.vendor_price, True)
+            
+        except cls.DoesNotExist:
+            return (product.selling_price, False)
