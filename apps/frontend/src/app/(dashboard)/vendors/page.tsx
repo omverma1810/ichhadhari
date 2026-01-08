@@ -296,7 +296,7 @@ export default function VendorsOverviewPage() {
             vendor.email,
             vendor.phone,
             vendor.vendor_id,
-            ...vendor.contact_persons.map(
+            ...(vendor.contact_persons || []).map(
               (person) => `${person.name} ${person.email} ${person.phone}`
             ),
           ]
@@ -437,7 +437,7 @@ export default function VendorsOverviewPage() {
     ];
     const rows = sortedVendors.map((vendor) => {
       const paymentStatus = calculatePaymentStatus(vendor);
-      const contact = vendor.contact_persons[0];
+      const contact = vendor.contact_persons?.[0];
       const recentOrder = recentOrderMap.get(vendor.id);
       return [
         vendor.company_name,
@@ -849,7 +849,7 @@ export default function VendorsOverviewPage() {
                     <AnimatePresence initial={false}>
                       {hasResults ? (
                         paginatedVendors.map((vendor, index) => {
-                          const contact = vendor.contact_persons[0];
+                          const contact = vendor.contact_persons?.[0];
                           const paymentStatus = calculatePaymentStatus(vendor);
                           const recentOrder = recentOrderMap.get(vendor.id);
                           const TypeIcon =
@@ -1055,7 +1055,7 @@ export default function VendorsOverviewPage() {
                 <AnimatePresence initial={false}>
                   {hasResults ? (
                     paginatedVendors.map((vendor) => {
-                      const contact = vendor.contact_persons[0];
+                      const contact = vendor.contact_persons?.[0];
                       const paymentStatus = calculatePaymentStatus(vendor);
                       const recentOrder = recentOrderMap.get(vendor.id);
                       const TypeIcon = vendorTypeMeta[vendor.vendor_type].icon;

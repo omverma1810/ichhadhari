@@ -228,7 +228,7 @@ function exportEmployeesToCsv(employeesToExport: Employee[]) {
       formatDate(employee.date_of_joining),
       employee.personal_email,
       employee.personal_phone,
-      employee.system_roles.join(" | "),
+      (employee.system_roles || []).join(" | "),
     ];
 
     return values.map((value) => `"${value.replace(/"/g, '""')}"`).join(",");
@@ -364,7 +364,7 @@ export default function EmployeesPage() {
           employee.position,
           employee.personal_email,
           employee.personal_phone,
-          employee.system_roles.join(" "),
+          (employee.system_roles || []).join(" "),
         ]
           .join(" ")
           .toLowerCase();
