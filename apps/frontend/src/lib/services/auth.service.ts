@@ -2,7 +2,9 @@ import axios, { AxiosError } from "axios";
 import { jwtDecode } from "jwt-decode";
 
 // API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://ichhadhari-backend-162541991773.asia-south1.run.app";
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = "access_token";
@@ -169,7 +171,7 @@ class AuthService {
   async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
       const response = await axios.post<RegisterResponse>(
-        `${API_BASE_URL}/auth/register/`,
+        `${API_BASE_URL}/api/auth/register/`,
         credentials
       );
 
@@ -206,7 +208,7 @@ class AuthService {
       // Django API expects 'username' field (can be email or username)
       const username = credentials.username || credentials.email || "";
       const response = await axios.post<LoginResponse>(
-        `${API_BASE_URL}/auth/login/`,
+        `${API_BASE_URL}/api/auth/login/`,
         {
           username,
           password: credentials.password,
@@ -291,7 +293,7 @@ class AuthService {
     try {
       // Django REST Framework SimpleJWT expects refresh token in request body
       const response = await axios.post<{ access: string }>(
-        `${API_BASE_URL}/auth/token/refresh/`,
+        `${API_BASE_URL}/api/auth/token/refresh/`,
         {
           refresh: refreshToken,
         }
