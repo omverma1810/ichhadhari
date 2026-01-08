@@ -57,7 +57,7 @@ export const authAPI = {
    */
   register: async (data: RegisterData): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>(
-      "/auth/register/",
+      "/api/auth/register/",
       data
     );
 
@@ -73,7 +73,7 @@ export const authAPI = {
    * Login with username and password
    */
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>("/auth/login/", {
+    const response = await apiClient.post<LoginResponse>("/api/auth/login/", {
       username,
       password,
     });
@@ -91,7 +91,7 @@ export const authAPI = {
    */
   logout: async (refreshToken: string): Promise<void> => {
     try {
-      await apiClient.post("/auth/logout/", { refresh: refreshToken });
+      await apiClient.post("/api/auth/logout/", { refresh: refreshToken });
     } finally {
       // Clear tokens from localStorage even if the request fails
       if (typeof window !== "undefined") {
@@ -105,9 +105,12 @@ export const authAPI = {
    * Refresh access token using refresh token
    */
   refreshToken: async (refreshToken: string): Promise<AuthTokens> => {
-    const response = await apiClient.post<AuthTokens>("/auth/token/refresh/", {
-      refresh: refreshToken,
-    });
+    const response = await apiClient.post<AuthTokens>(
+      "/api/auth/token/refresh/",
+      {
+        refresh: refreshToken,
+      }
+    );
 
     // Update access token
     if (response.access) {
@@ -123,14 +126,14 @@ export const authAPI = {
    * Get current user profile
    */
   getMe: async (): Promise<User> => {
-    return await apiClient.get<User>("/auth/me/");
+    return await apiClient.get<User>("/api/auth/me/");
   },
 
   /**
    * Update current user profile
    */
   updateMe: async (data: UpdateProfileData): Promise<User> => {
-    return await apiClient.patch<User>("/auth/me/", data);
+    return await apiClient.patch<User>("/api/auth/me/", data);
   },
 
   /**
@@ -140,20 +143,26 @@ export const authAPI = {
     oldPassword: string,
     newPassword: string
   ): Promise<{ message: string }> => {
-    return await apiClient.post<{ message: string }>("/auth/change-password/", {
-      old_password: oldPassword,
-      new_password: newPassword,
-      new_password2: newPassword,
-    });
+    return await apiClient.post<{ message: string }>(
+      "/api/auth/change-password/",
+      {
+        old_password: oldPassword,
+        new_password: newPassword,
+        new_password2: newPassword,
+      }
+    );
   },
 
   /**
    * Request password reset
    */
   forgotPassword: async (email: string): Promise<{ message: string }> => {
-    return await apiClient.post<{ message: string }>("/auth/forgot-password/", {
-      email,
-    });
+    return await apiClient.post<{ message: string }>(
+      "/api/auth/forgot-password/",
+      {
+        email,
+      }
+    );
   },
 
   /**
@@ -163,19 +172,25 @@ export const authAPI = {
     token: string,
     password: string
   ): Promise<{ message: string }> => {
-    return await apiClient.post<{ message: string }>("/auth/reset-password/", {
-      token,
-      password,
-      password2: password,
-    });
+    return await apiClient.post<{ message: string }>(
+      "/api/auth/reset-password/",
+      {
+        token,
+        password,
+        password2: password,
+      }
+    );
   },
 
   /**
    * Verify email with token
    */
   verifyEmail: async (token: string): Promise<{ message: string }> => {
-    return await apiClient.post<{ message: string }>("/auth/verify-email/", {
-      token,
-    });
+    return await apiClient.post<{ message: string }>(
+      "/api/auth/verify-email/",
+      {
+        token,
+      }
+    );
   },
 };

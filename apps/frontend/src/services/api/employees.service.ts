@@ -31,7 +31,7 @@ import type {
 } from "@/types/api";
 
 class EmployeesService {
-  private readonly BASE_PATH = "/employees";
+  private readonly BASE_PATH = "/api/employees";
 
   /**
    * Get list of employees with optional filters
