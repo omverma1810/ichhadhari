@@ -51,8 +51,8 @@ const invoiceItemSchema = z.object({
   quantity: z.string().min(1, "Quantity is required"),
   unit: z.string().min(1, "Unit is required"),
   unit_price: z.string().min(1, "Unit price is required"),
-  tax_rate: z.string().optional(),
-  discount_percentage: z.string().optional(),
+  tax_rate: z.string().default("0"),
+  discount_percentage: z.string().default("0"),
 });
 
 const invoiceSchema = z.object({
@@ -60,9 +60,9 @@ const invoiceSchema = z.object({
   invoice_date: z.string().min(1, "Invoice date is required"),
   due_date: z.string().min(1, "Due date is required"),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
-  notes: z.string().optional(),
-  terms_and_conditions: z.string().optional(),
-  reference_number: z.string().optional(),
+  notes: z.string().default(""),
+  terms_and_conditions: z.string().default(""),
+  reference_number: z.string().default(""),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -86,6 +86,9 @@ export default function CreateInvoicePage() {
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
+      vendor: "",
+      invoice_date: format(new Date(), "yyyy-MM-dd"),
+      due_date: "",
       items: [
         {
           item_description: "",
@@ -96,6 +99,9 @@ export default function CreateInvoicePage() {
           discount_percentage: "0",
         },
       ],
+      notes: "",
+      terms_and_conditions: "",
+      reference_number: "",
     },
   });
 
@@ -107,7 +113,7 @@ export default function CreateInvoicePage() {
   const items = watch("items");
 
   // Calculate totals
-  const calculateLineTotal = (item: typeof items[0]) => {
+  const calculateLineTotal = (item: (typeof items)[0]) => {
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unit_price) || 0;
     const tax = parseFloat(item.tax_rate || "0") || 0;
@@ -138,12 +144,12 @@ export default function CreateInvoicePage() {
           quantity: item.quantity,
           unit: item.unit,
           unit_price: item.unit_price,
-          tax_rate: item.tax_rate,
-          discount_percentage: item.discount_percentage,
+          tax_rate: item.tax_rate || "0",
+          discount_percentage: item.discount_percentage || "0",
         })),
-        notes: data.notes,
-        terms_and_conditions: data.terms_and_conditions,
-        reference_number: data.reference_number,
+        notes: data.notes || "",
+        terms_and_conditions: data.terms_and_conditions || "",
+        reference_number: data.reference_number || "",
       });
 
       toast.success("Invoice created successfully!");
@@ -186,9 +192,7 @@ export default function CreateInvoicePage() {
             Back to Invoices
           </Button>
           <h1 className="text-3xl font-bold text-[#5D4037]">Create Invoice</h1>
-          <p className="text-sm text-[#8B5A3C]">
-            Create a new vendor invoice
-          </p>
+          <p className="text-sm text-[#8B5A3C]">Create a new vendor invoice</p>
         </div>
       </header>
 
