@@ -209,12 +209,12 @@ const formatDate = (input?: string) => {
 };
 
 const calculatePaymentStatus = (vendor: Vendor): PaymentHealth => {
-  if (vendor.outstanding_balance <= 0) {
+  if ((vendor.outstanding_balance ?? 0) <= 0) {
     return "on_time";
   }
   const ratio =
-    vendor.credit_limit > 0
-      ? vendor.outstanding_balance / vendor.credit_limit
+    (vendor.credit_limit ?? 0) > 0
+      ? (vendor.outstanding_balance ?? 0) / (vendor.credit_limit ?? 1)
       : 0;
   if (ratio >= 0.45) {
     return "critical";
@@ -447,7 +447,7 @@ export default function VendorsOverviewPage() {
         vendor.email,
         vendor.phone,
         formatCurrency(vendor.outstanding_balance),
-        vendor.rating.toFixed(1),
+        (vendor.rating ?? 0).toFixed(1),
         recentOrder ? formatDate(recentOrder) : "—",
         vendor.credit_period_days,
         paymentStatusStyles[paymentStatus].label,

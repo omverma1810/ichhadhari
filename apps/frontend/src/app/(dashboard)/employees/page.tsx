@@ -322,7 +322,7 @@ export default function EmployeesPage() {
       return 0;
     }
     const totalAttendance = employees.reduce(
-      (acc, employee) => acc + employee.attendance_score,
+      (acc, employee) => acc + (employee.attendance_score ?? 0),
       0
     );
     return Math.round(totalAttendance / employees.length);
@@ -400,10 +400,10 @@ export default function EmployeesPage() {
       workingSet = workingSet.filter((employee) => {
         switch (focusView) {
           case "top-performers":
-            return employee.performance_rating >= 4.5;
+            return (employee.performance_rating ?? 0) >= 4.5;
           case "attendance-risk":
             return (
-              employee.attendance_score < 85 || employee.status === "on_leave"
+              (employee.attendance_score ?? 0) < 85 || employee.status === "on_leave"
             );
           case "new-joiners": {
             const joined = new Date(employee.date_of_joining).getTime();
@@ -430,7 +430,7 @@ export default function EmployeesPage() {
         case "department-asc":
           return a.department.localeCompare(b.department);
         case "performance-desc":
-          return b.performance_rating - a.performance_rating;
+          return (b.performance_rating ?? 0) - (a.performance_rating ?? 0);
         case "join-date-desc":
         default:
           return (
@@ -981,7 +981,7 @@ export default function EmployeesPage() {
                       const statusToggleDisabled =
                         employee.status === "resigned";
                       const supervisorBadge =
-                        employee.performance_rating >= 4.5;
+                        (employee.performance_rating ?? 0) >= 4.5;
 
                       return (
                         <motion.tr
@@ -1120,21 +1120,21 @@ export default function EmployeesPage() {
                                 <div className="flex items-center justify-between text-xs">
                                   <span>Performance</span>
                                   <span className="font-medium text-dairy-charcoal">
-                                    {employee.performance_rating.toFixed(1)} / 5
+                                    {(employee.performance_rating ?? 0).toFixed(1)} / 5
                                   </span>
                                 </div>
                                 <Progress
-                                  value={employee.performance_rating * 20}
+                                  value={(employee.performance_rating ?? 0) * 20}
                                 />
                               </div>
                               <div>
                                 <div className="flex items-center justify-between text-xs">
                                   <span>Attendance</span>
                                   <span className="font-medium text-dairy-charcoal">
-                                    {employee.attendance_score}%
+                                    {employee.attendance_score ?? 0}%
                                   </span>
                                 </div>
-                                <Progress value={employee.attendance_score} />
+                                <Progress value={employee.attendance_score ?? 0} />
                               </div>
                               <div>
                                 <div className="flex items-center justify-between text-xs">
