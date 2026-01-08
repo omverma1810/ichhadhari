@@ -19,10 +19,15 @@ class APIClient {
 
   constructor() {
     const configuredBaseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+      process.env.NEXT_PUBLIC_API_URL ||
+      "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+
+    // Ensure baseURL ends with /api for all API calls
+    const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
+    const apiBaseUrl = baseUrl.endsWith("/api") ? baseUrl : `${baseUrl}/api`;
 
     this.client = axios.create({
-      baseURL: configuredBaseUrl.replace(/\/+$/, ""),
+      baseURL: apiBaseUrl,
       headers: {
         "Content-Type": "application/json",
       },
@@ -154,7 +159,8 @@ class APIClient {
 
             // Attempt to refresh token - use full URL for auth endpoints
             const API_BASE_URL =
-              process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+              process.env.NEXT_PUBLIC_API_URL ||
+              "https://ichhadhari-backend-162541991773.asia-south1.run.app";
             const response = await axios.post(
               `${API_BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken }

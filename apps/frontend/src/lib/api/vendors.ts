@@ -190,7 +190,7 @@ export const vendorsAPI = {
   getVendors: async (
     params?: PaginationParams
   ): Promise<PaginatedResponse<Vendor>> => {
-    return await apiClient.get<PaginatedResponse<Vendor>>("/api/vendors/vendors/", {
+    return await apiClient.get<PaginatedResponse<Vendor>>("/vendors/vendors/", {
       params,
     });
   },
@@ -199,14 +199,14 @@ export const vendorsAPI = {
    * Get single vendor by ID
    */
   getVendor: async (id: number): Promise<Vendor> => {
-    return await apiClient.get<Vendor>(`/api/vendors/vendors/${id}/`);
+    return await apiClient.get<Vendor>(`/vendors/vendors/${id}/`);
   },
 
   /**
    * Create new vendor
    */
   createVendor: async (data: VendorCreateData): Promise<Vendor> => {
-    return await apiClient.post<Vendor>("/api/vendors/vendors/", data);
+    return await apiClient.post<Vendor>("/vendors/vendors/", data);
   },
 
   /**
@@ -216,14 +216,14 @@ export const vendorsAPI = {
     id: number,
     data: Partial<VendorCreateData>
   ): Promise<Vendor> => {
-    return await apiClient.patch<Vendor>(`/api/vendors/vendors/${id}/`, data);
+    return await apiClient.patch<Vendor>(`/vendors/vendors/${id}/`, data);
   },
 
   /**
    * Delete vendor
    */
   deleteVendor: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/vendors/vendors/${id}/`);
+    await apiClient.delete(`/vendors/vendors/${id}/`);
   },
 
   /**
@@ -234,7 +234,7 @@ export const vendorsAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<PurchaseOrder>> => {
     return await apiClient.get<PaginatedResponse<PurchaseOrder>>(
-      `/api/vendors/vendors/${id}/purchase-orders/`,
+      `/vendors/vendors/${id}/purchase-orders/`,
       { params }
     );
   },
@@ -246,7 +246,7 @@ export const vendorsAPI = {
     id: number,
     params?: { start_date?: string; end_date?: string }
   ): Promise<VendorStats> => {
-    return await apiClient.get<VendorStats>(`/api/vendors/vendors/${id}/stats/`, {
+    return await apiClient.get<VendorStats>(`/vendors/vendors/${id}/stats/`, {
       params,
     });
   },
@@ -260,7 +260,7 @@ export const vendorsAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<PurchaseOrder>> => {
     return await apiClient.get<PaginatedResponse<PurchaseOrder>>(
-      "/api/vendors/purchase-orders/",
+      "/vendors/purchase-orders/",
       { params }
     );
   },
@@ -270,7 +270,7 @@ export const vendorsAPI = {
    */
   getPurchaseOrder: async (id: number): Promise<PurchaseOrder> => {
     return await apiClient.get<PurchaseOrder>(
-      `/api/vendors/purchase-orders/${id}/`
+      `/vendors/purchase-orders/${id}/`
     );
   },
 
@@ -279,7 +279,7 @@ export const vendorsAPI = {
    */
   createPurchaseOrder: async (data: POCreateData): Promise<PurchaseOrder> => {
     return await apiClient.post<PurchaseOrder>(
-      "/api/vendors/purchase-orders/",
+      "/vendors/purchase-orders/",
       data
     );
   },
@@ -292,7 +292,7 @@ export const vendorsAPI = {
     data: Partial<POCreateData>
   ): Promise<PurchaseOrder> => {
     return await apiClient.patch<PurchaseOrder>(
-      `/api/vendors/purchase-orders/${id}/`,
+      `/vendors/purchase-orders/${id}/`,
       data
     );
   },
@@ -301,7 +301,7 @@ export const vendorsAPI = {
    * Delete purchase order
    */
   deletePurchaseOrder: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/vendors/purchase-orders/${id}/`);
+    await apiClient.delete(`/vendors/purchase-orders/${id}/`);
   },
 
   /**
@@ -309,7 +309,7 @@ export const vendorsAPI = {
    */
   approvePurchaseOrder: async (id: number): Promise<PurchaseOrder> => {
     return await apiClient.post<PurchaseOrder>(
-      `/api/vendors/purchase-orders/${id}/approve/`
+      `/vendors/purchase-orders/${id}/approve/`
     );
   },
 
@@ -318,7 +318,7 @@ export const vendorsAPI = {
    */
   sendPurchaseOrder: async (id: number): Promise<PurchaseOrder> => {
     return await apiClient.post<PurchaseOrder>(
-      `/api/vendors/purchase-orders/${id}/send/`
+      `/vendors/purchase-orders/${id}/send/`
     );
   },
 
@@ -327,7 +327,7 @@ export const vendorsAPI = {
    */
   confirmPurchaseOrder: async (id: number): Promise<PurchaseOrder> => {
     return await apiClient.post<PurchaseOrder>(
-      `/api/vendors/purchase-orders/${id}/confirm/`
+      `/vendors/purchase-orders/${id}/confirm/`
     );
   },
 
@@ -336,7 +336,7 @@ export const vendorsAPI = {
    */
   getPurchaseOrderItems: async (id: number): Promise<POItem[]> => {
     return await apiClient.get<POItem[]>(
-      `/api/vendors/purchase-orders/${id}/items/`
+      `/vendors/purchase-orders/${id}/items/`
     );
   },
 
@@ -349,7 +349,7 @@ export const vendorsAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<VendorPayment>> => {
     return await apiClient.get<PaginatedResponse<VendorPayment>>(
-      "/api/vendors/payments/",
+      "/vendors/payments/",
       { params }
     );
   },
@@ -358,7 +358,7 @@ export const vendorsAPI = {
    * Get single payment by ID
    */
   getPayment: async (id: number): Promise<VendorPayment> => {
-    return await apiClient.get<VendorPayment>(`/api/vendors/payments/${id}/`);
+    return await apiClient.get<VendorPayment>(`/vendors/payments/${id}/`);
   },
 
   /**
@@ -367,7 +367,7 @@ export const vendorsAPI = {
   createPayment: async (
     data: VendorPaymentCreateData
   ): Promise<VendorPayment> => {
-    return await apiClient.post<VendorPayment>("/api/vendors/payments/", data);
+    return await apiClient.post<VendorPayment>("/vendors/payments/", data);
   },
 
   /**
@@ -378,7 +378,7 @@ export const vendorsAPI = {
     data: Partial<VendorPaymentCreateData>
   ): Promise<VendorPayment> => {
     return await apiClient.patch<VendorPayment>(
-      `/api/vendors/payments/${id}/`,
+      `/vendors/payments/${id}/`,
       data
     );
   },
@@ -387,7 +387,7 @@ export const vendorsAPI = {
    * Delete vendor payment
    */
   deletePayment: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/vendors/payments/${id}/`);
+    await apiClient.delete(`/vendors/payments/${id}/`);
   },
 
   // ==================== GRNs ====================
@@ -399,7 +399,7 @@ export const vendorsAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<GoodsReceiptNote>> => {
     return await apiClient.get<PaginatedResponse<GoodsReceiptNote>>(
-      "/api/vendors/grns/",
+      "/vendors/grns/",
       { params }
     );
   },
@@ -408,14 +408,14 @@ export const vendorsAPI = {
    * Get single GRN by ID
    */
   getGRN: async (id: number): Promise<GoodsReceiptNote> => {
-    return await apiClient.get<GoodsReceiptNote>(`/api/vendors/grns/${id}/`);
+    return await apiClient.get<GoodsReceiptNote>(`/vendors/grns/${id}/`);
   },
 
   /**
    * Create new GRN
    */
   createGRN: async (data: GRNCreateData): Promise<GoodsReceiptNote> => {
-    return await apiClient.post<GoodsReceiptNote>("/api/vendors/grns/", data);
+    return await apiClient.post<GoodsReceiptNote>("/vendors/grns/", data);
   },
 
   /**
@@ -426,7 +426,7 @@ export const vendorsAPI = {
     data: Partial<GRNCreateData>
   ): Promise<GoodsReceiptNote> => {
     return await apiClient.patch<GoodsReceiptNote>(
-      `/api/vendors/grns/${id}/`,
+      `/vendors/grns/${id}/`,
       data
     );
   },
@@ -435,13 +435,13 @@ export const vendorsAPI = {
    * Delete GRN
    */
   deleteGRN: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/vendors/grns/${id}/`);
+    await apiClient.delete(`/vendors/grns/${id}/`);
   },
 
   /**
    * Get GRN items
    */
   getGRNItems: async (id: number): Promise<GRNItem[]> => {
-    return await apiClient.get<GRNItem[]>(`/api/vendors/grns/${id}/items/`);
+    return await apiClient.get<GRNItem[]>(`/vendors/grns/${id}/items/`);
   },
 };

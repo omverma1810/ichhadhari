@@ -121,56 +121,56 @@ export const inventoryAPI = {
    * Get paginated list of inventory items
    */
   getItems: async (params?: PaginationParams): Promise<PaginatedResponse<InventoryItem>> => {
-    return await apiClient.get<PaginatedResponse<InventoryItem>>("/api/inventory/items/", { params });
+    return await apiClient.get<PaginatedResponse<InventoryItem>>("/inventory/items/", { params });
   },
 
   /**
    * Get single inventory item by ID
    */
   getItem: async (id: number): Promise<InventoryItem> => {
-    return await apiClient.get<InventoryItem>(`/api/inventory/items/${id}/`);
+    return await apiClient.get<InventoryItem>(`/inventory/items/${id}/`);
   },
 
   /**
    * Create new inventory item
    */
   createItem: async (data: InventoryItemCreateData): Promise<InventoryItem> => {
-    return await apiClient.post<InventoryItem>("/api/inventory/items/", data);
+    return await apiClient.post<InventoryItem>("/inventory/items/", data);
   },
 
   /**
    * Update inventory item
    */
   updateItem: async (id: number, data: Partial<InventoryItemCreateData>): Promise<InventoryItem> => {
-    return await apiClient.patch<InventoryItem>(`/api/inventory/items/${id}/`, data);
+    return await apiClient.patch<InventoryItem>(`/inventory/items/${id}/`, data);
   },
 
   /**
    * Delete inventory item
    */
   deleteItem: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/inventory/items/${id}/`);
+    await apiClient.delete(`/inventory/items/${id}/`);
   },
 
   /**
    * Get low stock items
    */
   getLowStock: async (params?: PaginationParams): Promise<PaginatedResponse<InventoryItem>> => {
-    return await apiClient.get<PaginatedResponse<InventoryItem>>("/api/inventory/items/low-stock/", { params });
+    return await apiClient.get<PaginatedResponse<InventoryItem>>("/inventory/items/low-stock/", { params });
   },
 
   /**
    * Get stock levels summary
    */
   getStockLevels: async (): Promise<{ category: string; count: number; total_value: number }[]> => {
-    return await apiClient.get("/api/inventory/items/stock-levels/");
+    return await apiClient.get("/inventory/items/stock-levels/");
   },
 
   /**
    * Get transaction history for an item
    */
   getTransactionHistory: async (id: number, params?: PaginationParams): Promise<PaginatedResponse<InventoryTransaction>> => {
-    return await apiClient.get<PaginatedResponse<InventoryTransaction>>(`/api/inventory/items/${id}/transactions/`, { params });
+    return await apiClient.get<PaginatedResponse<InventoryTransaction>>(`/inventory/items/${id}/transactions/`, { params });
   },
 
   // ==================== Transactions ====================
@@ -179,42 +179,42 @@ export const inventoryAPI = {
    * Get paginated list of inventory transactions
    */
   getTransactions: async (params?: PaginationParams): Promise<PaginatedResponse<InventoryTransaction>> => {
-    return await apiClient.get<PaginatedResponse<InventoryTransaction>>("/api/inventory/transactions/", { params });
+    return await apiClient.get<PaginatedResponse<InventoryTransaction>>("/inventory/transactions/", { params });
   },
 
   /**
    * Get single transaction by ID
    */
   getTransaction: async (id: number): Promise<InventoryTransaction> => {
-    return await apiClient.get<InventoryTransaction>(`/api/inventory/transactions/${id}/`);
+    return await apiClient.get<InventoryTransaction>(`/inventory/transactions/${id}/`);
   },
 
   /**
    * Create new inventory transaction
    */
   createTransaction: async (data: TransactionCreateData): Promise<InventoryTransaction> => {
-    return await apiClient.post<InventoryTransaction>("/api/inventory/transactions/", data);
+    return await apiClient.post<InventoryTransaction>("/inventory/transactions/", data);
   },
 
   /**
    * Update inventory transaction
    */
   updateTransaction: async (id: number, data: Partial<TransactionCreateData>): Promise<InventoryTransaction> => {
-    return await apiClient.patch<InventoryTransaction>(`/api/inventory/transactions/${id}/`, data);
+    return await apiClient.patch<InventoryTransaction>(`/inventory/transactions/${id}/`, data);
   },
 
   /**
    * Delete inventory transaction
    */
   deleteTransaction: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/inventory/transactions/${id}/`);
+    await apiClient.delete(`/inventory/transactions/${id}/`);
   },
 
   /**
    * Get transaction statistics
    */
   getStats: async (params?: { start_date?: string; end_date?: string; item?: number }): Promise<TransactionStats> => {
-    return await apiClient.get<TransactionStats>("/api/inventory/transactions/stats/", { params });
+    return await apiClient.get<TransactionStats>("/inventory/transactions/stats/", { params });
   },
 
   // ==================== Alerts ====================
@@ -223,49 +223,49 @@ export const inventoryAPI = {
    * Get paginated list of inventory alerts
    */
   getAlerts: async (params?: PaginationParams): Promise<PaginatedResponse<InventoryAlert>> => {
-    return await apiClient.get<PaginatedResponse<InventoryAlert>>("/api/inventory/alerts/", { params });
+    return await apiClient.get<PaginatedResponse<InventoryAlert>>("/inventory/alerts/", { params });
   },
 
   /**
    * Get single alert by ID
    */
   getAlert: async (id: number): Promise<InventoryAlert> => {
-    return await apiClient.get<InventoryAlert>(`/api/inventory/alerts/${id}/`);
+    return await apiClient.get<InventoryAlert>(`/inventory/alerts/${id}/`);
   },
 
   /**
    * Create new inventory alert
    */
   createAlert: async (data: Partial<InventoryAlert>): Promise<InventoryAlert> => {
-    return await apiClient.post<InventoryAlert>("/api/inventory/alerts/", data);
+    return await apiClient.post<InventoryAlert>("/inventory/alerts/", data);
   },
 
   /**
    * Update inventory alert
    */
   updateAlert: async (id: number, data: Partial<InventoryAlert>): Promise<InventoryAlert> => {
-    return await apiClient.patch<InventoryAlert>(`/api/inventory/alerts/${id}/`, data);
+    return await apiClient.patch<InventoryAlert>(`/inventory/alerts/${id}/`, data);
   },
 
   /**
    * Delete inventory alert
    */
   deleteAlert: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/inventory/alerts/${id}/`);
+    await apiClient.delete(`/inventory/alerts/${id}/`);
   },
 
   /**
    * Acknowledge an alert
    */
   acknowledge: async (id: number): Promise<InventoryAlert> => {
-    return await apiClient.post<InventoryAlert>(`/api/inventory/alerts/${id}/acknowledge/`);
+    return await apiClient.post<InventoryAlert>(`/inventory/alerts/${id}/acknowledge/`);
   },
 
   /**
    * Resolve an alert
    */
   resolve: async (id: number): Promise<InventoryAlert> => {
-    return await apiClient.post<InventoryAlert>(`/api/inventory/alerts/${id}/resolve/`);
+    return await apiClient.post<InventoryAlert>(`/inventory/alerts/${id}/resolve/`);
   },
 
   // ==================== Raw Materials ====================
@@ -274,14 +274,14 @@ export const inventoryAPI = {
    * Get paginated list of raw materials
    */
   getRawMaterials: async (params?: PaginationParams): Promise<PaginatedResponse<RawMaterial>> => {
-    return await apiClient.get<PaginatedResponse<RawMaterial>>("/api/inventory/raw-materials/", { params });
+    return await apiClient.get<PaginatedResponse<RawMaterial>>("/inventory/raw-materials/", { params });
   },
 
   /**
    * Get single raw material by ID
    */
   getRawMaterial: async (id: number): Promise<RawMaterial> => {
-    return await apiClient.get<RawMaterial>(`/api/inventory/raw-materials/${id}/`);
+    return await apiClient.get<RawMaterial>(`/inventory/raw-materials/${id}/`);
   },
 
   // ==================== Finished Goods ====================
@@ -290,13 +290,13 @@ export const inventoryAPI = {
    * Get paginated list of finished goods
    */
   getFinishedGoods: async (params?: PaginationParams): Promise<PaginatedResponse<FinishedGood>> => {
-    return await apiClient.get<PaginatedResponse<FinishedGood>>("/api/inventory/finished-goods/", { params });
+    return await apiClient.get<PaginatedResponse<FinishedGood>>("/inventory/finished-goods/", { params });
   },
 
   /**
    * Get single finished good by ID
    */
   getFinishedGood: async (id: number): Promise<FinishedGood> => {
-    return await apiClient.get<FinishedGood>(`/api/inventory/finished-goods/${id}/`);
+    return await apiClient.get<FinishedGood>(`/inventory/finished-goods/${id}/`);
   },
 };
