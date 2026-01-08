@@ -16,7 +16,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL ||
-      "https://ichhadhari-backend-162541991773.asia-south1.run.app/api",
+      "https://ichhadhari-backend-162541991773.asia-south1.run.app",
   },
 
   // Transpile workspace packages

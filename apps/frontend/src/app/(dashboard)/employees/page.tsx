@@ -73,8 +73,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDate, formatNumber } from "@/lib/utils/formatters";
-import { useEmployees, useDeleteEmployee, useUpdateEmployee } from "@/hooks/api/useVendorsEmployees";
-import type { Employee, EmployeeStatus } from "@/types/employee";
+import {
+  useEmployees,
+  useDeleteEmployee,
+  useUpdateEmployee,
+} from "@/hooks/api/useVendorsEmployees";
+import type {
+  Employee,
+  EmploymentStatus as EmployeeStatus,
+} from "@/types/api/employees";
 
 const PAGE_SIZE = 8;
 
@@ -133,15 +140,34 @@ const statusMeta: Record<
   },
 };
 
-const roleBadgeMap: Record<Employee["role"], string> = {
+// Safe accessor for statusMeta - falls back to 'active' for unknown statuses
+const getStatusMeta = (status: EmployeeStatus | string | undefined | null) => {
+  if (status && status in statusMeta) {
+    return statusMeta[status as EmployeeStatus];
+  }
+  return statusMeta.active;
+};
+
+const roleBadgeMap: Record<string, string> = {
   admin: "bg-[#F4A920]/10 text-[#8A5100] border-[#F4A920]/40",
   manager: "bg-blue-50 text-blue-700 border-blue-200",
   supervisor: "bg-purple-50 text-purple-700 border-purple-200",
-  staff: "bg-slate-50 text-slate-700 border-slate-200",
   operator: "bg-lime-50 text-lime-700 border-lime-200",
+  technician: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  driver: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  helper: "bg-slate-50 text-slate-700 border-slate-200",
+  other: "bg-gray-50 text-gray-700 border-gray-200",
 };
 
-const employmentTypeLabel: Record<Employee["employment_type"], string> = {
+// Safe accessor for roleBadgeMap - falls back to 'other' for unknown roles
+const getRoleBadgeClass = (role: string | undefined | null) => {
+  if (role && role in roleBadgeMap) {
+    return roleBadgeMap[role];
+  }
+  return roleBadgeMap.other;
+};
+
+const employmentTypeLabel: Record<string, string> = {
   full_time: "Full-Time",
   part_time: "Part-Time",
   contract: "Contract",
@@ -156,12 +182,42 @@ const departmentPalette = [
   "bg-[#FFF1F5] text-[#924058] border-[#FFC4D7]/70",
 ];
 
-function getDepartmentBadgeClass(department: string) {
-  if (!department) return departmentPalette[0];
-  const hash = department
+function getDepartmentBadgeClass(department: unknown) {
+  // Safely convert department to string - handle null, undefined, numbers, objects
+  let deptString = "";
+  if (typeof department === "string") {
+    deptString = department;
+  } else if (typeof department === "number") {
+    deptString = String(department);
+  } else if (
+    department &&
+    typeof department === "object" &&
+    "name" in department
+  ) {
+    deptString = String((department as { name: unknown }).name);
+  }
+  if (!deptString) return departmentPalette[0];
+  const hash = deptString
     .split("")
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return departmentPalette[hash % departmentPalette.length];
+}
+
+// Safe accessor for department string - handles null, undefined, numbers, objects
+function getDepartmentString(department: unknown): string {
+  if (typeof department === "string") return department;
+  if (typeof department === "number") return String(department);
+  if (department && typeof department === "object" && "name" in department) {
+    return String((department as { name: unknown }).name);
+  }
+  if (
+    department &&
+    typeof department === "object" &&
+    "department_name" in department
+  ) {
+    return String((department as { department_name: unknown }).department_name);
+  }
+  return "";
 }
 
 function getInitials(employee: Employee) {
@@ -170,7 +226,7 @@ function getInitials(employee: Employee) {
   return `${first}${last}`.toUpperCase();
 }
 
-function formatRoleLabel(role: Employee["role"]) {
+function formatRoleLabel(role: string) {
   switch (role) {
     case "admin":
       return "Administrator";
@@ -180,8 +236,14 @@ function formatRoleLabel(role: Employee["role"]) {
       return "Supervisor";
     case "operator":
       return "Operator";
+    case "technician":
+      return "Technician";
+    case "driver":
+      return "Driver";
+    case "helper":
+      return "Helper";
     default:
-      return "Staff";
+      return "Other";
   }
 }
 
@@ -208,30 +270,32 @@ function exportEmployeesToCsv(employeesToExport: Employee[]) {
     "Employee ID",
     "Name",
     "Department",
-    "Position",
+    "Designation",
     "Employment Type",
     "Status",
     "Join Date",
     "Email",
     "Phone",
-    "Roles",
+    "City",
   ].join(",");
 
   const rows = employeesToExport.map((employee) => {
     const values = [
       employee.employee_id,
       `${employee.first_name} ${employee.last_name}`.trim(),
-      employee.department,
-      employee.position,
-      employmentTypeLabel[employee.employment_type],
-      statusMeta[employee.status].label,
+      getDepartmentString(employee.department),
+      employee.designation || "",
+      employmentTypeLabel[employee.employment_type] || employee.employment_type,
+      employee.is_active ? "Active" : "Inactive",
       formatDate(employee.date_of_joining),
-      employee.personal_email,
-      employee.personal_phone,
-      (employee.system_roles || []).join(" | "),
+      employee.personal_email || employee.email || "",
+      employee.phone,
+      employee.city || "",
     ];
 
-    return values.map((value) => `"${value.replace(/"/g, '""')}"`).join(",");
+    return values
+      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+      .join(",");
   });
 
   const csvContent = [header, ...rows].join("\n");
@@ -249,11 +313,18 @@ function exportEmployeesToCsv(employeesToExport: Employee[]) {
 
 export default function EmployeesPage() {
   // Fetch employees from API
-  const { data: employeesData, isLoading: employeesLoading, error: employeesError } = useEmployees();
+  const {
+    data: employeesData,
+    isLoading: employeesLoading,
+    error: employeesError,
+  } = useEmployees();
   const deleteEmployeeMutation = useDeleteEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
 
-  const employees = useMemo(() => employeesData?.results || [], [employeesData]);
+  const employees = useMemo(
+    () => employeesData?.results || [],
+    [employeesData]
+  );
   const isLoading = employeesLoading;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -265,14 +336,18 @@ export default function EmployeesPage() {
   const [focusView, setFocusView] = useState<FocusView>("all");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [page, setPage] = useState(1);
-  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<number>>(new Set());
   const [dialogConfig, setDialogConfig] = useState<DialogConfig | null>(null);
 
   const departments = useMemo(
     () =>
       Array.from(
-        new Set(employees.map((employee) => employee.department))
-      ).sort(),
+        new Set(
+          employees.map((employee) => getDepartmentString(employee.department))
+        )
+      )
+        .filter(Boolean)
+        .sort(),
     [employees]
   );
 
@@ -291,7 +366,7 @@ export default function EmployeesPage() {
   );
 
   const liveStatusSummary = useMemo(() => {
-    const summary: Record<EmployeeStatus | "total", number> = {
+    const summary: Record<string, number> = {
       total: 0,
       active: 0,
       on_leave: 0,
@@ -301,7 +376,10 @@ export default function EmployeesPage() {
 
     employees.forEach((employee) => {
       summary.total += 1;
-      summary[employee.status] += 1;
+      // Map is_active to active/inactive status
+      if (employee.is_active) {
+        summary.active += 1;
+      }
     });
 
     return summary;
@@ -310,33 +388,21 @@ export default function EmployeesPage() {
   const attendanceSnapshot = useMemo(() => {
     return {
       date: new Date().toISOString(),
-      present: employees.filter(e => e.status === 'active').length,
+      present: employees.filter((e) => e.is_active).length,
       onLeave: liveStatusSummary.on_leave,
-      absent: Math.max(0, liveStatusSummary.total - liveStatusSummary.active - liveStatusSummary.on_leave),
+      absent: Math.max(0, liveStatusSummary.total - liveStatusSummary.active),
       wfh: 0,
     };
   }, [liveStatusSummary, employees]);
 
   const averageAttendance = useMemo(() => {
-    if (employees.length === 0) {
-      return 0;
-    }
-    const totalAttendance = employees.reduce(
-      (acc, employee) => acc + (employee.attendance_score ?? 0),
-      0
-    );
-    return Math.round(totalAttendance / employees.length);
+    // Since attendance_score doesn't exist in API, return a placeholder
+    return 0;
   }, [employees]);
 
   const upcomingReviews = useMemo(() => {
-    const daysThreshold = 270;
-    const now = Date.now();
-    return employees.filter((employee) => {
-      if (!employee.last_review_date) return false;
-      const lastReview = new Date(employee.last_review_date).getTime();
-      const daysSince = (now - lastReview) / (1000 * 60 * 60 * 24);
-      return daysSince >= daysThreshold;
-    }).length;
+    // Since last_review_date doesn't exist in API, return a placeholder
+    return 0;
   }, [employees]);
 
   useEffect(() => {
@@ -360,12 +426,13 @@ export default function EmployeesPage() {
           employee.first_name,
           employee.last_name,
           employee.employee_id,
-          employee.department,
-          employee.position,
+          getDepartmentString(employee.department),
+          employee.designation,
           employee.personal_email,
-          employee.personal_phone,
-          (employee.system_roles || []).join(" "),
+          employee.email,
+          employee.phone,
         ]
+          .filter(Boolean)
           .join(" ")
           .toLowerCase();
         return haystack.includes(query);
@@ -374,7 +441,8 @@ export default function EmployeesPage() {
 
     if (departmentFilter !== "all") {
       workingSet = workingSet.filter(
-        (employee) => employee.department === departmentFilter
+        (employee) =>
+          getDepartmentString(employee.department) === departmentFilter
       );
     }
 
@@ -385,9 +453,12 @@ export default function EmployeesPage() {
     }
 
     if (statusFilter !== "all") {
-      workingSet = workingSet.filter(
-        (employee) => employee.status === statusFilter
-      );
+      // Map statusFilter to is_active
+      if (statusFilter === "active") {
+        workingSet = workingSet.filter((employee) => employee.is_active);
+      } else {
+        workingSet = workingSet.filter((employee) => !employee.is_active);
+      }
     }
 
     if (employmentFilter !== "all") {
@@ -400,11 +471,11 @@ export default function EmployeesPage() {
       workingSet = workingSet.filter((employee) => {
         switch (focusView) {
           case "top-performers":
-            return (employee.performance_rating ?? 0) >= 4.5;
+            // Performance rating doesn't exist, so return all active employees
+            return employee.is_active;
           case "attendance-risk":
-            return (
-              (employee.attendance_score ?? 0) < 85 || employee.status === "on_leave"
-            );
+            // Attendance score doesn't exist, so return inactive employees
+            return !employee.is_active;
           case "new-joiners": {
             const joined = new Date(employee.date_of_joining).getTime();
             const daysSinceJoining =
@@ -428,9 +499,12 @@ export default function EmployeesPage() {
             .toLowerCase()
             .localeCompare(`${a.first_name} ${a.last_name}`.toLowerCase());
         case "department-asc":
-          return a.department.localeCompare(b.department);
+          return getDepartmentString(a.department).localeCompare(
+            getDepartmentString(b.department)
+          );
         case "performance-desc":
-          return (b.performance_rating ?? 0) - (a.performance_rating ?? 0);
+          // Performance doesn't exist, sort by active status
+          return (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
         case "join-date-desc":
         default:
           return (
@@ -511,7 +585,7 @@ export default function EmployeesPage() {
     },
   ];
 
-  const handleRowSelection = (employeeId: string, selected: boolean) => {
+  const handleRowSelection = (employeeId: number, selected: boolean) => {
     setSelectedRowIds((previous) => {
       const next = new Set(previous);
       if (selected) {
@@ -587,17 +661,15 @@ export default function EmployeesPage() {
 
     if (dialogConfig.type === "status") {
       const { employee, nextStatus } = dialogConfig;
-      // Convert string ID to number if needed
-      const employeeId = typeof employee.id === 'string' ? parseInt(employee.id, 10) : employee.id;
+      // Map UI status to is_active boolean
+      const isActive = nextStatus === "active";
       updateEmployeeMutation.mutate({
-        id: employeeId,
-        data: { status: nextStatus },
+        id: employee.id,
+        data: { is_active: isActive },
       });
     } else {
       const { employee } = dialogConfig;
-      // Convert string ID to number if needed
-      const employeeId = typeof employee.id === 'string' ? parseInt(employee.id, 10) : employee.id;
-      deleteEmployeeMutation.mutate(employeeId);
+      deleteEmployeeMutation.mutate(employee.id);
       setSelectedRowIds((previous) => {
         const next = new Set(previous);
         next.delete(employee.id);
@@ -727,7 +799,7 @@ export default function EmployeesPage() {
                 value={departmentFilter}
                 onValueChange={setDepartmentFilter}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-40">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
                 <SelectContent>
@@ -973,15 +1045,16 @@ export default function EmployeesPage() {
                 {!isLoading && hasResults && (
                   <AnimatePresence initial={false}>
                     {paginatedEmployees.map((employee) => {
-                      const status = statusMeta[employee.status];
+                      const status = getStatusMeta(
+                        employee.is_active ? "active" : "inactive"
+                      );
                       const isSelected = selectedRowIds.has(employee.id);
-                      const roleClasses = roleBadgeMap[employee.role];
+                      const roleClasses = getRoleBadgeClass(employee.role);
                       const employmentLabel =
-                        employmentTypeLabel[employee.employment_type];
-                      const statusToggleDisabled =
-                        employee.status === "resigned";
-                      const supervisorBadge =
-                        (employee.performance_rating ?? 0) >= 4.5;
+                        employmentTypeLabel[employee.employment_type] ||
+                        employee.employment_type;
+                      const statusToggleDisabled = !employee.is_active;
+                      const supervisorBadge = false; // performance_rating doesn't exist
 
                       return (
                         <motion.tr
@@ -1014,7 +1087,7 @@ export default function EmployeesPage() {
                             <div className="flex items-center gap-3">
                               <Avatar className="ring-2 ring-white shadow-sm">
                                 <AvatarImage
-                                  src={employee.profile_picture ?? ""}
+                                  src={employee.photo_url ?? ""}
                                   alt={`${employee.first_name} ${employee.last_name}`}
                                 />
                                 <AvatarFallback className="bg-[#F4A920]/20 text-[#8A5100]">
@@ -1036,7 +1109,7 @@ export default function EmployeesPage() {
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                   <span>{employee.employee_id}</span>
                                   <span className="text-gray-300">|</span>
-                                  <span>{employee.position}</span>
+                                  <span>{employee.designation}</span>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 text-xs">
                                   <Badge
@@ -1057,7 +1130,7 @@ export default function EmployeesPage() {
                                       )
                                     )}
                                   >
-                                    {employee.department}
+                                    {getDepartmentString(employee.department)}
                                   </Badge>
                                 </div>
                               </div>
@@ -1068,24 +1141,30 @@ export default function EmployeesPage() {
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 <Phone className="size-3 text-[#F4A920]" />
                                 <a
-                                  href={`tel:${employee.personal_phone}`}
+                                  href={`tel:${employee.phone}`}
                                   className="hover:text-[#8A5100]"
                                 >
-                                  {employee.personal_phone}
+                                  {employee.phone}
                                 </a>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 <Mail className="size-3 text-[#F4A920]" />
                                 <a
-                                  href={`mailto:${employee.personal_email}`}
+                                  href={`mailto:${
+                                    employee.personal_email ||
+                                    employee.email ||
+                                    ""
+                                  }`}
                                   className="hover:text-[#8A5100]"
                                 >
-                                  {employee.personal_email}
+                                  {employee.personal_email ||
+                                    employee.email ||
+                                    "-"}
                                 </a>
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 Reports to:{" "}
-                                {employee.reporting_manager_id ?? "-"}
+                                {employee.reporting_manager ? "Manager" : "-"}
                               </div>
                             </div>
                           </TableCell>
@@ -1103,12 +1182,11 @@ export default function EmployeesPage() {
                                   Joined {formatDate(employee.date_of_joining)}
                                 </span>
                               </div>
-                              {employee.date_of_resignation && (
+                              {employee.date_of_leaving && (
                                 <div className="flex items-center gap-2 text-red-500">
                                   <AlertTriangle className="size-3" />
                                   <span>
-                                    Resigned{" "}
-                                    {formatDate(employee.date_of_resignation)}
+                                    Left {formatDate(employee.date_of_leaving)}
                                   </span>
                                 </div>
                               )}
@@ -1118,32 +1196,19 @@ export default function EmployeesPage() {
                             <div className="space-y-3 text-xs text-muted-foreground">
                               <div>
                                 <div className="flex items-center justify-between text-xs">
-                                  <span>Performance</span>
+                                  <span>Status</span>
                                   <span className="font-medium text-dairy-charcoal">
-                                    {(employee.performance_rating ?? 0).toFixed(1)} / 5
+                                    {employee.is_active ? "Active" : "Inactive"}
                                   </span>
                                 </div>
-                                <Progress
-                                  value={(employee.performance_rating ?? 0) * 20}
-                                />
                               </div>
                               <div>
                                 <div className="flex items-center justify-between text-xs">
-                                  <span>Attendance</span>
+                                  <span>Employment</span>
                                   <span className="font-medium text-dairy-charcoal">
-                                    {employee.attendance_score ?? 0}%
+                                    {employmentLabel}
                                   </span>
                                 </div>
-                                <Progress value={employee.attendance_score ?? 0} />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between text-xs">
-                                  <span>Productivity</span>
-                                  <span className="font-medium text-dairy-charcoal">
-                                    {employee.productivity_score}%
-                                  </span>
-                                </div>
-                                <Progress value={employee.productivity_score} />
                               </div>
                             </div>
                           </TableCell>
@@ -1161,7 +1226,7 @@ export default function EmployeesPage() {
                               </Badge>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Switch
-                                  checked={employee.status === "active"}
+                                  checked={employee.is_active}
                                   disabled={statusToggleDisabled}
                                   onCheckedChange={(checked) =>
                                     handleStatusToggleRequest(
@@ -1171,14 +1236,12 @@ export default function EmployeesPage() {
                                   }
                                   title={
                                     statusToggleDisabled
-                                      ? "Status locked for resigned employees"
+                                      ? "Status locked for inactive employees"
                                       : "Toggle active status"
                                   }
                                 />
                                 <span>
-                                  {employee.status === "active"
-                                    ? "Active"
-                                    : "Inactive"}
+                                  {employee.is_active ? "Active" : "Inactive"}
                                 </span>
                               </div>
                             </div>

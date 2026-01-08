@@ -19,7 +19,7 @@ class APIClient {
 
   constructor() {
     const configuredBaseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app/api";
+      process.env.NEXT_PUBLIC_API_URL || "https://ichhadhari-backend-162541991773.asia-south1.run.app";
 
     this.client = axios.create({
       baseURL: configuredBaseUrl.replace(/\/+$/, ""),

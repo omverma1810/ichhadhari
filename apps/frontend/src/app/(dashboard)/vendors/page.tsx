@@ -57,8 +57,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useVendors, usePurchaseOrders, useDeleteVendor } from "@/hooks/api/useVendorsEmployees";
-import type { Vendor, VendorStatus, VendorType } from "@/types/vendor";
+import {
+  useVendors,
+  usePurchaseOrders,
+  useDeleteVendor,
+} from "@/hooks/api/useVendorsEmployees";
+import type {
+  Vendor,
+  VendorStatus,
+  VendorCategory as VendorType,
+} from "@/types/api/vendors";
+import type { PurchaseOrder } from "@/types/api/vendors";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -145,7 +154,6 @@ const vendorStatusStyles: Record<VendorStatus, string> = {
   active: "border-emerald-200 bg-emerald-50 text-emerald-700",
   inactive: "border-slate-200 bg-slate-50 text-slate-600",
   suspended: "border-amber-200 bg-amber-50 text-amber-700",
-  blocked: "border-red-200 bg-red-50 text-red-700",
 };
 
 const vendorTypeMeta: Record<
@@ -156,8 +164,8 @@ const vendorTypeMeta: Record<
     className: string;
   }
 > = {
-  milk_supplier: {
-    label: "Milk Supplier",
+  raw_material: {
+    label: "Raw Material",
     icon: Droplet,
     className: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
@@ -171,8 +179,8 @@ const vendorTypeMeta: Record<
     icon: Package,
     className: "border-purple-200 bg-purple-50 text-purple-700",
   },
-  chemical: {
-    label: "Chemical",
+  service: {
+    label: "Service",
     icon: Flame,
     className: "border-orange-200 bg-orange-50 text-orange-700",
   },
@@ -181,6 +189,16 @@ const vendorTypeMeta: Record<
     icon: Store,
     className: "border-slate-200 bg-slate-50 text-slate-600",
   },
+};
+
+// Safe accessor for vendorTypeMeta - falls back to 'other' for unknown types
+const getVendorTypeMeta = (
+  vendorType: VendorType | string | undefined | null
+) => {
+  if (vendorType && vendorType in vendorTypeMeta) {
+    return vendorTypeMeta[vendorType as VendorType];
+  }
+  return vendorTypeMeta.other;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -258,7 +276,11 @@ export default function VendorsOverviewPage() {
   const [deleteCandidate, setDeleteCandidate] = useState<Vendor | null>(null);
 
   // Fetch vendors from API
-  const { data: vendorsData, isLoading: vendorsLoading, error: vendorsError } = useVendors();
+  const {
+    data: vendorsData,
+    isLoading: vendorsLoading,
+    error: vendorsError,
+  } = useVendors();
   const { data: purchaseOrdersData } = usePurchaseOrders();
   const deleteMutation = useDeleteVendor();
 
@@ -269,15 +291,19 @@ export default function VendorsOverviewPage() {
     const map = new Map<string, string>();
     const orders = purchaseOrdersData?.results || [];
     orders.forEach((order) => {
-      if (!order.vendor_id || !order.order_date) {
+      if (!order.vendor || !order.created_at) {
         return;
       }
-      const current = map.get(order.vendor_id.toString());
+      const vendorId =
+        typeof order.vendor === "number"
+          ? order.vendor.toString()
+          : String(order.vendor);
+      const current = map.get(vendorId);
       if (
         !current ||
-        new Date(order.order_date).getTime() > new Date(current).getTime()
+        new Date(order.created_at).getTime() > new Date(current).getTime()
       ) {
-        map.set(order.vendor_id.toString(), order.order_date);
+        map.set(vendorId, order.created_at);
       }
     });
     return map;
@@ -296,15 +322,13 @@ export default function VendorsOverviewPage() {
             vendor.email,
             vendor.phone,
             vendor.vendor_id,
-            ...(vendor.contact_persons || []).map(
-              (person) => `${person.name} ${person.email} ${person.phone}`
-            ),
+            vendor.contact_person,
           ]
             .filter(Boolean)
-            .some((value) => value.toLowerCase().includes(term))
+            .some((value) => value && value.toLowerCase().includes(term))
         : true;
       const matchesType =
-        typeFilter === "all" || vendor.vendor_type === typeFilter;
+        typeFilter === "all" || vendor.category === typeFilter;
       const matchesStatus =
         statusFilter === "all" || vendor.status === statusFilter;
       const paymentStatus = calculatePaymentStatus(vendor);
@@ -340,9 +364,9 @@ export default function VendorsOverviewPage() {
         case "recent":
         default: {
           const aDate =
-            recentOrderMap.get(a.id) ?? a.updated_at ?? a.created_at;
+            recentOrderMap.get(a.id.toString()) ?? a.updated_at ?? a.created_at;
           const bDate =
-            recentOrderMap.get(b.id) ?? b.updated_at ?? b.created_at;
+            recentOrderMap.get(b.id.toString()) ?? b.updated_at ?? b.created_at;
           const diff = new Date(aDate).getTime() - new Date(bDate).getTime();
           return sortState.direction === "asc" ? diff : -diff;
         }
@@ -437,14 +461,13 @@ export default function VendorsOverviewPage() {
     ];
     const rows = sortedVendors.map((vendor) => {
       const paymentStatus = calculatePaymentStatus(vendor);
-      const contact = vendor.contact_persons?.[0];
-      const recentOrder = recentOrderMap.get(vendor.id);
+      const recentOrder = recentOrderMap.get(vendor.id.toString());
       return [
         vendor.company_name,
-        vendorTypeMeta[vendor.vendor_type].label,
+        getVendorTypeMeta(vendor.category).label,
         vendor.status,
-        contact ? contact.name : "",
-        vendor.email,
+        vendor.contact_person || "",
+        vendor.email || "",
         vendor.phone,
         formatCurrency(vendor.outstanding_balance),
         (vendor.rating ?? 0).toFixed(1),
@@ -478,9 +501,7 @@ export default function VendorsOverviewPage() {
 
   const confirmDelete = useCallback(() => {
     if (deleteCandidate && deleteCandidate.id) {
-      // Convert string ID to number if needed
-      const vendorId = typeof deleteCandidate.id === 'string' ? parseInt(deleteCandidate.id, 10) : deleteCandidate.id;
-      deleteMutation.mutate(vendorId);
+      deleteMutation.mutate(deleteCandidate.id);
     }
     closeDeleteDialog();
   }, [closeDeleteDialog, deleteCandidate, deleteMutation]);
@@ -511,10 +532,12 @@ export default function VendorsOverviewPage() {
   );
 
   const renderStars = useCallback((rating: number) => {
+    const safeRating =
+      typeof rating === "number" && !isNaN(rating) ? rating : 0;
     return (
       <div className="flex items-center gap-1">
         {Array.from({ length: 5 }).map((_, index) => {
-          const filled = index + 1 <= Math.round(rating);
+          const filled = index + 1 <= Math.round(safeRating);
           return (
             <Star
               key={index}
@@ -527,9 +550,9 @@ export default function VendorsOverviewPage() {
           );
         })}
         <span
-          className={cn("ml-2 text-sm font-medium", getRatingColor(rating))}
+          className={cn("ml-2 text-sm font-medium", getRatingColor(safeRating))}
         >
-          {rating.toFixed(1)}
+          {safeRating.toFixed(1)}
         </span>
       </div>
     );
@@ -545,7 +568,7 @@ export default function VendorsOverviewPage() {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className="space-y-8 text-[color:#5D4037]"
+      className="space-y-8 text-[#5D4037]"
     >
       <div className="space-y-4">
         <nav aria-label="Breadcrumb" className="text-sm text-[#8B5A3C]/80">
@@ -563,7 +586,7 @@ export default function VendorsOverviewPage() {
           </ol>
         </nav>
         <motion.div
-          className="flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-[#FFF3D9] via-[#FFF9EC] to-[#FFFEF7] p-6 shadow-[0_20px_45px_rgba(244,169,32,0.25)] sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-4 rounded-3xl bg-linear-to-r from-[#FFF3D9] via-[#FFF9EC] to-[#FFFEF7] p-6 shadow-[0_20px_45px_rgba(244,169,32,0.25)] sm:flex-row sm:items-center sm:justify-between"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
@@ -585,7 +608,7 @@ export default function VendorsOverviewPage() {
           </div>
           <Button
             asChild
-            className="group relative h-11 rounded-full border-0 bg-gradient-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] px-6 text-base font-semibold text-white shadow-[0_12px_24px_rgba(139,90,60,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:shadow-[0_16px_32px_rgba(139,90,60,0.3)] focus-visible:ring-[#F4A920]/50"
+            className="group relative h-11 rounded-full border-0 bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] px-6 text-base font-semibold text-white shadow-[0_12px_24px_rgba(139,90,60,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:shadow-[0_16px_32px_rgba(139,90,60,0.3)] focus-visible:ring-[#F4A920]/50"
           >
             <Link href="/vendors/new">
               <span className="flex items-center gap-2">
@@ -849,11 +872,13 @@ export default function VendorsOverviewPage() {
                     <AnimatePresence initial={false}>
                       {hasResults ? (
                         paginatedVendors.map((vendor, index) => {
-                          const contact = vendor.contact_persons?.[0];
                           const paymentStatus = calculatePaymentStatus(vendor);
-                          const recentOrder = recentOrderMap.get(vendor.id);
-                          const TypeIcon =
-                            vendorTypeMeta[vendor.vendor_type].icon;
+                          const recentOrder = recentOrderMap.get(
+                            vendor.id.toString()
+                          );
+                          const TypeIcon = getVendorTypeMeta(
+                            vendor.category
+                          ).icon;
                           return (
                             <motion.tr
                               key={vendor.id}
@@ -866,7 +891,7 @@ export default function VendorsOverviewPage() {
                                 delay: index * 0.04,
                                 ease: "easeOut",
                               }}
-                              className="group border-b border-[#F4A920]/20 bg-white text-sm transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_18px_45px_rgba(139,90,60,0.16)]"
+                              className="group border-b border-[#F4A920]/20 bg-white text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_rgba(139,90,60,0.16)]"
                             >
                               <TableCell className="font-semibold text-[#5D4037]">
                                 <Link
@@ -888,11 +913,11 @@ export default function VendorsOverviewPage() {
                                 <Badge
                                   className={cn(
                                     "flex items-center gap-2 px-3 py-1 text-[13px]",
-                                    vendorTypeMeta[vendor.vendor_type].className
+                                    getVendorTypeMeta(vendor.category).className
                                   )}
                                 >
                                   <TypeIcon className="size-4" />
-                                  {vendorTypeMeta[vendor.vendor_type].label}
+                                  {getVendorTypeMeta(vendor.category).label}
                                 </Badge>
                               </TableCell>
                               <TableCell>
@@ -908,19 +933,19 @@ export default function VendorsOverviewPage() {
                               <TableCell>
                                 <div className="flex flex-col gap-1 text-sm text-[#5D4037]">
                                   <div className="font-medium">
-                                    {contact?.name ?? "—"}
+                                    {vendor.contact_person ?? "—"}
                                   </div>
                                   <div className="flex items-center gap-2 text-xs text-[#8B5A3C]/80">
-                                    {contact?.phone ? (
+                                    {vendor.phone ? (
                                       <span className="flex items-center gap-1">
                                         <Phone className="size-3.5" />
-                                        {contact.phone}
+                                        {vendor.phone}
                                       </span>
                                     ) : null}
-                                    {contact?.email ? (
+                                    {vendor.email ? (
                                       <span className="flex items-center gap-1">
                                         <Mail className="size-3.5" />
-                                        {contact.email}
+                                        {vendor.email}
                                       </span>
                                     ) : null}
                                   </div>
@@ -1055,10 +1080,11 @@ export default function VendorsOverviewPage() {
                 <AnimatePresence initial={false}>
                   {hasResults ? (
                     paginatedVendors.map((vendor) => {
-                      const contact = vendor.contact_persons?.[0];
                       const paymentStatus = calculatePaymentStatus(vendor);
-                      const recentOrder = recentOrderMap.get(vendor.id);
-                      const TypeIcon = vendorTypeMeta[vendor.vendor_type].icon;
+                      const recentOrder = recentOrderMap.get(
+                        vendor.id.toString()
+                      );
+                      const TypeIcon = getVendorTypeMeta(vendor.category).icon;
                       return (
                         <motion.div
                           key={vendor.id}
@@ -1092,20 +1118,20 @@ export default function VendorsOverviewPage() {
                               <Badge
                                 className={cn(
                                   "w-fit gap-2 text-xs",
-                                  vendorTypeMeta[vendor.vendor_type].className
+                                  getVendorTypeMeta(vendor.category).className
                                 )}
                               >
                                 <TypeIcon className="size-4" />
-                                {vendorTypeMeta[vendor.vendor_type].label}
+                                {getVendorTypeMeta(vendor.category).label}
                               </Badge>
                               <div className="space-y-1 text-sm text-[#8B5A3C]/80">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Phone className="size-4 text-[#F4A920]" />
-                                  {contact?.phone ?? vendor.phone ?? "—"}
+                                  {vendor.phone ?? "—"}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Mail className="size-4 text-[#F4A920]" />
-                                  {contact?.email ?? vendor.email ?? "—"}
+                                  {vendor.email ?? "—"}
                                 </div>
                               </div>
                             </div>
@@ -1224,7 +1250,7 @@ export default function VendorsOverviewPage() {
                         className={cn(
                           "flex size-9 items-center justify-center rounded-full border transition-all",
                           isActive
-                            ? "border-transparent bg-gradient-to-r from-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_24px_rgba(139,90,60,0.25)]"
+                            ? "border-transparent bg-linear-to-r from-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_24px_rgba(139,90,60,0.25)]"
                             : "border-[#F4A920]/30 bg-white text-[#8B5A3C] hover:border-[#F4A920]/60 hover:bg-[#F4A920]/10"
                         )}
                       >
@@ -1276,7 +1302,7 @@ export default function VendorsOverviewPage() {
             </Button>
             <Button
               type="button"
-              className="rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-[0_12px_30px_rgba(220,38,38,0.35)] hover:from-red-500 hover:to-red-500"
+              className="rounded-full bg-linear-to-r from-red-500 to-red-600 text-white shadow-[0_12px_30px_rgba(220,38,38,0.35)] hover:from-red-500 hover:to-red-500"
               onClick={confirmDelete}
             >
               Delete Vendor
@@ -1313,7 +1339,7 @@ function SummaryCard({
     >
       <div className="relative overflow-hidden rounded-2xl border border-[#F4A920]/20 bg-white p-6 shadow-[0_20px_45px_rgba(93,64,55,0.1)]">
         <div
-          className="absolute inset-0 -z-10 bg-gradient-to-br opacity-20"
+          className="absolute inset-0 -z-10 bg-linear-to-br opacity-20"
           style={{
             backgroundImage: `linear-gradient(135deg, ${brandPalette.gold}, transparent)`,
           }}
@@ -1329,7 +1355,7 @@ function SummaryCard({
           </div>
           <span
             className={cn(
-              "flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-[0_12px_30px_rgba(139,90,60,0.22)]",
+              "flex size-12 items-center justify-center rounded-2xl bg-linear-to-br text-white shadow-[0_12px_30px_rgba(139,90,60,0.22)]",
               accentClass
             )}
           >

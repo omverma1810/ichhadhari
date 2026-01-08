@@ -169,7 +169,7 @@ class AuthService {
   async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
       const response = await axios.post<RegisterResponse>(
-        `${API_BASE_URL}/api/auth/register/`,
+        `${API_BASE_URL}/auth/register/`,
         credentials
       );
 
@@ -206,7 +206,7 @@ class AuthService {
       // Django API expects 'username' field (can be email or username)
       const username = credentials.username || credentials.email || "";
       const response = await axios.post<LoginResponse>(
-        `${API_BASE_URL}/api/auth/login/`,
+        `${API_BASE_URL}/auth/login/`,
         {
           username,
           password: credentials.password,
@@ -291,7 +291,7 @@ class AuthService {
     try {
       // Django REST Framework SimpleJWT expects refresh token in request body
       const response = await axios.post<{ access: string }>(
-        `${API_BASE_URL}/api/auth/token/refresh/`,
+        `${API_BASE_URL}/auth/token/refresh/`,
         {
           refresh: refreshToken,
         }
