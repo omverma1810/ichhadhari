@@ -22,111 +22,110 @@ export function InvoicePrintTemplate({ invoice }: InvoicePrintTemplateProps) {
 
   return (
     <div className="invoice-print-container">
-      {/* Header */}
-      <div className="invoice-header">
-        <div className="company-info">
-          <h1 className="company-name">ICHHADHARI PREMIUM PUNJABI DAIRY</h1>
-          <p className="company-address">Jabalpur, Madhya Pradesh, India</p>
-          <p className="company-contact">Phone: +91-XXXXXXXXXX</p>
-        </div>
-        <div className="invoice-info">
-          <h2 className="invoice-title">INVOICE</h2>
-          <div className="invoice-details">
-            <p>
-              <strong>Invoice #:</strong> {invoice.invoice_number}
-            </p>
-            <p>
-              <strong>Date:</strong> {formatDate(invoice.invoice_date)}
-            </p>
-            <p>
-              <strong>Due Date:</strong> {formatDate(invoice.due_date)}
-            </p>
-          </div>
-        </div>
+      {/* Header - Centered for thermal printer */}
+      <div className="thermal-header">
+        <h1 className="company-name">ICHHADHARI PREMIUM PUNJABI</h1>
+        <h1 className="company-name">DAIRY</h1>
+        <p className="company-address">Jabalpur, Madhya Pradesh, India</p>
+        <p className="company-contact">Phone: +91-9174530128</p>
+      </div>
+
+      <div className="divider" />
+
+      {/* Invoice Info - Centered */}
+      <div className="invoice-info-thermal">
+        <h2 className="invoice-title">INVOICE</h2>
+        <p className="invoice-detail">Invoice #: {invoice.invoice_number}</p>
+        <p className="invoice-detail">
+          Date: {formatDate(invoice.invoice_date)}
+        </p>
+        <p className="invoice-detail">
+          Due Date: {formatDate(invoice.due_date)}
+        </p>
       </div>
 
       <div className="divider" />
 
       {/* Vendor Information */}
-      <div className="vendor-section">
-        <h3 className="section-title">BILL TO:</h3>
-        <p className="vendor-name">{invoice.vendor_name}</p>
+      <div className="vendor-section-thermal">
+        <p className="section-label">BILL TO:</p>
+        <p className="vendor-name-thermal">{invoice.vendor_name}</p>
         {invoice.reference_number && (
-          <p className="reference">Ref: {invoice.reference_number}</p>
+          <p className="reference-thermal">Ref: {invoice.reference_number}</p>
         )}
       </div>
 
       <div className="divider" />
 
-      {/* Items Table */}
-      <table className="items-table">
-        <thead>
-          <tr>
-            <th className="col-desc">Description</th>
-            <th className="col-qty">Qty</th>
-            <th className="col-unit">Unit</th>
-            <th className="col-price">Price</th>
-            <th className="col-total">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoice.items.map((item, index) => (
-            <tr key={item.id || index}>
-              <td className="item-desc">{item.item_description}</td>
-              <td className="item-qty">
-                {parseFloat(String(item.quantity)).toFixed(2)}
-              </td>
-              <td className="item-unit">{item.unit}</td>
-              <td className="item-price">{formatCurrency(item.unit_price)}</td>
-              <td className="item-total">{formatCurrency(item.line_total)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Items - Simple list format for thermal */}
+      <div className="items-section-thermal">
+        <div className="items-header-thermal">
+          <span className="item-desc-header">DESCRIPTION</span>
+          <span className="item-qty-header">QTY</span>
+          <span className="item-total-header">TOTAL</span>
+        </div>
+        <div className="divider-thin" />
+        {invoice.items.map((item, index) => (
+          <div key={item.id || index} className="item-row-thermal">
+            <div className="item-desc-thermal">{item.item_description}</div>
+            <div className="item-details-thermal">
+              <span>
+                {parseFloat(String(item.quantity)).toFixed(2)} {item.unit} x{" "}
+                {formatCurrency(item.unit_price)}
+              </span>
+              <span className="item-total-thermal">
+                {formatCurrency(item.line_total)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="divider" />
 
-      {/* Totals Section */}
-      <div className="totals-section">
-        <div className="totals-row">
-          <span className="totals-label">Subtotal:</span>
-          <span className="totals-value">
+      {/* Totals Section - Thermal format */}
+      <div className="totals-section-thermal">
+        <div className="totals-row-thermal">
+          <span className="totals-label-thermal">Subtotal:</span>
+          <span className="totals-value-thermal">
             {formatCurrency(invoice.subtotal)}
           </span>
         </div>
         {parseFloat(invoice.tax_amount) > 0 && (
-          <div className="totals-row">
-            <span className="totals-label">Tax:</span>
-            <span className="totals-value">
+          <div className="totals-row-thermal">
+            <span className="totals-label-thermal">Tax:</span>
+            <span className="totals-value-thermal">
               {formatCurrency(invoice.tax_amount)}
             </span>
           </div>
         )}
         {parseFloat(invoice.discount_amount) > 0 && (
-          <div className="totals-row">
-            <span className="totals-label">Discount:</span>
-            <span className="totals-value">
+          <div className="totals-row-thermal">
+            <span className="totals-label-thermal">Discount:</span>
+            <span className="totals-value-thermal">
               -{formatCurrency(invoice.discount_amount)}
             </span>
           </div>
         )}
-        <div className="totals-row total-row">
-          <span className="totals-label">Total Amount:</span>
-          <span className="totals-value">
+        <div className="divider" />
+        <div className="totals-row-thermal total-row-thermal">
+          <span className="totals-label-thermal">TOTAL:</span>
+          <span className="totals-value-thermal">
             {formatCurrency(invoice.total_amount)}
           </span>
         </div>
         {parseFloat(invoice.amount_paid) > 0 && (
           <>
-            <div className="totals-row">
-              <span className="totals-label">Amount Paid:</span>
-              <span className="totals-value">
+            <div className="totals-row-thermal">
+              <span className="totals-label-thermal">Paid:</span>
+              <span className="totals-value-thermal">
                 {formatCurrency(invoice.amount_paid)}
               </span>
             </div>
-            <div className="totals-row balance-row">
-              <span className="totals-label">Balance Due:</span>
-              <span className="totals-value">
+            <div className="divider-thin" />
+            <div className="totals-row-thermal balance-row-thermal">
+              <span className="totals-label-thermal">Balance Due:</span>
+              <span className="totals-value-thermal">
                 {formatCurrency(invoice.amount_due)}
               </span>
             </div>
@@ -134,34 +133,40 @@ export function InvoicePrintTemplate({ invoice }: InvoicePrintTemplateProps) {
         )}
       </div>
 
-      {/* Notes */}
+      {/* Notes - Thermal format */}
       {invoice.notes && (
         <>
           <div className="divider" />
-          <div className="notes-section">
-            <h3 className="section-title">Notes:</h3>
-            <p className="notes-text">{invoice.notes}</p>
+          <div className="notes-section-thermal">
+            <p className="section-label-thermal">Notes:</p>
+            <p className="notes-text-thermal">{invoice.notes}</p>
           </div>
         </>
       )}
 
-      {/* Terms and Conditions */}
+      {/* Terms and Conditions - Thermal format */}
       {invoice.terms_and_conditions && (
         <>
-          <div className="divider" />
-          <div className="terms-section">
-            <h3 className="section-title">Terms & Conditions:</h3>
-            <p className="terms-text">{invoice.terms_and_conditions}</p>
+          <div className="divider-thin" />
+          <div className="terms-section-thermal">
+            <p className="section-label-thermal">Terms & Conditions:</p>
+            <p className="terms-text-thermal">{invoice.terms_and_conditions}</p>
           </div>
         </>
       )}
 
-      {/* Footer */}
-      <div className="invoice-footer">
-        <p className="footer-text">Thank you for your business!</p>
-        <p className="footer-text">
+      <div className="divider" />
+
+      {/* Footer - Centered for thermal */}
+      <div className="invoice-footer-thermal">
+        <p className="footer-text-thermal">Thank you for your business!</p>
+        <p className="footer-text-thermal">
           Generated: {new Date().toLocaleString("en-IN")}
         </p>
+        <p className="footer-text-thermal">
+          ichhadhari-dairy.vercel.app/vendors/in
+        </p>
+        <p className="footer-text-thermal">voices/{invoice.id}</p>
       </div>
     </div>
   );

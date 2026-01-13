@@ -1,14 +1,15 @@
 /* ============================================
    INVOICE PRINT STYLES
-   Optimized for TVS RP-45 Dot Matrix Printer
+   Optimized for TVS Electronics Shope 45 (80mm Thermal Printer)
+   Paper width: 80mm (~302px at 96dpi)
    ============================================ */
 
 /* Print-specific styles */
 @media print {
-  /* Reset page */
+  /* Reset page for thermal receipt paper */
   @page {
-    size: A4 portrait;
-    margin: 1cm 1.5cm;
+    size: 80mm auto;
+    margin: 0;
   }
 
   /* Hide everything except invoice */
@@ -25,7 +26,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 80mm;
   }
 
   /* Remove shadows and backgrounds */
@@ -38,85 +39,95 @@
 }
 
 /* ============================================
-   INVOICE CONTAINER
+   INVOICE CONTAINER - Thermal Receipt Format
    ============================================ */
 
 .invoice-print-container {
   font-family: "Courier New", Courier, monospace;
-  font-size: 11pt;
-  line-height: 1.4;
+  font-size: 10pt;
+  line-height: 1.3;
   color: #000;
-  max-width: 800px;
+  max-width: 302px; /* 80mm at 96dpi */
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px;
 }
 
 @media print {
   .invoice-print-container {
-    padding: 0;
-    font-size: 10pt;
+    padding: 5mm;
+    font-size: 9pt;
+    width: 80mm;
+    max-width: 80mm;
   }
 }
 
 /* ============================================
-   HEADER
+   THERMAL HEADER - Centered
    ============================================ */
 
-.invoice-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-@media print {
-  .invoice-header {
-    margin-bottom: 15px;
-  }
-}
-
-.company-info {
-  flex: 1;
+.thermal-header {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .company-name {
-  font-size: 18pt;
+  font-size: 13pt;
   font-weight: bold;
-  margin: 0 0 5px 0;
+  margin: 0;
+  line-height: 1.2;
   letter-spacing: 0.5px;
 }
 
 @media print {
   .company-name {
-    font-size: 14pt;
+    font-size: 12pt;
   }
 }
 
 .company-address,
 .company-contact {
-  font-size: 9pt;
+  font-size: 8pt;
   margin: 2px 0;
 }
 
-.invoice-info {
-  text-align: right;
-  flex: 1;
+@media print {
+  .company-address,
+  .company-contact {
+    font-size: 7pt;
+  }
+}
+
+/* ============================================
+   INVOICE INFO - Thermal Format
+   ============================================ */
+
+.invoice-info-thermal {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .invoice-title {
-  font-size: 20pt;
+  font-size: 14pt;
   font-weight: bold;
-  margin: 0 0 10px 0;
+  margin: 5px 0;
+  letter-spacing: 1px;
 }
 
 @media print {
   .invoice-title {
-    font-size: 16pt;
+    font-size: 12pt;
   }
 }
 
-.invoice-details p {
-  margin: 3px 0;
-  font-size: 9pt;
+.invoice-detail {
+  font-size: 8pt;
+  margin: 2px 0;
+}
+
+@media print {
+  .invoice-detail {
+    font-size: 7pt;
+  }
 }
 
 /* ============================================
@@ -124,266 +135,303 @@
    ============================================ */
 
 .divider {
-  border-top: 2px solid #000;
-  margin: 15px 0;
+  border-top: 1px solid #000;
+  margin: 8px 0;
+}
+
+.divider-thin {
+  border-top: 1px dashed #333;
+  margin: 5px 0;
 }
 
 @media print {
   .divider {
     border-top: 1px solid #000;
-    margin: 10px 0;
+    margin: 5px 0;
+  }
+
+  .divider-thin {
+    margin: 3px 0;
   }
 }
 
 /* ============================================
-   VENDOR SECTION
+   VENDOR SECTION - Thermal
    ============================================ */
 
-.vendor-section {
-  margin-bottom: 15px;
+.vendor-section-thermal {
+  margin-bottom: 8px;
+  text-align: left;
 }
 
-.section-title {
-  font-size: 10pt;
+.section-label {
+  font-size: 8pt;
   font-weight: bold;
-  margin: 0 0 5px 0;
+  margin: 0 0 3px 0;
   text-transform: uppercase;
 }
 
-.vendor-name {
-  font-size: 11pt;
-  font-weight: bold;
-  margin: 3px 0;
-}
-
-.reference {
-  font-size: 9pt;
-  margin: 3px 0;
-}
-
-/* ============================================
-   ITEMS TABLE
-   ============================================ */
-
-.items-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 15px;
-}
-
-.items-table thead {
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
-}
-
 @media print {
-  .items-table thead {
-    border-top: 1px solid #000;
-    border-bottom: 1px solid #000;
+  .section-label {
+    font-size: 7pt;
   }
 }
 
-.items-table th {
-  padding: 5px 8px;
-  text-align: left;
-  font-size: 9pt;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.items-table td {
-  padding: 5px 8px;
+.vendor-name-thermal {
   font-size: 10pt;
-  border-bottom: 1px dotted #999;
+  font-weight: bold;
+  margin: 2px 0;
 }
 
 @media print {
-  .items-table th,
-  .items-table td {
-    padding: 3px 5px;
+  .vendor-name-thermal {
+    font-size: 9pt;
   }
 }
 
-/* Column widths */
-.col-desc {
-  width: 40%;
-}
-.col-qty {
-  width: 12%;
-  text-align: right;
-}
-.col-unit {
-  width: 15%;
-  text-align: center;
-}
-.col-price {
-  width: 15%;
-  text-align: right;
-}
-.col-total {
-  width: 18%;
-  text-align: right;
+.reference-thermal {
+  font-size: 8pt;
+  margin: 2px 0;
 }
 
-.item-desc {
-  text-align: left;
-}
-.item-qty {
-  text-align: right;
-}
-.item-unit {
-  text-align: center;
-}
-.item-price {
-  text-align: right;
-}
-.item-total {
-  text-align: right;
-  font-weight: bold;
+@media print {
+  .reference-thermal {
+    font-size: 7pt;
+  }
 }
 
 /* ============================================
-   TOTALS SECTION
+   ITEMS SECTION - Thermal Receipt Format
    ============================================ */
 
-.totals-section {
-  margin-left: auto;
-  width: 300px;
-  margin-bottom: 15px;
+.items-section-thermal {
+  margin-bottom: 8px;
 }
 
-@media print {
-  .totals-section {
-    width: 250px;
-  }
-}
-
-.totals-row {
+.items-header-thermal {
   display: flex;
   justify-content: space-between;
-  padding: 5px 10px;
-  font-size: 10pt;
+  font-size: 8pt;
+  font-weight: bold;
+  margin-bottom: 3px;
 }
 
-.totals-label {
+@media print {
+  .items-header-thermal {
+    font-size: 7pt;
+  }
+}
+
+.item-desc-header {
+  flex: 2;
+  text-align: left;
+}
+
+.item-qty-header {
+  flex: 1;
+  text-align: center;
+}
+
+.item-total-header {
+  flex: 1;
+  text-align: right;
+}
+
+.item-row-thermal {
+  margin-bottom: 5px;
+  font-size: 9pt;
+}
+
+@media print {
+  .item-row-thermal {
+    font-size: 8pt;
+    margin-bottom: 3px;
+  }
+}
+
+.item-desc-thermal {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.item-details-thermal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+}
+
+@media print {
+  .item-details-thermal {
+    font-size: 7pt;
+  }
+}
+
+.item-total-thermal {
+  font-weight: bold;
+}
+
+/* ============================================
+   TOTALS SECTION - Thermal
+   ============================================ */
+
+.totals-section-thermal {
+  margin-bottom: 8px;
+}
+
+.totals-row-thermal {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 9pt;
+}
+
+@media print {
+  .totals-row-thermal {
+    font-size: 8pt;
+    padding: 2px 0;
+  }
+}
+
+.totals-label-thermal {
   font-weight: normal;
 }
 
-.totals-value {
+.totals-value-thermal {
   font-weight: bold;
   text-align: right;
 }
 
-.total-row {
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
-  margin-top: 5px;
-  font-size: 12pt;
+.total-row-thermal {
+  font-size: 11pt;
   font-weight: bold;
+  padding: 5px 0;
 }
 
 @media print {
-  .total-row {
-    border-top: 1px solid #000;
-    border-bottom: 1px solid #000;
-    font-size: 11pt;
+  .total-row-thermal {
+    font-size: 10pt;
+    padding: 3px 0;
   }
 }
 
-.balance-row {
-  border-top: 1px solid #000;
-  margin-top: 5px;
-  background-color: #f3f4f6;
+.balance-row-thermal {
+  font-weight: bold;
+  background-color: #f5f5f5;
+  padding: 5px;
+  margin-top: 3px;
 }
 
 @media print {
-  .balance-row {
-    background-color: #f5f5f5;
+  .balance-row-thermal {
+    background-color: transparent;
+    padding: 3px 0;
   }
 }
 
 /* ============================================
-   NOTES AND TERMS
+   NOTES AND TERMS - Thermal
    ============================================ */
 
-.notes-section,
-.terms-section {
-  margin-bottom: 15px;
+.notes-section-thermal,
+.terms-section-thermal {
+  margin-bottom: 8px;
 }
 
-.notes-text,
-.terms-text {
-  font-size: 9pt;
-  line-height: 1.5;
-  margin-top: 5px;
+.section-label-thermal {
+  font-size: 8pt;
+  font-weight: bold;
+  margin: 0 0 3px 0;
+  text-transform: uppercase;
+}
+
+@media print {
+  .section-label-thermal {
+    font-size: 7pt;
+  }
+}
+
+.notes-text-thermal,
+.terms-text-thermal {
+  font-size: 8pt;
+  line-height: 1.4;
+  margin: 0;
   white-space: pre-wrap;
 }
 
-/* ============================================
-   FOOTER
-   ============================================ */
-
-.invoice-footer {
-  text-align: center;
-  margin-top: 30px;
-  padding-top: 15px;
-  border-top: 2px solid #000;
-}
-
 @media print {
-  .invoice-footer {
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 1px solid #000;
+  .notes-text-thermal,
+  .terms-text-thermal {
+    font-size: 7pt;
   }
 }
 
-.footer-text {
-  font-size: 9pt;
-  margin: 3px 0;
+/* ============================================
+   FOOTER - Thermal
+   ============================================ */
+
+.invoice-footer-thermal {
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 5px;
+}
+
+.footer-text-thermal {
+  font-size: 7pt;
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+@media print {
+  .footer-text-thermal {
+    font-size: 6pt;
+  }
 }
 
 /* ============================================
-   DOT MATRIX PRINTER OPTIMIZATIONS
+   THERMAL PRINTER OPTIMIZATIONS
    ============================================ */
 
 @media print {
-  /* High contrast for dot matrix */
+  /* High contrast for thermal printer */
   .invoice-print-container {
     color: #000 !important;
     background: #fff !important;
   }
 
-  /* Bold text for better visibility */
+  /* Bold text for better visibility on thermal paper */
   .company-name,
   .invoice-title,
-  .vendor-name,
-  .section-title,
-  .items-table th,
-  .totals-value,
-  .total-row {
+  .vendor-name-thermal,
+  .section-label,
+  .section-label-thermal,
+  .items-header-thermal,
+  .item-desc-thermal,
+  .item-total-thermal,
+  .totals-value-thermal,
+  .total-row-thermal {
     font-weight: bold !important;
   }
 
-  /* Remove all colors (dot matrix is monochrome) */
+  /* Remove all colors (thermal printer is monochrome) */
   * {
     color: #000 !important;
     background-color: transparent !important;
   }
 
-  .balance-row {
-    background-color: #f0f0f0 !important;
-  }
-
   /* Ensure borders are visible */
   .divider,
-  .items-table thead,
-  .total-row {
+  .divider-thin {
     border-color: #000 !important;
   }
 
-  /* Optimize spacing for 40-column width */
+  /* Optimize for 80mm width */
   .invoice-print-container {
-    max-width: 100%;
+    width: 80mm;
+    max-width: 80mm;
+  }
+
+  /* Add small padding for printer margins */
+  .invoice-print-container {
+    padding: 5mm;
   }
 }
