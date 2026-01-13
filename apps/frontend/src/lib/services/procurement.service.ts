@@ -240,19 +240,19 @@ export const procurementService = {
     status?: string;
     milk_type?: string;
   }): Promise<PaginatedResponse<Vendor>> =>
-    api.get<PaginatedResponse<Vendor>>("/vendors/vendors/", { params }),
+    api.get<PaginatedResponse<Vendor>>("/api/vendors/vendors/", { params }),
 
   getVendor: (id: number): Promise<Vendor> =>
-    api.get<Vendor>(`/vendors/vendors/${id}/`),
+    api.get<Vendor>(`/api/vendors/vendors/${id}/`),
 
   createVendor: (data: VendorFormData): Promise<Vendor> =>
-    api.post<Vendor>("/vendors/vendors/", data),
+    api.post<Vendor>("/api/vendors/vendors/", data),
 
   updateVendor: (id: number, data: Partial<VendorFormData>): Promise<Vendor> =>
-    api.patch<Vendor>(`/vendors/vendors/${id}/`, data),
+    api.patch<Vendor>(`/api/vendors/vendors/${id}/`, data),
 
   deleteVendor: (id: number): Promise<void> =>
-    api.delete<void>(`/vendors/vendors/${id}/`),
+    api.delete<void>(`/api/vendors/vendors/${id}/`),
 
   // Milk Collections
   getMilkCollections: async (params?: {
@@ -264,26 +264,26 @@ export const procurementService = {
     start_date?: string;
     end_date?: string;
   }): Promise<PaginatedResponse<MilkCollection>> =>
-    api.get<PaginatedResponse<MilkCollection>>("/milk/collections/", {
+    api.get<PaginatedResponse<MilkCollection>>("/api/milk/collections/", {
       params,
     }),
 
   getMilkCollection: (id: number): Promise<MilkCollection> =>
-    api.get<MilkCollection>(`/milk/collections/${id}/`),
+    api.get<MilkCollection>(`/api/milk/collections/${id}/`),
 
   createMilkCollection: (
     data: MilkCollectionFormData
   ): Promise<MilkCollection> =>
-    api.post<MilkCollection>("/milk/collections/", data),
+    api.post<MilkCollection>("/api/milk/collections/", data),
 
   updateMilkCollection: (
     id: number,
     data: Partial<MilkCollectionFormData>
   ): Promise<MilkCollection> =>
-    api.patch<MilkCollection>(`/milk/collections/${id}/`, data),
+    api.patch<MilkCollection>(`/api/milk/collections/${id}/`, data),
 
   deleteMilkCollection: (id: number): Promise<void> =>
-    api.delete<void>(`/milk/collections/${id}/`),
+    api.delete<void>(`/api/milk/collections/${id}/`),
 
   // Quality Tests
   getQualityTests: async (params?: {
@@ -291,24 +291,24 @@ export const procurementService = {
     collection?: number;
     overall_result?: string;
   }): Promise<PaginatedResponse<QualityTest>> =>
-    api.get<PaginatedResponse<QualityTest>>("/milk/quality-tests/", {
+    api.get<PaginatedResponse<QualityTest>>("/api/milk/quality-tests/", {
       params,
     }),
 
   getQualityTest: (id: number): Promise<QualityTest> =>
-    api.get<QualityTest>(`/milk/quality-tests/${id}/`),
+    api.get<QualityTest>(`/api/milk/quality-tests/${id}/`),
 
   createQualityTest: (data: QualityTestFormData): Promise<QualityTest> =>
-    api.post<QualityTest>("/milk/quality-tests/", data),
+    api.post<QualityTest>("/api/milk/quality-tests/", data),
 
   updateQualityTest: (
     id: number,
     data: Partial<QualityTestFormData>
   ): Promise<QualityTest> =>
-    api.patch<QualityTest>(`/milk/quality-tests/${id}/`, data),
+    api.patch<QualityTest>(`/api/milk/quality-tests/${id}/`, data),
 
   deleteQualityTest: (id: number): Promise<void> =>
-    api.delete<void>(`/milk/quality-tests/${id}/`),
+    api.delete<void>(`/api/milk/quality-tests/${id}/`),
 
   // Vendor Payments
   getVendorPayments: async (params?: {
@@ -318,44 +318,44 @@ export const procurementService = {
     start_date?: string;
     end_date?: string;
   }): Promise<PaginatedResponse<VendorPayment>> =>
-    api.get<PaginatedResponse<VendorPayment>>("/vendors/payments/", {
+    api.get<PaginatedResponse<VendorPayment>>("/api/vendors/payments/", {
       params,
     }),
 
   getVendorPayment: (id: number): Promise<VendorPayment> =>
-    api.get<VendorPayment>(`/vendors/payments/${id}/`),
+    api.get<VendorPayment>(`/api/vendors/payments/${id}/`),
 
   createVendorPayment: (data: VendorPaymentFormData): Promise<VendorPayment> =>
-    api.post<VendorPayment>("/vendors/payments/", data),
+    api.post<VendorPayment>("/api/vendors/payments/", data),
 
   updateVendorPayment: (
     id: number,
     data: Partial<VendorPaymentFormData>
   ): Promise<VendorPayment> =>
-    api.patch<VendorPayment>(`/vendors/payments/${id}/`, data),
+    api.patch<VendorPayment>(`/api/vendors/payments/${id}/`, data),
 
   deleteVendorPayment: (id: number): Promise<void> =>
-    api.delete<void>(`/vendors/payments/${id}/`),
+    api.delete<void>(`/api/vendors/payments/${id}/`),
 
   processVendorPayment: (
     id: number,
     transactionReference: string
   ): Promise<VendorPayment> =>
-    api.patch<VendorPayment>(`/vendors/payments/${id}/`, {
+    api.patch<VendorPayment>(`/api/vendors/payments/${id}/`, {
       status: "completed",
       transaction_reference: transactionReference,
     }),
 
   getVendorPaymentHistory: (vendorId: number): Promise<VendorPayment[]> =>
     api
-      .get<PaginatedResponse<VendorPayment>>("/vendors/payments/", {
+      .get<PaginatedResponse<VendorPayment>>("/api/vendors/payments/", {
         params: { vendor: vendorId },
       })
       .then((data) => data.results ?? []),
 
   getPendingPayments: (): Promise<VendorPayment[]> =>
     api
-      .get<PaginatedResponse<VendorPayment>>("/vendors/payments/", {
+      .get<PaginatedResponse<VendorPayment>>("/api/vendors/payments/", {
         params: { status: "pending" },
       })
       .then((data) => data.results ?? []),
@@ -368,33 +368,33 @@ export const procurementService = {
     start_date?: string;
     end_date?: string;
   }): Promise<PaginatedResponse<PurchaseOrder>> =>
-    api.get<PaginatedResponse<PurchaseOrder>>("/vendors/purchase-orders/", {
+    api.get<PaginatedResponse<PurchaseOrder>>("/api/vendors/purchase-orders/", {
       params,
     }),
 
   getPurchaseOrder: (id: number): Promise<PurchaseOrder> =>
-    api.get<PurchaseOrder>(`/vendors/purchase-orders/${id}/`),
+    api.get<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/`),
 
   createPurchaseOrder: (data: PurchaseOrderFormData): Promise<PurchaseOrder> =>
-    api.post<PurchaseOrder>("/vendors/purchase-orders/", data),
+    api.post<PurchaseOrder>("/api/vendors/purchase-orders/", data),
 
   updatePurchaseOrder: (
     id: number,
     data: Partial<PurchaseOrderFormData>
   ): Promise<PurchaseOrder> =>
-    api.patch<PurchaseOrder>(`/vendors/purchase-orders/${id}/`, data),
+    api.patch<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/`, data),
 
   deletePurchaseOrder: (id: number): Promise<void> =>
-    api.delete<void>(`/vendors/purchase-orders/${id}/`),
+    api.delete<void>(`/api/vendors/purchase-orders/${id}/`),
 
   approvePurchaseOrder: (id: number): Promise<PurchaseOrder> =>
-    api.patch<PurchaseOrder>(`/vendors/purchase-orders/${id}/`, {
+    api.patch<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/`, {
       status: "approved",
     }),
 
   getActivePurchaseOrders: (): Promise<PurchaseOrder[]> =>
     api
-      .get<PaginatedResponse<PurchaseOrder>>("/vendors/purchase-orders/", {
+      .get<PaginatedResponse<PurchaseOrder>>("/api/vendors/purchase-orders/", {
         params: { status: "approved" },
       })
       .then((data) => data.results ?? []),

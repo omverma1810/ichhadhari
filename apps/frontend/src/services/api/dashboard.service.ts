@@ -23,7 +23,7 @@ import type {
 } from "@/types/api";
 
 class DashboardService {
-  private readonly BASE_PATH = "/v1/dashboard";
+  private readonly BASE_PATH = "/api/v1/dashboard";
 
   private isNoDataError(error: unknown): boolean {
     if (!isAxiosError(error)) {

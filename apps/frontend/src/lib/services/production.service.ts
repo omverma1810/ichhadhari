@@ -131,61 +131,61 @@ export interface ProductionFilters {
 // ==================== PRODUCTS ====================
 
 const getProducts = (filters?: ProductionFilters) =>
-  api.get<PaginatedResponse<Product>>("/production/products/", {
+  api.get<PaginatedResponse<Product>>("/api/production/products/", {
     params: filters,
   });
 
 const getProduct = (id: number) =>
-  api.get<Product>(`/production/products/${id}/`);
+  api.get<Product>(`/api/production/products/${id}/`);
 
 const createProduct = (data: ProductFormData) =>
-  api.post<Product>("/production/products/", data);
+  api.post<Product>("/api/production/products/", data);
 
 const updateProduct = (id: number, data: Partial<ProductFormData>) =>
-  api.patch<Product>(`/production/products/${id}/`, data);
+  api.patch<Product>(`/api/production/products/${id}/`, data);
 
 const deleteProduct = (id: number) =>
-  api.delete<void>(`/production/products/${id}/`);
+  api.delete<void>(`/api/production/products/${id}/`);
 
 // ==================== PRODUCTION BATCHES ====================
 
 const getBatches = (filters?: ProductionFilters) =>
-  api.get<PaginatedResponse<ProductionBatch>>("/production/batches/", {
+  api.get<PaginatedResponse<ProductionBatch>>("/api/production/batches/", {
     params: filters,
   });
 
 const getBatch = (id: number) =>
-  api.get<ProductionBatch>(`/production/batches/${id}/`);
+  api.get<ProductionBatch>(`/api/production/batches/${id}/`);
 
 const createBatch = (data: ProductionBatchFormData) =>
-  api.post<ProductionBatch>("/production/batches/", data);
+  api.post<ProductionBatch>("/api/production/batches/", data);
 
 const updateBatch = (id: number, data: Partial<ProductionBatchFormData>) =>
-  api.patch<ProductionBatch>(`/production/batches/${id}/`, data);
+  api.patch<ProductionBatch>(`/api/production/batches/${id}/`, data);
 
 const deleteBatch = (id: number) =>
-  api.delete<void>(`/production/batches/${id}/`);
+  api.delete<void>(`/api/production/batches/${id}/`);
 
 // ==================== PRODUCTION SCHEDULES ====================
 
 const getSchedules = (filters?: ProductionFilters) =>
-  api.get<PaginatedResponse<ProductionSchedule>>("/production/schedules/", {
+  api.get<PaginatedResponse<ProductionSchedule>>("/api/production/schedules/", {
     params: filters,
   });
 
 const getSchedule = (id: number) =>
-  api.get<ProductionSchedule>(`/production/schedules/${id}/`);
+  api.get<ProductionSchedule>(`/api/production/schedules/${id}/`);
 
 const createSchedule = (data: ProductionScheduleFormData) =>
-  api.post<ProductionSchedule>("/production/schedules/", data);
+  api.post<ProductionSchedule>("/api/production/schedules/", data);
 
 const updateSchedule = (
   id: number,
   data: Partial<ProductionScheduleFormData>
-) => api.patch<ProductionSchedule>(`/production/schedules/${id}/`, data);
+) => api.patch<ProductionSchedule>(`/api/production/schedules/${id}/`, data);
 
 const deleteSchedule = (id: number) =>
-  api.delete<void>(`/production/schedules/${id}/`);
+  api.delete<void>(`/api/production/schedules/${id}/`);
 
 // ==================== EXPORTS ====================
 

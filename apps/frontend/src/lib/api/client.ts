@@ -22,12 +22,11 @@ class APIClient {
       process.env.NEXT_PUBLIC_API_URL ||
       "https://ichhadhari-backend-162541991773.asia-south1.run.app";
 
-    // Ensure baseURL ends with /api for all API calls
+    // Use the base URL directly - services already include /api/ prefix in their paths
     const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
-    const apiBaseUrl = baseUrl.endsWith("/api") ? baseUrl : `${baseUrl}/api`;
 
     this.client = axios.create({
-      baseURL: apiBaseUrl,
+      baseURL: baseUrl,
       headers: {
         "Content-Type": "application/json",
       },

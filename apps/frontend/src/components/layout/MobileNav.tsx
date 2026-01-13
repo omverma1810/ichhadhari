@@ -71,18 +71,20 @@ export function MobileNav({ role = "manager" }: MobileNavProps) {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] p-0">
-        <SheetHeader className="p-6 pb-4 text-left">
-          <SheetTitle>Dairy Dashboard</SheetTitle>
+      <SheetContent side="left" className="w-[280px] bg-white p-0">
+        <SheetHeader className="border-b border-gray-200 bg-white p-6 pb-4 text-left">
+          <SheetTitle className="text-lg font-bold text-dairy-charcoal">
+            Dairy Dashboard
+          </SheetTitle>
         </SheetHeader>
         <button
           onClick={handleClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-dairy-blue"
+          className="absolute right-4 top-4 z-10 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-dairy-blue"
         >
           <X className="h-5 w-5" />
           <span className="sr-only">Close menu</span>
         </button>
-        <nav className="flex flex-col gap-4 p-6">
+        <nav className="flex flex-col gap-4 overflow-y-auto bg-white p-6">
           {filteredNavigation.map((section) => (
             <div key={section.title} className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">

@@ -172,25 +172,26 @@ export interface EmployeeFilters {
 // ==================== EMPLOYEES ====================
 
 const getEmployees = (filters?: EmployeeFilters) =>
-  api.get<PaginatedResponse<Employee>>("/employees/", {
+  api.get<PaginatedResponse<Employee>>("/api/employees/", {
     params: filters,
   });
 
-const getEmployee = (id: number) => api.get<Employee>(`/employees/${id}/`);
+const getEmployee = (id: number) => api.get<Employee>(`/api/employees/${id}/`);
 
 const createEmployee = (data: EmployeeFormData) =>
-  api.post<Employee>("/employees/", data);
+  api.post<Employee>("/api/employees/", data);
 
 const updateEmployee = (id: number, data: Partial<EmployeeFormData>) =>
-  api.patch<Employee>(`/employees/${id}/`, data);
+  api.patch<Employee>(`/api/employees/${id}/`, data);
 
-const deleteEmployee = (id: number) => api.delete<void>(`/employees/${id}/`);
+const deleteEmployee = (id: number) =>
+  api.delete<void>(`/api/employees/${id}/`);
 
 // Upload profile image
 const uploadProfileImage = (id: number, file: File) => {
   const formData = new FormData();
   formData.append("profile_image", file);
-  return api.patch<Employee>(`/employees/${id}/`, formData, {
+  return api.patch<Employee>(`/api/employees/${id}/`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
@@ -198,51 +199,52 @@ const uploadProfileImage = (id: number, file: File) => {
 // ==================== ATTENDANCE ====================
 
 const getAttendance = (filters?: EmployeeFilters) =>
-  api.get<PaginatedResponse<Attendance>>("/employees/attendance/", {
+  api.get<PaginatedResponse<Attendance>>("/api/employees/attendance/", {
     params: filters,
   });
 
 const getAttendanceRecord = (id: number) =>
-  api.get<Attendance>(`/employees/attendance/${id}/`);
+  api.get<Attendance>(`/api/employees/attendance/${id}/`);
 
 const createAttendance = (data: AttendanceFormData) =>
-  api.post<Attendance>("/employees/attendance/", data);
+  api.post<Attendance>("/api/employees/attendance/", data);
 
 const updateAttendance = (id: number, data: Partial<AttendanceFormData>) =>
-  api.patch<Attendance>(`/employees/attendance/${id}/`, data);
+  api.patch<Attendance>(`/api/employees/attendance/${id}/`, data);
 
 const deleteAttendance = (id: number) =>
-  api.delete<void>(`/employees/attendance/${id}/`);
+  api.delete<void>(`/api/employees/attendance/${id}/`);
 
 // Mark attendance (bulk operation)
 const markAttendance = (data: AttendanceFormData[]) =>
-  api.post<Attendance[]>("/employees/attendance/bulk/", data);
+  api.post<Attendance[]>("/api/employees/attendance/bulk/", data);
 
 // ==================== SALARY ====================
 
 const getSalaries = (filters?: EmployeeFilters) =>
-  api.get<PaginatedResponse<Salary>>("/employees/salaries/", {
+  api.get<PaginatedResponse<Salary>>("/api/employees/salaries/", {
     params: filters,
   });
 
-const getSalary = (id: number) => api.get<Salary>(`/employees/salaries/${id}/`);
+const getSalary = (id: number) =>
+  api.get<Salary>(`/api/employees/salaries/${id}/`);
 
 const createSalary = (data: SalaryFormData) =>
-  api.post<Salary>("/employees/salaries/", data);
+  api.post<Salary>("/api/employees/salaries/", data);
 
 const updateSalary = (id: number, data: Partial<SalaryFormData>) =>
-  api.patch<Salary>(`/employees/salaries/${id}/`, data);
+  api.patch<Salary>(`/api/employees/salaries/${id}/`, data);
 
 const deleteSalary = (id: number) =>
-  api.delete<void>(`/employees/salaries/${id}/`);
+  api.delete<void>(`/api/employees/salaries/${id}/`);
 
 // Process salary
 const processSalary = (id: number) =>
-  api.post<Salary>(`/employees/salaries/${id}/process/`);
+  api.post<Salary>(`/api/employees/salaries/${id}/process/`);
 
 // Generate payslip
 const generatePayslip = (id: number) =>
-  api.get<Blob>(`/employees/salaries/${id}/payslip/`, {
+  api.get<Blob>(`/api/employees/salaries/${id}/payslip/`, {
     responseType: "blob",
   });
 

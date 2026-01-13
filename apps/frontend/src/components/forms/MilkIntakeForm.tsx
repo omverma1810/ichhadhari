@@ -84,11 +84,26 @@ export function MilkIntakeForm({
   initialData,
 }: MilkIntakeFormProps) {
   const createCollectionMutation = useCreateCollection();
-  const { data: suppliersData, isLoading: suppliersLoading } = useSuppliers({
-    page_size: 50,
+  const {
+    data: suppliersData,
+    isLoading: suppliersLoading,
+    error: suppliersError,
+  } = useSuppliers({
+    page_size: 100,
     ordering: "name",
   });
   const supplierOptions = suppliersData?.results ?? [];
+
+  // Debug logging
+  if (process.env.NODE_ENV === "development") {
+    console.log("Suppliers loading:", suppliersLoading);
+    console.log("Suppliers data:", suppliersData);
+    console.log("Suppliers options:", supplierOptions);
+    if (suppliersError) {
+      console.error("Suppliers error:", suppliersError);
+    }
+  }
+
   const milkTypeOptions = [
     { value: "cow", label: "Cow milk" },
     { value: "buffalo", label: "Buffalo milk" },
@@ -211,13 +226,23 @@ export function MilkIntakeForm({
                     placeholder={
                       suppliersLoading
                         ? "Loading suppliers..."
+                        : suppliersError
+                        ? "Error loading suppliers"
                         : supplierOptions.length > 0
                         ? "Select supplier"
-                        : "No suppliers found"
+                        : "No suppliers found - Add suppliers first"
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
+                  {supplierOptions.length === 0 && !suppliersLoading && (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      <p className="font-medium">No suppliers available</p>
+                      <p className="text-xs mt-1">
+                        Go to Milk Management → Suppliers to add suppliers
+                      </p>
+                    </div>
+                  )}
                   {supplierOptions.map((supplier) => (
                     <SelectItem key={supplier.id} value={String(supplier.id)}>
                       <div className="flex flex-col">

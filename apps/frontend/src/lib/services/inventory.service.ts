@@ -131,92 +131,96 @@ export interface InventoryFilters {
 // ==================== INVENTORY ITEMS ====================
 
 const getItems = (filters?: InventoryFilters) =>
-  api.get<PaginatedResponse<InventoryItem>>("/inventory/items/", {
+  api.get<PaginatedResponse<InventoryItem>>("/api/inventory/items/", {
     params: filters,
   });
 
 const getItem = (id: number) =>
-  api.get<InventoryItem>(`/inventory/items/${id}/`);
+  api.get<InventoryItem>(`/api/inventory/items/${id}/`);
 
 const createItem = (data: InventoryItemFormData) =>
-  api.post<InventoryItem>("/inventory/items/", data);
+  api.post<InventoryItem>("/api/inventory/items/", data);
 
 const updateItem = (id: number, data: Partial<InventoryItemFormData>) =>
-  api.patch<InventoryItem>(`/inventory/items/${id}/`, data);
+  api.patch<InventoryItem>(`/api/inventory/items/${id}/`, data);
 
-const deleteItem = (id: number) => api.delete<void>(`/inventory/items/${id}/`);
+const deleteItem = (id: number) =>
+  api.delete<void>(`/api/inventory/items/${id}/`);
 
 // Get low stock items
 const getLowStockItems = () =>
-  api.get<PaginatedResponse<InventoryItem>>("/inventory/items/", {
+  api.get<PaginatedResponse<InventoryItem>>("/api/inventory/items/", {
     params: { status: "low_stock" },
   });
 
 const getOutOfStockItems = () =>
-  api.get<PaginatedResponse<InventoryItem>>("/inventory/items/", {
+  api.get<PaginatedResponse<InventoryItem>>("/api/inventory/items/", {
     params: { status: "out_of_stock" },
   });
 
 const bulkUpdateStock = (
   updates: Array<{ id: number; current_stock: number }>
-) => api.post("/inventory/items/bulk-update/", { updates });
+) => api.post("/api/inventory/items/bulk-update/", { updates });
 
 // ==================== STOCK TRANSACTIONS ====================
 
 const getTransactions = (filters?: InventoryFilters) =>
-  api.get<PaginatedResponse<StockTransaction>>("/inventory/transactions/", {
+  api.get<PaginatedResponse<StockTransaction>>("/api/inventory/transactions/", {
     params: filters,
   });
 
 const getTransaction = (id: number) =>
-  api.get<StockTransaction>(`/inventory/transactions/${id}/`);
+  api.get<StockTransaction>(`/api/inventory/transactions/${id}/`);
 
 const createTransaction = (data: StockTransactionFormData) =>
-  api.post<StockTransaction>("/inventory/transactions/", data);
+  api.post<StockTransaction>("/api/inventory/transactions/", data);
 
 const updateTransaction = (
   id: number,
   data: Partial<StockTransactionFormData>
-) => api.patch<StockTransaction>(`/inventory/transactions/${id}/`, data);
+) => api.patch<StockTransaction>(`/api/inventory/transactions/${id}/`, data);
 
 const deleteTransaction = (id: number) =>
-  api.delete<void>(`/inventory/transactions/${id}/`);
+  api.delete<void>(`/api/inventory/transactions/${id}/`);
 
 const getItemTransactionHistory = (itemId: number) =>
-  api.get<PaginatedResponse<StockTransaction>>("/inventory/transactions/", {
+  api.get<PaginatedResponse<StockTransaction>>("/api/inventory/transactions/", {
     params: { item: itemId },
   });
 
 // ==================== COLD STORAGE ====================
 
 const getStorages = (filters?: InventoryFilters) =>
-  api.get<PaginatedResponse<ColdStorage>>("/inventory/cold-storage/", {
+  api.get<PaginatedResponse<ColdStorage>>("/api/inventory/cold-storage/", {
     params: filters,
   });
 
 const getStorage = (id: number) =>
-  api.get<ColdStorage>(`/inventory/cold-storage/${id}/`);
+  api.get<ColdStorage>(`/api/inventory/cold-storage/${id}/`);
 
 const createStorage = (data: ColdStorageFormData) =>
-  api.post<ColdStorage>("/inventory/cold-storage/", data);
+  api.post<ColdStorage>("/api/inventory/cold-storage/", data);
 
 const updateStorage = (id: number, data: Partial<ColdStorageFormData>) =>
-  api.patch<ColdStorage>(`/inventory/cold-storage/${id}/`, data);
+  api.patch<ColdStorage>(`/api/inventory/cold-storage/${id}/`, data);
 
 const deleteStorage = (id: number) =>
-  api.delete<void>(`/inventory/cold-storage/${id}/`);
+  api.delete<void>(`/api/inventory/cold-storage/${id}/`);
 
 const updateTemperature = (id: number, temperature: number, humidity: number) =>
-  api.patch<ColdStorage>(`/inventory/cold-storage/${id}/`, {
+  api.patch<ColdStorage>(`/api/inventory/cold-storage/${id}/`, {
     temperature_celsius: temperature,
     humidity_percentage: humidity,
   });
 
 const getMaintenanceAlerts = () => {
   const today = new Date().toISOString().split("T")[0];
-  return api.get<PaginatedResponse<ColdStorage>>("/inventory/cold-storage/", {
-    params: { next_maintenance_due__lte: today },
-  });
+  return api.get<PaginatedResponse<ColdStorage>>(
+    "/api/inventory/cold-storage/",
+    {
+      params: { next_maintenance_due__lte: today },
+    }
+  );
 };
 
 // ==================== EXPORTS ====================

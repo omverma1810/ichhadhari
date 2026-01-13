@@ -58,13 +58,13 @@ export const dashboardService = {
    * Get dashboard statistics
    */
   getStats: (): Promise<DashboardStats> =>
-    api.get<DashboardStats>("/v1/dashboard/stats/"),
+    api.get<DashboardStats>("/api/v1/dashboard/stats/"),
 
   /**
    * Get recent activities
    */
   getRecentActivities: (limit: number = 10): Promise<RecentActivity[]> =>
-    api.get<RecentActivity[]>("/v1/dashboard/activities/", {
+    api.get<RecentActivity[]>("/api/v1/dashboard/activities/", {
       params: { limit },
     }),
 
@@ -75,15 +75,18 @@ export const dashboardService = {
     startDate: string,
     endDate: string
   ): Promise<MilkCollectionChartData[]> =>
-    api.get<MilkCollectionChartData[]>("/v1/dashboard/milk-collection-chart/", {
-      params: { start_date: startDate, end_date: endDate },
-    }),
+    api.get<MilkCollectionChartData[]>(
+      "/api/v1/dashboard/milk-collection-chart/",
+      {
+        params: { start_date: startDate, end_date: endDate },
+      }
+    ),
 
   /**
    * Get production chart data
    */
   getProductionChart: (year: number): Promise<ProductionChartData[]> =>
-    api.get<ProductionChartData[]>("/v1/dashboard/production-chart/", {
+    api.get<ProductionChartData[]>("/api/v1/dashboard/production-chart/", {
       params: { year },
     }),
 
@@ -91,5 +94,5 @@ export const dashboardService = {
    * Get dashboard alerts
    */
   getAlerts: (): Promise<DashboardAlert[]> =>
-    api.get<DashboardAlert[]>("/v1/dashboard/alerts/"),
+    api.get<DashboardAlert[]>("/api/v1/dashboard/alerts/"),
 };

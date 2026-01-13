@@ -140,7 +140,7 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<DashboardStats> =>
-    apiClient.get<DashboardStats>("/v1/dashboard/stats/", { params }),
+    apiClient.get<DashboardStats>("/api/v1/dashboard/stats/", { params }),
 
   /**
    * Get recent activity
@@ -150,7 +150,7 @@ export const dashboardAPI = {
     offset?: number;
     type?: string;
   }): Promise<RecentActivity> =>
-    apiClient.get<RecentActivity>("/v1/dashboard/recent-activity/", {
+    apiClient.get<RecentActivity>("/api/v1/dashboard/recent-activity/", {
       params,
     }),
 
@@ -165,9 +165,12 @@ export const dashboardAPI = {
       period?: "daily" | "weekly" | "monthly";
     }
   ): Promise<DashboardChartResponseMap[T]> =>
-    apiClient.get<DashboardChartResponseMap[T]>(`/v1/dashboard/charts/${type}/`, {
-      params,
-    }),
+    apiClient.get<DashboardChartResponseMap[T]>(
+      `/api/v1/dashboard/charts/${type}/`,
+      {
+        params,
+      }
+    ),
 
   /**
    * Get milk collection chart data
@@ -176,9 +179,12 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<MilkCollectionChart> =>
-    apiClient.get<MilkCollectionChart>("/v1/dashboard/charts/milk-collection/", {
-      params,
-    }),
+    apiClient.get<MilkCollectionChart>(
+      "/api/v1/dashboard/charts/milk-collection/",
+      {
+        params,
+      }
+    ),
 
   /**
    * Get production chart data
@@ -187,7 +193,7 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<ProductionChart> =>
-    apiClient.get<ProductionChart>("/v1/dashboard/charts/production/", {
+    apiClient.get<ProductionChart>("/api/v1/dashboard/charts/production/", {
       params,
     }),
 
@@ -198,7 +204,7 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<InventoryChart> =>
-    apiClient.get<InventoryChart>("/v1/dashboard/charts/inventory/", {
+    apiClient.get<InventoryChart>("/api/v1/dashboard/charts/inventory/", {
       params,
     }),
 
@@ -209,7 +215,7 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<AttendanceChart> =>
-    apiClient.get<AttendanceChart>("/v1/dashboard/charts/attendance/", {
+    apiClient.get<AttendanceChart>("/api/v1/dashboard/charts/attendance/", {
       params,
     }),
 
@@ -220,7 +226,7 @@ export const dashboardAPI = {
     start_date?: string;
     end_date?: string;
   }): Promise<FinancialChart> =>
-    apiClient.get<FinancialChart>("/v1/dashboard/charts/financial/", {
+    apiClient.get<FinancialChart>("/api/v1/dashboard/charts/financial/", {
       params,
     }),
 
@@ -234,7 +240,7 @@ export const dashboardAPI = {
     low: number;
     total: number;
   }> => {
-    return await apiClient.get("/v1/dashboard/alerts-summary/");
+    return await apiClient.get("/api/v1/dashboard/alerts-summary/");
   },
 
   /**
@@ -246,6 +252,6 @@ export const dashboardAPI = {
     employees_present: number;
     low_stock_alerts: number;
   }> => {
-    return await apiClient.get("/v1/dashboard/quick-stats/");
+    return await apiClient.get("/api/v1/dashboard/quick-stats/");
   },
 };

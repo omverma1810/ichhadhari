@@ -302,7 +302,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<Employee>> => {
     return await apiClient.get<PaginatedResponse<Employee>>(
-      "/employees/employees/",
+      "/api/employees/employees/",
       { params }
     );
   },
@@ -311,14 +311,14 @@ export const employeesAPI = {
    * Get single employee by ID
    */
   getEmployee: async (id: number): Promise<Employee> => {
-    return await apiClient.get<Employee>(`/employees/employees/${id}/`);
+    return await apiClient.get<Employee>(`/api/employees/employees/${id}/`);
   },
 
   /**
    * Create new employee
    */
   createEmployee: async (data: EmployeeCreateData): Promise<Employee> => {
-    return await apiClient.post<Employee>("/employees/employees/", data);
+    return await apiClient.post<Employee>("/api/employees/employees/", data);
   },
 
   /**
@@ -328,14 +328,14 @@ export const employeesAPI = {
     id: number,
     data: Partial<EmployeeCreateData>
   ): Promise<Employee> => {
-    return await apiClient.patch<Employee>(`/employees/employees/${id}/`, data);
+    return await apiClient.patch<Employee>(`/api/employees/employees/${id}/`, data);
   },
 
   /**
    * Delete employee
    */
   deleteEmployee: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/employees/${id}/`);
+    await apiClient.delete(`/api/employees/employees/${id}/`);
   },
 
   /**
@@ -346,7 +346,7 @@ export const employeesAPI = {
     params?: { start_date?: string; end_date?: string }
   ): Promise<AttendanceSummary> => {
     return await apiClient.get<AttendanceSummary>(
-      `/employees/employees/${id}/attendance-summary/`,
+      `/api/employees/employees/${id}/attendance-summary/`,
       { params }
     );
   },
@@ -356,7 +356,7 @@ export const employeesAPI = {
    */
   getPerformanceHistory: async (id: number): Promise<PerformanceHistory[]> => {
     return await apiClient.get<PerformanceHistory[]>(
-      `/employees/employees/${id}/performance-history/`
+      `/api/employees/employees/${id}/performance-history/`
     );
   },
 
@@ -365,7 +365,7 @@ export const employeesAPI = {
    */
   getSalaryDetails: async (id: number): Promise<SalaryDetails> => {
     return await apiClient.get<SalaryDetails>(
-      `/employees/employees/${id}/salary-details/`
+      `/api/employees/employees/${id}/salary-details/`
     );
   },
 
@@ -378,7 +378,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<Department>> => {
     return await apiClient.get<PaginatedResponse<Department>>(
-      "/employees/departments/",
+      "/api/employees/departments/",
       { params }
     );
   },
@@ -387,14 +387,14 @@ export const employeesAPI = {
    * Get single department by ID
    */
   getDepartment: async (id: number): Promise<Department> => {
-    return await apiClient.get<Department>(`/employees/departments/${id}/`);
+    return await apiClient.get<Department>(`/api/employees/departments/${id}/`);
   },
 
   /**
    * Create new department
    */
   createDepartment: async (data: DepartmentCreateData): Promise<Department> => {
-    return await apiClient.post<Department>("/employees/departments/", data);
+    return await apiClient.post<Department>("/api/employees/departments/", data);
   },
 
   /**
@@ -405,7 +405,7 @@ export const employeesAPI = {
     data: Partial<DepartmentCreateData>
   ): Promise<Department> => {
     return await apiClient.patch<Department>(
-      `/employees/departments/${id}/`,
+      `/api/employees/departments/${id}/`,
       data
     );
   },
@@ -414,7 +414,7 @@ export const employeesAPI = {
    * Delete department
    */
   deleteDepartment: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/departments/${id}/`);
+    await apiClient.delete(`/api/employees/departments/${id}/`);
   },
 
   // ==================== Attendance ====================
@@ -426,7 +426,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<Attendance>> => {
     return await apiClient.get<PaginatedResponse<Attendance>>(
-      "/employees/attendance/",
+      "/api/employees/attendance/",
       { params }
     );
   },
@@ -435,14 +435,14 @@ export const employeesAPI = {
    * Get single attendance record by ID
    */
   getAttendanceRecord: async (id: number): Promise<Attendance> => {
-    return await apiClient.get<Attendance>(`/employees/attendance/${id}/`);
+    return await apiClient.get<Attendance>(`/api/employees/attendance/${id}/`);
   },
 
   /**
    * Create new attendance record
    */
   createAttendance: async (data: AttendanceCreateData): Promise<Attendance> => {
-    return await apiClient.post<Attendance>("/employees/attendance/", data);
+    return await apiClient.post<Attendance>("/api/employees/attendance/", data);
   },
 
   /**
@@ -453,7 +453,7 @@ export const employeesAPI = {
     data: Partial<AttendanceCreateData>
   ): Promise<Attendance> => {
     return await apiClient.patch<Attendance>(
-      `/employees/attendance/${id}/`,
+      `/api/employees/attendance/${id}/`,
       data
     );
   },
@@ -462,7 +462,7 @@ export const employeesAPI = {
    * Delete attendance record
    */
   deleteAttendance: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/attendance/${id}/`);
+    await apiClient.delete(`/api/employees/attendance/${id}/`);
   },
 
   /**
@@ -472,7 +472,7 @@ export const employeesAPI = {
     data: BulkAttendanceData
   ): Promise<Attendance[]> => {
     return await apiClient.post<Attendance[]>(
-      "/employees/attendance/bulk-mark/",
+      "/api/employees/attendance/bulk-mark/",
       data
     );
   },
@@ -486,7 +486,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<LeaveRequest>> => {
     return await apiClient.get<PaginatedResponse<LeaveRequest>>(
-      "/employees/leave-requests/",
+      "/api/employees/leave-requests/",
       { params }
     );
   },
@@ -496,7 +496,7 @@ export const employeesAPI = {
    */
   getLeaveRequest: async (id: number): Promise<LeaveRequest> => {
     return await apiClient.get<LeaveRequest>(
-      `/employees/leave-requests/${id}/`
+      `/api/employees/leave-requests/${id}/`
     );
   },
 
@@ -507,7 +507,7 @@ export const employeesAPI = {
     data: LeaveRequestCreateData
   ): Promise<LeaveRequest> => {
     return await apiClient.post<LeaveRequest>(
-      "/employees/leave-requests/",
+      "/api/employees/leave-requests/",
       data
     );
   },
@@ -520,7 +520,7 @@ export const employeesAPI = {
     data: Partial<LeaveRequestCreateData>
   ): Promise<LeaveRequest> => {
     return await apiClient.patch<LeaveRequest>(
-      `/employees/leave-requests/${id}/`,
+      `/api/employees/leave-requests/${id}/`,
       data
     );
   },
@@ -529,7 +529,7 @@ export const employeesAPI = {
    * Delete leave request
    */
   deleteLeaveRequest: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/leave-requests/${id}/`);
+    await apiClient.delete(`/api/employees/leave-requests/${id}/`);
   },
 
   /**
@@ -537,7 +537,7 @@ export const employeesAPI = {
    */
   approveLeaveRequest: async (id: number): Promise<LeaveRequest> => {
     return await apiClient.post<LeaveRequest>(
-      `/employees/leave-requests/${id}/approve/`
+      `/api/employees/leave-requests/${id}/approve/`
     );
   },
 
@@ -549,7 +549,7 @@ export const employeesAPI = {
     reason: string
   ): Promise<LeaveRequest> => {
     return await apiClient.post<LeaveRequest>(
-      `/employees/leave-requests/${id}/reject/`,
+      `/api/employees/leave-requests/${id}/reject/`,
       {
         rejection_reason: reason,
       }
@@ -565,7 +565,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<LeaveType>> => {
     return await apiClient.get<PaginatedResponse<LeaveType>>(
-      "/employees/leave-types/",
+      "/api/employees/leave-types/",
       { params }
     );
   },
@@ -574,14 +574,14 @@ export const employeesAPI = {
    * Get single leave type by ID
    */
   getLeaveType: async (id: number): Promise<LeaveType> => {
-    return await apiClient.get<LeaveType>(`/employees/leave-types/${id}/`);
+    return await apiClient.get<LeaveType>(`/api/employees/leave-types/${id}/`);
   },
 
   /**
    * Create new leave type
    */
   createLeaveType: async (data: LeaveTypeCreateData): Promise<LeaveType> => {
-    return await apiClient.post<LeaveType>("/employees/leave-types/", data);
+    return await apiClient.post<LeaveType>("/api/employees/leave-types/", data);
   },
 
   /**
@@ -592,7 +592,7 @@ export const employeesAPI = {
     data: Partial<LeaveTypeCreateData>
   ): Promise<LeaveType> => {
     return await apiClient.patch<LeaveType>(
-      `/employees/leave-types/${id}/`,
+      `/api/employees/leave-types/${id}/`,
       data
     );
   },
@@ -601,7 +601,7 @@ export const employeesAPI = {
    * Delete leave type
    */
   deleteLeaveType: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/leave-types/${id}/`);
+    await apiClient.delete(`/api/employees/leave-types/${id}/`);
   },
 
   // ==================== Performance Reviews ====================
@@ -613,7 +613,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<PerformanceReview>> => {
     return await apiClient.get<PaginatedResponse<PerformanceReview>>(
-      "/employees/performance-reviews/",
+      "/api/employees/performance-reviews/",
       { params }
     );
   },
@@ -623,7 +623,7 @@ export const employeesAPI = {
    */
   getPerformanceReview: async (id: number): Promise<PerformanceReview> => {
     return await apiClient.get<PerformanceReview>(
-      `/employees/performance-reviews/${id}/`
+      `/api/employees/performance-reviews/${id}/`
     );
   },
 
@@ -634,7 +634,7 @@ export const employeesAPI = {
     data: PerformanceReviewCreateData
   ): Promise<PerformanceReview> => {
     return await apiClient.post<PerformanceReview>(
-      "/employees/performance-reviews/",
+      "/api/employees/performance-reviews/",
       data
     );
   },
@@ -647,7 +647,7 @@ export const employeesAPI = {
     data: Partial<PerformanceReviewCreateData>
   ): Promise<PerformanceReview> => {
     return await apiClient.patch<PerformanceReview>(
-      `/employees/performance-reviews/${id}/`,
+      `/api/employees/performance-reviews/${id}/`,
       data
     );
   },
@@ -656,7 +656,7 @@ export const employeesAPI = {
    * Delete performance review
    */
   deletePerformanceReview: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/performance-reviews/${id}/`);
+    await apiClient.delete(`/api/employees/performance-reviews/${id}/`);
   },
 
   // ==================== Salary Structures ====================
@@ -668,7 +668,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<SalaryStructure>> => {
     return await apiClient.get<PaginatedResponse<SalaryStructure>>(
-      "/employees/salary-structures/",
+      "/api/employees/salary-structures/",
       { params }
     );
   },
@@ -678,7 +678,7 @@ export const employeesAPI = {
    */
   getSalaryStructure: async (id: number): Promise<SalaryStructure> => {
     return await apiClient.get<SalaryStructure>(
-      `/employees/salary-structures/${id}/`
+      `/api/employees/salary-structures/${id}/`
     );
   },
 
@@ -689,7 +689,7 @@ export const employeesAPI = {
     data: SalaryStructureCreateData
   ): Promise<SalaryStructure> => {
     return await apiClient.post<SalaryStructure>(
-      "/employees/salary-structures/",
+      "/api/employees/salary-structures/",
       data
     );
   },
@@ -702,7 +702,7 @@ export const employeesAPI = {
     data: Partial<SalaryStructureCreateData>
   ): Promise<SalaryStructure> => {
     return await apiClient.patch<SalaryStructure>(
-      `/employees/salary-structures/${id}/`,
+      `/api/employees/salary-structures/${id}/`,
       data
     );
   },
@@ -711,7 +711,7 @@ export const employeesAPI = {
    * Delete salary structure
    */
   deleteSalaryStructure: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/salary-structures/${id}/`);
+    await apiClient.delete(`/api/employees/salary-structures/${id}/`);
   },
 
   // ==================== Payroll ====================
@@ -723,7 +723,7 @@ export const employeesAPI = {
     params?: PaginationParams
   ): Promise<PaginatedResponse<Payroll>> => {
     return await apiClient.get<PaginatedResponse<Payroll>>(
-      "/employees/payroll/",
+      "/api/employees/payroll/",
       { params }
     );
   },
@@ -732,14 +732,14 @@ export const employeesAPI = {
    * Get single payroll record by ID
    */
   getPayrollRecord: async (id: number): Promise<Payroll> => {
-    return await apiClient.get<Payroll>(`/employees/payroll/${id}/`);
+    return await apiClient.get<Payroll>(`/api/employees/payroll/${id}/`);
   },
 
   /**
    * Create new payroll record
    */
   createPayroll: async (data: PayrollCreateData): Promise<Payroll> => {
-    return await apiClient.post<Payroll>("/employees/payroll/", data);
+    return await apiClient.post<Payroll>("/api/employees/payroll/", data);
   },
 
   /**
@@ -749,20 +749,20 @@ export const employeesAPI = {
     id: number,
     data: Partial<PayrollCreateData>
   ): Promise<Payroll> => {
-    return await apiClient.patch<Payroll>(`/employees/payroll/${id}/`, data);
+    return await apiClient.patch<Payroll>(`/api/employees/payroll/${id}/`, data);
   },
 
   /**
    * Delete payroll record
    */
   deletePayroll: async (id: number): Promise<void> => {
-    await apiClient.delete(`/employees/payroll/${id}/`);
+    await apiClient.delete(`/api/employees/payroll/${id}/`);
   },
 
   /**
    * Approve payroll record
    */
   approvePayroll: async (id: number): Promise<Payroll> => {
-    return await apiClient.post<Payroll>(`/employees/payroll/${id}/approve/`);
+    return await apiClient.post<Payroll>(`/api/employees/payroll/${id}/approve/`);
   },
 };

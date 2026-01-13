@@ -102,13 +102,13 @@ export interface ReportFilters {
 // ==================== SALES REPORTS ====================
 
 const getSalesReport = (filters?: ReportFilters) =>
-  api.get<SalesReport[]>("/analytics/sales/", { params: filters });
+  api.get<SalesReport[]>("/api/analytics/sales/", { params: filters });
 
 const getSalesSummary = (filters?: ReportFilters) =>
-  api.get("/analytics/sales/summary/", { params: filters });
+  api.get("/api/analytics/sales/summary/", { params: filters });
 
 const exportSalesReport = (filters?: ReportFilters) =>
-  api.get<Blob>("/analytics/sales/export/", {
+  api.get<Blob>("/api/analytics/sales/export/", {
     params: filters,
     responseType: "blob",
   });
@@ -116,15 +116,15 @@ const exportSalesReport = (filters?: ReportFilters) =>
 // ==================== PROCUREMENT REPORTS ====================
 
 const getProcurementReport = (filters?: ReportFilters) =>
-  api.get<ProcurementReport[]>("/analytics/procurement/", {
+  api.get<ProcurementReport[]>("/api/analytics/procurement/", {
     params: filters,
   });
 
 const getProcurementSummary = (filters?: ReportFilters) =>
-  api.get("/analytics/procurement/summary/", { params: filters });
+  api.get("/api/analytics/procurement/summary/", { params: filters });
 
 const exportProcurementReport = (filters?: ReportFilters) =>
-  api.get<Blob>("/analytics/procurement/export/", {
+  api.get<Blob>("/api/analytics/procurement/export/", {
     params: filters,
     responseType: "blob",
   });
@@ -132,15 +132,15 @@ const exportProcurementReport = (filters?: ReportFilters) =>
 // ==================== PRODUCTION REPORTS ====================
 
 const getProductionReport = (filters?: ReportFilters) =>
-  api.get<ProductionReport[]>("/analytics/production/", {
+  api.get<ProductionReport[]>("/api/analytics/production/", {
     params: filters,
   });
 
 const getProductionSummary = (filters?: ReportFilters) =>
-  api.get("/analytics/production/summary/", { params: filters });
+  api.get("/api/analytics/production/summary/", { params: filters });
 
 const exportProductionReport = (filters?: ReportFilters) =>
-  api.get<Blob>("/analytics/production/export/", {
+  api.get<Blob>("/api/analytics/production/export/", {
     params: filters,
     responseType: "blob",
   });
@@ -148,13 +148,13 @@ const exportProductionReport = (filters?: ReportFilters) =>
 // ==================== INVENTORY REPORTS ====================
 
 const getInventoryReport = (filters?: ReportFilters) =>
-  api.get<InventoryReport[]>("/analytics/inventory/", { params: filters });
+  api.get<InventoryReport[]>("/api/analytics/inventory/", { params: filters });
 
 const getInventorySummary = (filters?: ReportFilters) =>
-  api.get("/analytics/inventory/summary/", { params: filters });
+  api.get("/api/analytics/inventory/summary/", { params: filters });
 
 const exportInventoryReport = (filters?: ReportFilters) =>
-  api.get<Blob>("/analytics/inventory/export/", {
+  api.get<Blob>("/api/analytics/inventory/export/", {
     params: filters,
     responseType: "blob",
   });
@@ -162,13 +162,13 @@ const exportInventoryReport = (filters?: ReportFilters) =>
 // ==================== FINANCIAL REPORTS ====================
 
 const getFinancialReport = (filters?: ReportFilters) =>
-  api.get<FinancialReport[]>("/analytics/financial/", { params: filters });
+  api.get<FinancialReport[]>("/api/analytics/financial/", { params: filters });
 
 const getFinancialSummary = (filters?: ReportFilters) =>
-  api.get("/analytics/financial/summary/", { params: filters });
+  api.get("/api/analytics/financial/summary/", { params: filters });
 
 const exportFinancialReport = (filters?: ReportFilters) =>
-  api.get<Blob>("/analytics/financial/export/", {
+  api.get<Blob>("/api/analytics/financial/export/", {
     params: filters,
     responseType: "blob",
   });
@@ -176,19 +176,19 @@ const exportFinancialReport = (filters?: ReportFilters) =>
 // ==================== PERFORMANCE REPORTS ====================
 
 const getVendorPerformance = (filters?: ReportFilters) =>
-  api.get<VendorPerformance[]>("/analytics/vendor-performance/", {
+  api.get<VendorPerformance[]>("/api/analytics/vendor-performance/", {
     params: filters,
   });
 
 const getEmployeePerformance = (filters?: ReportFilters) =>
-  api.get<EmployeePerformance[]>("/analytics/employee-performance/", {
+  api.get<EmployeePerformance[]>("/api/analytics/employee-performance/", {
     params: filters,
   });
 
 // ==================== DASHBOARD ANALYTICS ====================
 
 const getDashboardAnalytics = (filters?: ReportFilters) =>
-  api.get<DashboardAnalytics>("/analytics/dashboard/", { params: filters });
+  api.get<DashboardAnalytics>("/api/analytics/dashboard/", { params: filters });
 
 // ==================== EXPORTS ====================
 
