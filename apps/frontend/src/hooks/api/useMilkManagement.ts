@@ -102,7 +102,7 @@ export const useSupplier = (id: number, enabled: boolean = true) => {
  */
 export const useSupplierCollections = (
   id: number,
-  params?: SupplierCollectionFilters
+  params?: SupplierCollectionFilters,
 ) => {
   return useQuery({
     queryKey: milkManagementKeys.supplierCollections(id, params),
@@ -609,7 +609,7 @@ const resolveCategory = (fatPercentage: unknown): SegregationCategory => {
 };
 
 const buildSegregationStats = (
-  collections: MilkCollection[]
+  collections: MilkCollection[],
 ): SegregationStats => {
   const buckets: Record<
     SegregationCategory,
@@ -628,11 +628,11 @@ const buildSegregationStats = (
     const liters = toNumber(collection.quantity);
     if (liters <= 0) return;
 
-    const category = resolveCategory(collection.fat_percentage);
+    const category = resolveCategory(collection.fat);
     const bucket = buckets[category];
     bucket.liters += liters;
     bucket.batches += 1;
-    bucket.fatSum += toNumber(collection.fat_percentage);
+    bucket.fatSum += toNumber(collection.fat);
   });
 
   const totalLiters =
@@ -670,7 +670,7 @@ const buildSegregationStats = (
 const buildTrendData = (
   collections: MilkCollection[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): MilkTrendData[] => {
   type TrendBucket = Record<SegregationCategory, number>;
   const buckets = new Map<string, TrendBucket>();
@@ -695,7 +695,7 @@ const buildTrendData = (
     }
 
     const bucket = buckets.get(normalizedDate)!;
-    const category = resolveCategory(collection.fat_percentage);
+    const category = resolveCategory(collection.fat);
     bucket[category] += toNumber(collection.quantity);
   });
 

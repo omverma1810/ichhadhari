@@ -2,8 +2,8 @@ export interface MilkIntake {
   id: string;
   batchId: string;
   quantity: number;
-  fatPercentage: number;
-  snfPercentage?: number;
+  fat: number;
+  snf?: number;
   temperature?: number;
   category: "premium" | "standard" | "other";
   source?: string;
@@ -23,10 +23,11 @@ export interface MilkIntakeFormData {
   supplierId: number;
   milkType: MilkType;
   quantity: number;
-  fatPercentage: number;
-  snfPercentage?: number;
+  fat: number;
+  snf?: number;
   temperature?: number;
-  ratePerLiter: number;
+  ratePerFat: number;
+  ratePerSnf: number;
   collectionTime?: string; // HH:MM from time input
   notes?: string;
   recordedAt: Date;

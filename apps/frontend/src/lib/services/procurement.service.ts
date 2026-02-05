@@ -74,10 +74,12 @@ export interface MilkCollection {
   shift: "morning" | "evening";
   milk_type: "cow" | "buffalo" | "mixed";
   quantity_liters: number;
-  fat_percentage: number;
-  snf_percentage: number;
+  fat: number;
+  snf: number;
   temperature: number;
-  rate_per_liter: number;
+  rate_per_fat: number;
+  rate_per_snf: number;
+  price_per_liter: number;
   total_amount: number;
   quality_status: "pending" | "approved" | "rejected";
   payment_status: "pending" | "paid" | "cancelled";
@@ -96,10 +98,11 @@ export interface MilkCollectionFormData {
   shift: "morning" | "evening";
   milk_type: "cow" | "buffalo" | "mixed";
   quantity_liters: number;
-  fat_percentage: number;
-  snf_percentage: number;
+  fat: number;
+  snf: number;
   temperature: number;
-  rate_per_liter: number;
+  rate_per_fat: number;
+  rate_per_snf: number;
 }
 
 export interface QualityTest {

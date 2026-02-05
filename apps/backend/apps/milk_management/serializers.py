@@ -136,13 +136,15 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
             'collection_time',
             'milk_type',
             'quantity',
-            'fat_percentage',
-            'snf_percentage',
+            'fat',
+            'snf',
             'temperature',
             'quality_score',
             'quality_status',
             'rejection_reason',
-            'rate_per_liter',
+            'rate_per_fat',
+            'rate_per_snf',
+            'price_per_liter',
             'total_amount',
             'notes',
             'bmc_integration_data',
@@ -152,6 +154,7 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'collection_id',
             'quality_score',
+            'price_per_liter',
             'total_amount',
             'created_at',
             'updated_at',
@@ -169,16 +172,16 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Quantity must be greater than 0")
         return value
     
-    def validate_fat_percentage(self, value):
-        """Validate fat percentage is within valid range."""
-        if value < Decimal('0.00') or value > Decimal('100.00'):
-            raise serializers.ValidationError("Fat percentage must be between 0 and 100")
+    def validate_fat(self, value):
+        """Validate fat content is within valid range."""
+        if value < Decimal('0.00') or value > Decimal('15.00'):
+            raise serializers.ValidationError("Fat content must be between 0 and 15 kg/L")
         return value
     
-    def validate_snf_percentage(self, value):
-        """Validate SNF percentage is within valid range."""
-        if value < Decimal('0.00') or value > Decimal('100.00'):
-            raise serializers.ValidationError("SNF percentage must be between 0 and 100")
+    def validate_snf(self, value):
+        """Validate SNF content is within valid range."""
+        if value < Decimal('0.00') or value > Decimal('15.00'):
+            raise serializers.ValidationError("SNF content must be between 0 and 15 kg/L")
         return value
     
     def validate_temperature(self, value):

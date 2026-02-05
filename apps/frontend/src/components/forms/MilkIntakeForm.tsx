@@ -48,22 +48,22 @@ const milkIntakeSchema = z.object({
     .number({ required_error: "Supplier is required" })
     .min(1, "Supplier is required"),
   milkType: z.enum(["cow", "buffalo", "mixed"]),
-  ratePerLiter: z
-    .number({ required_error: "Rate per liter is required" })
-    .positive("Rate per liter is required"),
+  ratePerFat: z
+    .number({ required_error: "Rate per fat is required" })
+    .positive("Rate per fat is required"),
+  ratePerSnf: z
+    .number({ required_error: "Rate per SNF is required" })
+    .positive("Rate per SNF is required"),
   collectionTime: z
     .string()
     .regex(/^[0-2]?\d:[0-5]\d$/, "Invalid time format")
     .optional(),
   quantity: z.number().min(0.1, "Quantity must be at least 0.1 liter"),
-  fatPercentage: z
+  fat: z.number().min(0).max(15, "Fat content must be between 0 and 15 kg/L"),
+  snf: z
     .number()
     .min(0)
-    .max(15, "Fat percentage must be between 0 and 15"),
-  snfPercentage: z
-    .number()
-    .min(0)
-    .max(15, "SNF percentage must be between 0 and 15")
+    .max(15, "SNF content must be between 0 and 15 kg/L")
     .optional(),
   temperature: z
     .number()
@@ -122,33 +122,34 @@ export function MilkIntakeForm({
     defaultValues: {
       supplierId: initialData?.supplierId,
       milkType: initialData?.milkType ?? "cow",
-      ratePerLiter: initialData?.ratePerLiter ?? 0,
+      ratePerFat: initialData?.ratePerFat ?? 60,
+      ratePerSnf: initialData?.ratePerSnf ?? 10,
       collectionTime:
         initialData?.collectionTime ?? format(new Date(), "HH:mm"),
       quantity: initialData?.quantity ?? 0,
-      fatPercentage: initialData?.fatPercentage ?? 0,
-      snfPercentage: initialData?.snfPercentage,
+      fat: initialData?.fat ?? 0,
+      snf: initialData?.snf,
       temperature: initialData?.temperature,
       notes: initialData?.notes,
       recordedAt: initialData?.recordedAt ?? new Date(),
     },
   });
 
-  const fatPercentage = watch("fatPercentage");
+  const fat = watch("fat");
   const recordedAt = watch("recordedAt");
 
   const category = useMemo(() => {
-    if (!fatPercentage) {
+    if (!fat) {
       return null;
     }
-    if (fatPercentage >= 8 && fatPercentage <= 9) {
+    if (fat >= 8 && fat <= 9) {
       return "premium";
     }
-    if (fatPercentage >= 4 && fatPercentage <= 5) {
+    if (fat >= 4 && fat <= 5) {
       return "standard";
     }
     return "other";
-  }, [fatPercentage]);
+  }, [fat]);
 
   const categoryClasses = {
     premium: "bg-amber-100 text-amber-800 border-amber-300",
@@ -165,10 +166,11 @@ export function MilkIntakeForm({
         : format(data.recordedAt, "HH:mm:ss"),
       milk_type: data.milkType,
       quantity: data.quantity.toFixed(2),
-      fat_percentage: data.fatPercentage.toFixed(2),
-      snf_percentage: (data.snfPercentage ?? 0).toFixed(2),
+      fat: data.fat.toFixed(2),
+      snf: (data.snf ?? 0).toFixed(2),
       temperature: (data.temperature ?? 0).toFixed(1),
-      rate_per_liter: data.ratePerLiter.toFixed(2),
+      rate_per_fat: data.ratePerFat.toFixed(2),
+      rate_per_snf: data.ratePerSnf.toFixed(2),
       notes: data.notes,
     };
 
@@ -196,7 +198,7 @@ export function MilkIntakeForm({
             <div
               className={cn(
                 "flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold",
-                categoryClasses[category]
+                categoryClasses[category],
               )}
             >
               <MilkDrop className="h-4 w-4" />
@@ -227,10 +229,10 @@ export function MilkIntakeForm({
                       suppliersLoading
                         ? "Loading suppliers..."
                         : suppliersError
-                        ? "Error loading suppliers"
-                        : supplierOptions.length > 0
-                        ? "Select supplier"
-                        : "No suppliers found - Add suppliers first"
+                          ? "Error loading suppliers"
+                          : supplierOptions.length > 0
+                            ? "Select supplier"
+                            : "No suppliers found - Add suppliers first"
                     }
                   />
                 </SelectTrigger>
@@ -309,62 +311,74 @@ export function MilkIntakeForm({
         </motion.div>
 
         <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="ratePerLiter" className="flex items-center gap-2">
+          <Label htmlFor="ratePerFat" className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-dairy-charcoal" />
-            Rate per liter (₹) *
+            Rate per kg fat (₹) *
           </Label>
           <Input
-            id="ratePerLiter"
+            id="ratePerFat"
             type="number"
             step="0.1"
-            placeholder="0.0"
-            {...register("ratePerLiter", { valueAsNumber: true })}
+            placeholder="60.0"
+            {...register("ratePerFat", { valueAsNumber: true })}
             className="h-12"
           />
-          {errors.ratePerLiter ? (
-            <p className="text-sm text-red-600">
-              {errors.ratePerLiter.message}
-            </p>
+          {errors.ratePerFat ? (
+            <p className="text-sm text-red-600">{errors.ratePerFat.message}</p>
           ) : null}
         </motion.div>
 
         <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="fatPercentage" className="flex items-center gap-2">
+          <Label htmlFor="ratePerSnf" className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-dairy-charcoal" />
+            Rate per kg SNF (₹) *
+          </Label>
+          <Input
+            id="ratePerSnf"
+            type="number"
+            step="0.1"
+            placeholder="10.0"
+            {...register("ratePerSnf", { valueAsNumber: true })}
+            className="h-12"
+          />
+          {errors.ratePerSnf ? (
+            <p className="text-sm text-red-600">{errors.ratePerSnf.message}</p>
+          ) : null}
+        </motion.div>
+
+        <motion.div className="space-y-2" variants={staggerItem}>
+          <Label htmlFor="fat" className="flex items-center gap-2">
             <Droplet className="h-4 w-4 text-dairy-orange" />
-            Fat percentage (%) *
+            Fat (kg/L) *
           </Label>
           <Input
-            id="fatPercentage"
+            id="fat"
             type="number"
             step="0.1"
-            placeholder="0.0"
-            {...register("fatPercentage", { valueAsNumber: true })}
+            placeholder="4.5"
+            {...register("fat", { valueAsNumber: true })}
             className="h-12"
           />
-          {errors.fatPercentage ? (
-            <p className="text-sm text-red-600">
-              {errors.fatPercentage.message}
-            </p>
+          {errors.fat ? (
+            <p className="text-sm text-red-600">{errors.fat.message}</p>
           ) : null}
         </motion.div>
 
         <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="snfPercentage" className="flex items-center gap-2">
+          <Label htmlFor="snf" className="flex items-center gap-2">
             <Droplet className="h-4 w-4 text-dairy-green" />
-            SNF percentage (%)
+            SNF (kg/L)
           </Label>
           <Input
-            id="snfPercentage"
+            id="snf"
             type="number"
             step="0.1"
-            placeholder="0.0"
-            {...register("snfPercentage", { valueAsNumber: true })}
+            placeholder="8.5"
+            {...register("snf", { valueAsNumber: true })}
             className="h-12"
           />
-          {errors.snfPercentage ? (
-            <p className="text-sm text-red-600">
-              {errors.snfPercentage.message}
-            </p>
+          {errors.snf ? (
+            <p className="text-sm text-red-600">{errors.snf.message}</p>
           ) : null}
         </motion.div>
 
@@ -397,7 +411,7 @@ export function MilkIntakeForm({
                 variant="outline"
                 className={cn(
                   "flex w-full items-center justify-between border-dashed py-3 text-left font-normal md:w-1/2",
-                  !recordedAt && "text-gray-400"
+                  !recordedAt && "text-gray-400",
                 )}
               >
                 {recordedAt ? format(recordedAt, "PPP") : "Select date"}

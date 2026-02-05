@@ -123,13 +123,15 @@ export interface MilkCollection extends AuditFields {
   collection_time: string; // HH:MM:SS format
   milk_type: MilkType;
   quantity: number | string; // Decimal field
-  fat_percentage: number | string; // Decimal field
-  snf_percentage: number | string; // Decimal field
+  fat: number | string; // Fat content (kg per liter)
+  snf: number | string; // SNF content (kg per liter)
   temperature: number | string; // Decimal field
   quality_status: QualityStatus;
   quality_score: number | string; // Auto-calculated by backend
   rejection_reason?: string | null;
-  rate_per_liter: number | string; // Decimal field
+  rate_per_fat: number | string; // Rate per kg of fat
+  rate_per_snf: number | string; // Rate per kg of SNF
+  price_per_liter: number | string; // Auto-calculated: (fat × rate_per_fat) + (snf × rate_per_snf)
   total_amount: number | string; // Auto-calculated by backend
   notes?: string | null;
   bmc_integration_data?: any;
@@ -141,12 +143,13 @@ export interface CreateMilkCollectionPayload {
   collection_time?: string; // HH:MM:SS format, defaults to current time
   milk_type: MilkType;
   quantity: number | string; // Decimal value
-  fat_percentage: number | string; // Decimal value
-  snf_percentage: number | string; // Decimal value
+  fat: number | string; // Fat content (kg per liter)
+  snf: number | string; // SNF content (kg per liter)
   temperature: number | string; // Decimal value
   quality_status?: QualityStatus; // Defaults to 'accepted'
   rejection_reason?: string; // Required if quality_status is 'rejected'
-  rate_per_liter: number | string; // Decimal value
+  rate_per_fat: number | string; // Rate per kg of fat
+  rate_per_snf: number | string; // Rate per kg of SNF
   collected_by?: number; // Optional, defaults to current user
   notes?: string;
   bmc_integration_data?: any;

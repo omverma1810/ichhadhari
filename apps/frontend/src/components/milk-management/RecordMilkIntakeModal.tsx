@@ -1,20 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Droplet, Thermometer, Calendar, FileText, DollarSign } from 'lucide-react';
-import { milkService } from '@/services/milkService';
-import { toast } from 'sonner';
-import type { MilkType, CollectionShift } from '@/types/api';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Droplet,
+  Thermometer,
+  Calendar,
+  FileText,
+  DollarSign,
+} from "lucide-react";
+import { milkService } from "@/services/milkService";
+import { toast } from "sonner";
+import type { MilkType, CollectionShift } from "@/types/api";
 
 interface RecordMilkIntakeModalProps {
   isOpen: boolean;
@@ -24,14 +30,14 @@ interface RecordMilkIntakeModalProps {
 }
 
 const MILK_TYPES = [
-  { value: 'cow', label: 'Cow Milk' },
-  { value: 'buffalo', label: 'Buffalo Milk' },
-  { value: 'mixed', label: 'Mixed Milk' },
+  { value: "cow", label: "Cow Milk" },
+  { value: "buffalo", label: "Buffalo Milk" },
+  { value: "mixed", label: "Mixed Milk" },
 ];
 
 const SHIFT_OPTIONS = [
-  { value: 'morning', label: 'Morning' },
-  { value: 'evening', label: 'Evening' },
+  { value: "morning", label: "Morning" },
+  { value: "evening", label: "Evening" },
 ];
 
 export function RecordMilkIntakeModal({
@@ -44,15 +50,15 @@ export function RecordMilkIntakeModal({
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    quantity: '',
-    fatPercentage: '',
-    snfPercentage: '',
-    temperature: '4.0',
-    milkType: 'cow' as MilkType,
-    shift: 'morning' as CollectionShift,
-    ratePerLiter: '',
-    collectionDate: new Date().toISOString().split('T')[0],
-    notes: '',
+    quantity: "",
+    fatPercentage: "",
+    snfPercentage: "",
+    temperature: "4.0",
+    milkType: "cow" as MilkType,
+    shift: "morning" as CollectionShift,
+    ratePerLiter: "",
+    collectionDate: new Date().toISOString().split("T")[0],
+    notes: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,49 +69,53 @@ export function RecordMilkIntakeModal({
     try {
       // Validate form data
       if (!formData.quantity || parseFloat(formData.quantity) <= 0) {
-        throw new Error('Please enter a valid quantity');
+        throw new Error("Please enter a valid quantity");
       }
-      if (!formData.fatPercentage || parseFloat(formData.fatPercentage) <= 0) {
-        throw new Error('Please enter a valid fat percentage');
+      if (!formData.fat || parseFloat(formData.fat) <= 0) {
+        throw new Error("Please enter a valid fat content");
       }
-      if (!formData.snfPercentage || parseFloat(formData.snfPercentage) <= 0) {
-        throw new Error('Please enter a valid SNF percentage');
+      if (!formData.snf || parseFloat(formData.snf) <= 0) {
+        throw new Error("Please enter a valid SNF content");
       }
-      if (!formData.ratePerLiter || parseFloat(formData.ratePerLiter) <= 0) {
-        throw new Error('Please enter a valid rate per liter');
+      if (!formData.ratePerFat || parseFloat(formData.ratePerFat) <= 0) {
+        throw new Error("Please enter a valid rate per fat");
+      }
+      if (!formData.ratePerSnf || parseFloat(formData.ratePerSnf) <= 0) {
+        throw new Error("Please enter a valid rate per SNF");
       }
 
-      console.log('📝 Submitting milk collection form:', formData);
+      console.log("📝 Submitting milk collection form:", formData);
 
       // Create collection via API
       const result = await milkService.createCollection({
         supplier: supplierId || 1,
         milk_type: formData.milkType,
         quantity: parseFloat(formData.quantity),
-        fat_percentage: parseFloat(formData.fatPercentage),
-        snf_percentage: parseFloat(formData.snfPercentage),
+        fat: parseFloat(formData.fat),
+        snf: parseFloat(formData.snf),
         temperature: parseFloat(formData.temperature),
-        rate_per_liter: parseFloat(formData.ratePerLiter),
+        rate_per_fat: parseFloat(formData.ratePerFat),
+        rate_per_snf: parseFloat(formData.ratePerSnf),
         collection_date: formData.collectionDate,
         notes: formData.notes,
       });
 
-      console.log('✅ Milk collection created successfully:', result);
+      console.log("✅ Milk collection created successfully:", result);
 
       // Show success message
-      toast.success('Milk collection recorded successfully!');
+      toast.success("Milk collection recorded successfully!");
 
       // Reset form
       setFormData({
-        quantity: '',
-        fatPercentage: '',
-        snfPercentage: '',
-        temperature: '4.0',
-        milkType: 'cow',
-        shift: 'morning',
-        ratePerLiter: '',
-        collectionDate: new Date().toISOString().split('T')[0],
-        notes: '',
+        quantity: "",
+        fatPercentage: "",
+        snfPercentage: "",
+        temperature: "4.0",
+        milkType: "cow",
+        shift: "morning",
+        ratePerLiter: "",
+        collectionDate: new Date().toISOString().split("T")[0],
+        notes: "",
       });
 
       // Call success callback
@@ -116,9 +126,9 @@ export function RecordMilkIntakeModal({
       // Close modal
       onClose();
     } catch (err: any) {
-      console.error('❌ Failed to create milk collection:', err);
+      console.error("❌ Failed to create milk collection:", err);
       const errorMessage =
-        err.message || 'Failed to record milk collection. Please try again.';
+        err.message || "Failed to record milk collection. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -133,7 +143,12 @@ export function RecordMilkIntakeModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} title="Record milk intake" size="xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      title="Record milk intake"
+      size="xl"
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Error Alert */}
         {error && (
@@ -150,7 +165,9 @@ export function RecordMilkIntakeModal({
             </label>
             <Select
               value={formData.milkType}
-              onValueChange={(value) => setFormData({ ...formData, milkType: value as MilkType })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, milkType: value as MilkType })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select milk type" />
@@ -171,7 +188,9 @@ export function RecordMilkIntakeModal({
             </label>
             <Select
               value={formData.shift}
-              onValueChange={(value) => setFormData({ ...formData, shift: value as CollectionShift })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, shift: value as CollectionShift })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select shift" />
@@ -200,7 +219,9 @@ export function RecordMilkIntakeModal({
               min="0"
               placeholder="e.g., 15.50"
               value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, quantity: e.target.value })
+              }
               required
             />
           </div>
@@ -208,16 +229,18 @@ export function RecordMilkIntakeModal({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <Droplet className="inline h-4 w-4 mr-1" />
-              Fat percentage (%) *
+              Fat (kg/L) *
             </label>
             <Input
               type="number"
               step="0.01"
               min="0"
-              max="100"
+              max="15"
               placeholder="e.g., 4.50"
-              value={formData.fatPercentage}
-              onChange={(e) => setFormData({ ...formData, fatPercentage: e.target.value })}
+              value={formData.fat}
+              onChange={(e) =>
+                setFormData({ ...formData, fat: e.target.value })
+              }
               required
             />
           </div>
@@ -227,16 +250,18 @@ export function RecordMilkIntakeModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              SNF percentage (%) *
+              SNF (kg/L) *
             </label>
             <Input
               type="number"
               step="0.01"
               min="0"
-              max="100"
+              max="15"
               placeholder="e.g., 8.50"
-              value={formData.snfPercentage}
-              onChange={(e) => setFormData({ ...formData, snfPercentage: e.target.value })}
+              value={formData.snf}
+              onChange={(e) =>
+                setFormData({ ...formData, snf: e.target.value })
+              }
               required
             />
           </div>
@@ -251,27 +276,50 @@ export function RecordMilkIntakeModal({
               step="0.1"
               placeholder="e.g., 4.0"
               value={formData.temperature}
-              onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, temperature: e.target.value })
+              }
               required
             />
           </div>
         </div>
 
-        {/* Row 3: Rate Per Liter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <DollarSign className="inline h-4 w-4 mr-1" />
-            Rate per liter (₹) *
-          </label>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="e.g., 45.00"
-            value={formData.ratePerLiter}
-            onChange={(e) => setFormData({ ...formData, ratePerLiter: e.target.value })}
-            required
-          />
+        {/* Row 3: Rate Per Fat and Rate Per SNF */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <DollarSign className="inline h-4 w-4 mr-1" />
+              Rate per kg fat (₹) *
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g., 60.00"
+              value={formData.ratePerFat}
+              onChange={(e) =>
+                setFormData({ ...formData, ratePerFat: e.target.value })
+              }
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <DollarSign className="inline h-4 w-4 mr-1" />
+              Rate per kg SNF (₹) *
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g., 10.00"
+              value={formData.ratePerSnf}
+              onChange={(e) =>
+                setFormData({ ...formData, ratePerSnf: e.target.value })
+              }
+              required
+            />
+          </div>
           <p className="mt-1 text-sm text-gray-500">Price per liter of milk</p>
         </div>
 
@@ -284,7 +332,9 @@ export function RecordMilkIntakeModal({
           <Input
             type="date"
             value={formData.collectionDate}
-            onChange={(e) => setFormData({ ...formData, collectionDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, collectionDate: e.target.value })
+            }
             required
           />
         </div>
@@ -300,7 +350,9 @@ export function RecordMilkIntakeModal({
             rows={3}
             placeholder="Any additional information about this collection..."
             value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, notes: e.target.value })
+            }
           />
         </div>
 

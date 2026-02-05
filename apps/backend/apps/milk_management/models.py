@@ -212,23 +212,23 @@ class MilkCollection(TimeStampedModel):
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Quantity in liters"
     )
-    fat_percentage = models.DecimalField(
+    fat = models.DecimalField(
         max_digits=4,
         decimal_places=2,
         validators=[
             MinValueValidator(Decimal('0.00')),
-            MaxValueValidator(Decimal('100.00'))
+            MaxValueValidator(Decimal('15.00'))
         ],
-        help_text="Fat content percentage"
+        help_text="Fat content (kg per liter)"
     )
-    snf_percentage = models.DecimalField(
+    snf = models.DecimalField(
         max_digits=4,
         decimal_places=2,
         validators=[
             MinValueValidator(Decimal('0.00')),
-            MaxValueValidator(Decimal('100.00'))
+            MaxValueValidator(Decimal('15.00'))
         ],
-        help_text="SNF (Solids Not Fat) percentage"
+        help_text="SNF - Solids Not Fat (kg per liter)"
     )
     temperature = models.DecimalField(
         max_digits=4,
@@ -259,16 +259,28 @@ class MilkCollection(TimeStampedModel):
     )
     
     # Financial
-    rate_per_liter = models.DecimalField(
+    rate_per_fat = models.DecimalField(
         max_digits=8,
         decimal_places=2,
-        help_text="Rate per liter in currency"
+        help_text="Rate per kg of fat"
+    )
+    rate_per_snf = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Rate per kg of SNF"
+    )
+    price_per_liter = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Calculated price per liter"
     )
     total_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=Decimal('0.00'),
-        help_text="Total amount for this collection"
+        help_text="Total amount for this collection (quantity × price_per_liter)"
     )
     
     # Additional Information
@@ -299,22 +311,22 @@ class MilkCollection(TimeStampedModel):
         Calculate quality score based on fat, SNF, and temperature.
         
         Scoring:
-        - Fat: 0-50 points (proportional to fat percentage, max at 6%+)
-        - SNF: 0-30 points (proportional to SNF percentage, max at 9%+)
+        - Fat: 0-50 points (proportional to fat content, max at 6.0 kg/L+)
+        - SNF: 0-30 points (proportional to SNF content, max at 9.0 kg/L+)
         - Temperature: 20 points if between 2-6°C, else 0
         
         Returns:
             Decimal: Quality score between 0 and 100
         """
-        # Fat score (max 50 points, optimal at 6% or higher)
+        # Fat score (max 50 points, optimal at 6.0 kg/L or higher)
         fat_score = min(
-            (float(self.fat_percentage) / 6.0) * 50,
+            (float(self.fat) / 6.0) * 50,
             50.0
         )
         
-        # SNF score (max 30 points, optimal at 9% or higher)
+        # SNF score (max 30 points, optimal at 9.0 kg/L or higher)
         snf_score = min(
-            (float(self.snf_percentage) / 9.0) * 30,
+            (float(self.snf) / 9.0) * 30,
             30.0
         )
         
@@ -328,7 +340,7 @@ class MilkCollection(TimeStampedModel):
         return Decimal(str(round(total_score, 2)))
     
     def save(self, *args, **kwargs):
-        """Override save to auto-calculate quality score and total amount."""
+        """Override save to auto-calculate quality score, price per liter, and total amount."""
         from decimal import ROUND_HALF_UP, InvalidOperation
         import logging
         
@@ -345,22 +357,22 @@ class MilkCollection(TimeStampedModel):
             self.quantity = Decimal('0.00')
             
         try:
-            if self.fat_percentage is None or self.fat_percentage == '':
-                self.fat_percentage = Decimal('0.00')
+            if self.fat is None or self.fat == '':
+                self.fat = Decimal('0.00')
             else:
-                self.fat_percentage = Decimal(str(self.fat_percentage)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                self.fat = Decimal(str(self.fat)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         except (InvalidOperation, ValueError, TypeError):
-            logger.error(f"Invalid fat_percentage value: {self.fat_percentage}")
-            self.fat_percentage = Decimal('0.00')
+            logger.error(f"Invalid fat value: {self.fat}")
+            self.fat = Decimal('0.00')
             
         try:
-            if self.snf_percentage is None or self.snf_percentage == '':
-                self.snf_percentage = Decimal('0.00')
+            if self.snf is None or self.snf == '':
+                self.snf = Decimal('0.00')
             else:
-                self.snf_percentage = Decimal(str(self.snf_percentage)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                self.snf = Decimal(str(self.snf)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         except (InvalidOperation, ValueError, TypeError):
-            logger.error(f"Invalid snf_percentage value: {self.snf_percentage}")
-            self.snf_percentage = Decimal('0.00')
+            logger.error(f"Invalid snf value: {self.snf}")
+            self.snf = Decimal('0.00')
             
         try:
             if self.temperature is None or self.temperature == '':
@@ -373,13 +385,22 @@ class MilkCollection(TimeStampedModel):
             self.temperature = Decimal('0.0')
             
         try:
-            if self.rate_per_liter is None or self.rate_per_liter == '':
-                self.rate_per_liter = Decimal('0.00')
+            if self.rate_per_fat is None or self.rate_per_fat == '':
+                self.rate_per_fat = Decimal('0.00')
             else:
-                self.rate_per_liter = Decimal(str(self.rate_per_liter)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                self.rate_per_fat = Decimal(str(self.rate_per_fat)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         except (InvalidOperation, ValueError, TypeError):
-            logger.error(f"Invalid rate_per_liter value: {self.rate_per_liter}")
-            self.rate_per_liter = Decimal('0.00')
+            logger.error(f"Invalid rate_per_fat value: {self.rate_per_fat}")
+            self.rate_per_fat = Decimal('0.00')
+            
+        try:
+            if self.rate_per_snf is None or self.rate_per_snf == '':
+                self.rate_per_snf = Decimal('0.00')
+            else:
+                self.rate_per_snf = Decimal(str(self.rate_per_snf)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        except (InvalidOperation, ValueError, TypeError):
+            logger.error(f"Invalid rate_per_snf value: {self.rate_per_snf}")
+            self.rate_per_snf = Decimal('0.00')
         
         # Calculate quality score and ensure it's valid
         try:
@@ -396,9 +417,20 @@ class MilkCollection(TimeStampedModel):
             logger.error(f"Error calculating quality_score: {e}")
             self.quality_score = Decimal('0.00')
         
-        # Calculate total amount (quantize to 2 decimal places)
+        # Calculate price per liter: (fat × rate_per_fat) + (snf × rate_per_snf)
         try:
-            amount = self.quantity * self.rate_per_liter
+            price = (self.fat * self.rate_per_fat) + (self.snf * self.rate_per_snf)
+            if price is not None:
+                self.price_per_liter = Decimal(str(price)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            else:
+                self.price_per_liter = Decimal('0.00')
+        except (InvalidOperation, ValueError, TypeError, AttributeError) as e:
+            logger.error(f"Error calculating price_per_liter: {e}")
+            self.price_per_liter = Decimal('0.00')
+        
+        # Calculate total amount (quantity × price_per_liter)
+        try:
+            amount = self.quantity * self.price_per_liter
             if amount is not None:
                 self.total_amount = Decimal(str(amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             else:

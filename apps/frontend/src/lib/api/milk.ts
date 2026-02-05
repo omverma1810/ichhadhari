@@ -51,8 +51,8 @@ export interface SupplierStats {
   total_quantity: number;
   total_amount_due: number;
   total_amount_paid: number;
-  average_fat_percentage: number;
-  average_snf_percentage: number;
+  average_fat: number;
+  average_snf: number;
 }
 
 // Collection types
@@ -63,10 +63,12 @@ export interface MilkCollection {
   collection_date: string;
   shift: "morning" | "evening";
   quantity: number;
-  fat_percentage: number;
-  snf_percentage: number;
+  fat: number;
+  snf: number;
   temperature: number;
-  rate_per_liter: number;
+  rate_per_fat: number;
+  rate_per_snf: number;
+  price_per_liter: number;
   total_amount: number;
   quality_grade: "A" | "B" | "C";
   status: "pending" | "approved" | "rejected";
@@ -82,10 +84,11 @@ export interface CollectionCreateData {
   collection_date: string;
   shift: "morning" | "evening";
   quantity: number;
-  fat_percentage: number;
-  snf_percentage: number;
+  fat: number;
+  snf: number;
   temperature: number;
-  rate_per_liter?: number;
+  rate_per_fat: number;
+  rate_per_snf?: number;
   quality_grade?: "A" | "B" | "C";
   status?: "pending" | "approved" | "rejected";
   notes?: string;
@@ -133,11 +136,11 @@ export const milkAPI = {
    * Get paginated list of suppliers
    */
   getSuppliers: async (
-    params?: PaginationParams
+    params?: PaginationParams,
   ): Promise<PaginatedResponse<Supplier>> => {
     return await apiClient.get<PaginatedResponse<Supplier>>(
       "/api/milk/suppliers/",
-      { params }
+      { params },
     );
   },
 
@@ -160,7 +163,7 @@ export const milkAPI = {
    */
   updateSupplier: async (
     id: number,
-    data: Partial<SupplierCreateData>
+    data: Partial<SupplierCreateData>,
   ): Promise<Supplier> => {
     return await apiClient.patch<Supplier>(`/api/milk/suppliers/${id}/`, data);
   },
@@ -177,13 +180,13 @@ export const milkAPI = {
    */
   getSupplierStats: async (
     id: number,
-    params?: { start_date?: string; end_date?: string }
+    params?: { start_date?: string; end_date?: string },
   ): Promise<SupplierStats> => {
     return await apiClient.get<SupplierStats>(
       `/api/milk/suppliers/${id}/stats/`,
       {
         params,
-      }
+      },
     );
   },
 
@@ -192,11 +195,11 @@ export const milkAPI = {
    */
   getSupplierCollections: async (
     id: number,
-    params?: PaginationParams
+    params?: PaginationParams,
   ): Promise<PaginatedResponse<MilkCollection>> => {
     return await apiClient.get<PaginatedResponse<MilkCollection>>(
       `/api/milk/suppliers/${id}/collections/`,
-      { params }
+      { params },
     );
   },
 
@@ -206,11 +209,11 @@ export const milkAPI = {
    * Get paginated list of milk collections
    */
   getCollections: async (
-    params?: PaginationParams
+    params?: PaginationParams,
   ): Promise<PaginatedResponse<MilkCollection>> => {
     return await apiClient.get<PaginatedResponse<MilkCollection>>(
       "/api/milk/collections/",
-      { params }
+      { params },
     );
   },
 
@@ -225,7 +228,7 @@ export const milkAPI = {
    * Create new milk collection
    */
   createCollection: async (
-    data: CollectionCreateData
+    data: CollectionCreateData,
   ): Promise<MilkCollection> => {
     return await apiClient.post<MilkCollection>("/api/milk/collections/", data);
   },
@@ -235,11 +238,11 @@ export const milkAPI = {
    */
   updateCollection: async (
     id: number,
-    data: Partial<CollectionCreateData>
+    data: Partial<CollectionCreateData>,
   ): Promise<MilkCollection> => {
     return await apiClient.patch<MilkCollection>(
       `/api/milk/collections/${id}/`,
-      data
+      data,
     );
   },
 
@@ -262,7 +265,7 @@ export const milkAPI = {
       "/api/milk/collections/stats/",
       {
         params,
-      }
+      },
     );
   },
 
@@ -271,13 +274,13 @@ export const milkAPI = {
    */
   getCollectionsBySupplier: async (
     supplierId: number,
-    params?: PaginationParams
+    params?: PaginationParams,
   ): Promise<PaginatedResponse<MilkCollection>> => {
     return await apiClient.get<PaginatedResponse<MilkCollection>>(
       "/api/milk/collections/",
       {
         params: { ...params, supplier: supplierId },
-      }
+      },
     );
   },
 
@@ -287,13 +290,13 @@ export const milkAPI = {
    * Get paginated list of payments
    */
   getPayments: async (
-    params?: PaginationParams
+    params?: PaginationParams,
   ): Promise<PaginatedResponse<Payment>> => {
     return await apiClient.get<PaginatedResponse<Payment>>(
       "/api/milk/payments/",
       {
         params,
-      }
+      },
     );
   },
 
@@ -316,7 +319,7 @@ export const milkAPI = {
    */
   updatePayment: async (
     id: number,
-    data: Partial<PaymentCreateData>
+    data: Partial<PaymentCreateData>,
   ): Promise<Payment> => {
     return await apiClient.patch<Payment>(`/api/milk/payments/${id}/`, data);
   },

@@ -114,10 +114,11 @@ class MilkCollectionModelTest(TestCase):
             'collection_time': time(6, 30),
             'milk_type': 'cow',
             'quantity': Decimal('10.5'),
-            'fat_percentage': Decimal('4.5'),
-            'snf_percentage': Decimal('8.5'),
+            'fat': Decimal('4.5'),
+            'snf': Decimal('8.5'),
             'temperature': Decimal('4.0'),
-            'rate_per_liter': Decimal('35.00'),
+            'rate_per_fat': Decimal('60.00'),
+            'rate_per_snf': Decimal('10.00'),
         }
     
     def test_create_collection(self):
@@ -135,7 +136,7 @@ class MilkCollectionModelTest(TestCase):
         # Calculate quality score
         score = collection.calculate_quality_score()
         
-        # With fat=4.5%, SNF=8.5%, temp=4°C (ideal range)
+        # With fat=4.5 kg/L, SNF=8.5 kg/L, temp=4°C (ideal range)
         # Fat score: (4.5/6.0) * 50 = 37.5
         # SNF score: (8.5/9.0) * 30 = 28.33
         # Temp score: 20 (in ideal range)
