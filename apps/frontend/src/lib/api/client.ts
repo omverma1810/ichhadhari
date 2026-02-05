@@ -20,7 +20,7 @@ class APIClient {
   constructor() {
     const configuredBaseUrl =
       process.env.NEXT_PUBLIC_API_URL ||
-      "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+      "https://ichhadhari-backend-2ljhubczcq-el.a.run.app";
 
     // Use the base URL directly - services already include /api/ prefix in their paths
     const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
@@ -54,8 +54,8 @@ class APIClient {
           console.log(
             `[API Request] ${config.method?.toUpperCase()} ${config.url}`,
             Object.fromEntries(
-              Object.entries(logDetails).filter(([, value]) => value != null)
-            )
+              Object.entries(logDetails).filter(([, value]) => value != null),
+            ),
           );
         }
 
@@ -66,7 +66,7 @@ class APIClient {
           console.error("[API Request Error]", error);
         }
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor - handle token refresh on 401
@@ -83,8 +83,8 @@ class APIClient {
               response.config.url
             }`,
             Object.fromEntries(
-              Object.entries(responseLog).filter(([, value]) => value != null)
-            )
+              Object.entries(responseLog).filter(([, value]) => value != null),
+            ),
           );
         }
         return response;
@@ -109,8 +109,8 @@ class APIClient {
 
           const filteredDetails = Object.fromEntries(
             Object.entries(errorDetails).filter(
-              ([, value]) => value !== undefined && value !== null
-            )
+              ([, value]) => value !== undefined && value !== null,
+            ),
           );
 
           const fallbackDetails =
@@ -125,7 +125,7 @@ class APIClient {
             "[API Response Error]",
             Object.keys(filteredDetails).length > 0
               ? filteredDetails
-              : fallbackDetails
+              : fallbackDetails,
           );
         }
 
@@ -162,7 +162,7 @@ class APIClient {
               "https://ichhadhari-backend-162541991773.asia-south1.run.app";
             const response = await axios.post(
               `${API_BASE_URL}/api/auth/token/refresh/`,
-              { refresh: refreshToken }
+              { refresh: refreshToken },
             );
 
             const { access } = response.data;
@@ -192,7 +192,7 @@ class APIClient {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -228,7 +228,7 @@ class APIClient {
 
   public async get<T = unknown>(
     url: string,
-    config?: AxiosRequestConfig<never>
+    config?: AxiosRequestConfig<never>,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.get<T>(url, config);
     return response.data;
@@ -237,7 +237,7 @@ class APIClient {
   public async post<TResponse = unknown, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<TResponse> {
     const response: AxiosResponse<TResponse> =
       await this.client.post<TResponse>(url, data, config);
@@ -247,12 +247,12 @@ class APIClient {
   public async put<TResponse = unknown, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<TResponse> {
     const response: AxiosResponse<TResponse> = await this.client.put<TResponse>(
       url,
       data,
-      config
+      config,
     );
     return response.data;
   }
@@ -260,7 +260,7 @@ class APIClient {
   public async patch<TResponse = unknown, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<TResponse> {
     const response: AxiosResponse<TResponse> =
       await this.client.patch<TResponse>(url, data, config);
@@ -269,7 +269,7 @@ class APIClient {
 
   public async delete<T = unknown>(
     url: string,
-    config?: AxiosRequestConfig<never>
+    config?: AxiosRequestConfig<never>,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.client.delete<T>(url, config);
     return response.data;
@@ -301,7 +301,7 @@ export type ApiError = {
 const DEFAULT_ERROR_MESSAGE = "An unexpected error occurred";
 
 const parseErrorPayload = (
-  payload: ApiErrorResponse | string | undefined
+  payload: ApiErrorResponse | string | undefined,
 ): string | undefined => {
   if (!payload) return undefined;
 
@@ -350,7 +350,7 @@ const getErrorMessage = (error: unknown): string => {
 
   if (axios.isAxiosError(error)) {
     const payloadMessage = parseErrorPayload(
-      error.response?.data as ApiErrorResponse | string
+      error.response?.data as ApiErrorResponse | string,
     );
     if (payloadMessage) return payloadMessage;
     if (typeof error.message === "string" && error.message.trim().length > 0) {
