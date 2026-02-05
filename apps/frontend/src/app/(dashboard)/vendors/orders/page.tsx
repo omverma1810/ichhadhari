@@ -1,6 +1,6 @@
 export default function VendorOrdersPage() {
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold text-dairy-charcoal">
           Vendor Orders

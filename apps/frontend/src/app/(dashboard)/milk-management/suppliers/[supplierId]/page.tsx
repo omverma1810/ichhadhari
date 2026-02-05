@@ -266,14 +266,14 @@ export default function SupplierDetailsPage() {
             <ProfileRow
               label="Total Milk Supplied"
               value={`${formatNumber(
-                toNumber(supplier.total_milk_supplied)
+                toNumber(supplier.total_milk_supplied),
               )} L`}
             />
             {supplier.bank_name ? (
               <ProfileRow
                 label="Bank"
                 value={`${supplier.bank_name} · ${maskAccount(
-                  supplier.account_number
+                  supplier.account_number,
                 )}`}
               />
             ) : null}
@@ -307,43 +307,105 @@ export default function SupplierDetailsPage() {
             ) : recentCollections.length === 0 ? (
               <EmptyPanel message="No collections recorded for this supplier" />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Collection ID</TableHead>
-                    <TableHead>Quantity (L)</TableHead>
-                    <TableHead>Quality Score</TableHead>
-                    <TableHead>Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Collection ID</TableHead>
+                        <TableHead>Quantity (L)</TableHead>
+                        <TableHead>Quality Score</TableHead>
+                        <TableHead>Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentCollections.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell>
+                            {formatDate(entry.collection_date)}
+                          </TableCell>
+                          <TableCell>
+                            {formatTimeString(entry.collection_time)}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs font-semibold text-dairy-blue">
+                            {entry.collection_id}
+                          </TableCell>
+                          <TableCell>
+                            {formatNumber(toNumber(entry.quantity))}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="gap-1">
+                              <Droplet className="h-3 w-3 text-dairy-orange" />
+                              {toNumber(entry.quality_score).toFixed(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(toNumber(entry.total_amount))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden space-y-4">
                   {recentCollections.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{formatDate(entry.collection_date)}</TableCell>
-                      <TableCell>
-                        {formatTimeString(entry.collection_time)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs font-semibold text-dairy-blue">
-                        {entry.collection_id}
-                      </TableCell>
-                      <TableCell>
-                        {formatNumber(toNumber(entry.quantity))}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="gap-1">
-                          <Droplet className="h-3 w-3 text-dairy-orange" />
-                          {toNumber(entry.quality_score).toFixed(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(toNumber(entry.total_amount))}
-                      </TableCell>
-                    </TableRow>
+                    <Card key={entry.id}>
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {formatDate(entry.collection_date)}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {formatTimeString(entry.collection_time)}
+                            </span>
+                          </div>
+                          <div className="text-xs font-mono font-semibold text-dairy-blue">
+                            {entry.collection_id}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">
+                                Quantity
+                              </span>
+                              <p className="font-medium">
+                                {formatNumber(toNumber(entry.quantity))} L
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">
+                                Quality
+                              </span>
+                              <p>
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-xs"
+                                >
+                                  <Droplet className="h-3 w-3 text-dairy-orange" />
+                                  {toNumber(entry.quality_score).toFixed(1)}
+                                </Badge>
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t">
+                            <span className="text-sm text-muted-foreground">
+                              Total Amount
+                            </span>
+                            <span className="text-lg font-semibold">
+                              {formatCurrency(toNumber(entry.total_amount))}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -374,37 +436,82 @@ export default function SupplierDetailsPage() {
             ) : recentPayments.length === 0 ? (
               <EmptyPanel message="No payments recorded for this supplier" />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentPayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            {formatDate(payment.payment_date)}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-gray-600">
+                            {payment.payment_id}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(payment.amount)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={cn(
+                                "capitalize",
+                                paymentBadge(payment.status),
+                              )}
+                            >
+                              {payment.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden space-y-4">
                   {recentPayments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                      <TableCell className="font-mono text-xs text-gray-600">
-                        {payment.payment_id}
-                      </TableCell>
-                      <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={cn(
-                            "capitalize",
-                            paymentBadge(payment.status)
-                          )}
-                        >
-                          {payment.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+                    <Card key={payment.id}>
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {formatDate(payment.payment_date)}
+                            </span>
+                            <Badge
+                              className={cn(
+                                "capitalize text-xs",
+                                paymentBadge(payment.status),
+                              )}
+                            >
+                              {payment.status}
+                            </Badge>
+                          </div>
+                          <div className="text-xs font-mono text-gray-600">
+                            {payment.payment_id}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t">
+                            <span className="text-sm text-muted-foreground">
+                              Amount
+                            </span>
+                            <span className="text-lg font-semibold">
+                              {formatCurrency(payment.amount)}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -486,7 +593,7 @@ function ProfileRow({
         className={cn(
           "mt-1 text-sm text-gray-700",
           highlight && "font-semibold text-red-600",
-          multiline && "whitespace-pre-line"
+          multiline && "whitespace-pre-line",
         )}
       >
         {value}

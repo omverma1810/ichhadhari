@@ -106,13 +106,13 @@ export default function BatchesPage() {
   const stats = {
     total: batches.length,
     in_progress: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "in_progress"
+      (b: ProductionBatch) => b.batch_status === "in_progress",
     ).length,
     quality_check: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "quality_check"
+      (b: ProductionBatch) => b.batch_status === "quality_check",
     ).length,
     approved: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "approved"
+      (b: ProductionBatch) => b.batch_status === "approved",
     ).length,
   };
 
@@ -222,7 +222,7 @@ export default function BatchesPage() {
               {Object.entries(statusConfig).map(([key, config], index) => {
                 const Icon = config.icon;
                 const count = batches.filter(
-                  (b: ProductionBatch) => b.batch_status === key
+                  (b: ProductionBatch) => b.batch_status === key,
                 ).length;
 
                 return (
@@ -273,7 +273,7 @@ export default function BatchesPage() {
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -319,89 +319,192 @@ export default function BatchesPage() {
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Batch Number</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Production Date</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Quality Rating</TableHead>
-                      <TableHead>Total Cost</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBatches.map((batch: ProductionBatch) => {
-                      const status =
-                        statusConfig[
-                          batch.batch_status as keyof typeof statusConfig
-                        ];
-                      const StatusIcon = status.icon;
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Batch Number</TableHead>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Production Date</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Quality Rating</TableHead>
+                        <TableHead>Total Cost</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBatches.map((batch: ProductionBatch) => {
+                        const status =
+                          statusConfig[
+                            batch.batch_status as keyof typeof statusConfig
+                          ];
+                        const StatusIcon = status.icon;
 
-                      return (
-                        <TableRow key={batch.id}>
-                          <TableCell>
-                            <div className="font-mono text-sm font-semibold text-[#5D4037]">
-                              {batch.batch_number}
+                        return (
+                          <TableRow key={batch.id}>
+                            <TableCell>
+                              <div className="font-mono text-sm font-semibold text-[#5D4037]">
+                                {batch.batch_number}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">
+                                {batch.product_name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Calendar className="w-4 h-4" />
+                                {format(new Date(batch.production_date), "PPP")}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {batch.quantity_produced.toLocaleString()}{" "}
+                                {batch.unit}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={status.color}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {status.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {batch.quality_rating ? (
+                                <div className="flex items-center gap-1">
+                                  <TrendingUp className="w-4 h-4 text-green-600" />
+                                  <span className="text-sm font-medium">
+                                    {batch.quality_rating}/10
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">
+                                  N/A
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm font-medium">
+                                <DollarSign className="w-4 h-4 text-gray-400" />
+                                ₹{batch.total_cost.toLocaleString()}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Link href={`/production/batches/${batch.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  View Details
+                                </Button>
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Card Layout */}
+                <div className="lg:hidden space-y-4">
+                  {filteredBatches.map((batch: ProductionBatch) => {
+                    const status =
+                      statusConfig[
+                        batch.batch_status as keyof typeof statusConfig
+                      ];
+                    const StatusIcon = status.icon;
+
+                    return (
+                      <Card key={batch.id} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Batch Number
+                              </p>
+                              <p className="font-mono text-sm font-semibold text-[#5D4037]">
+                                {batch.batch_number}
+                              </p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">
-                              {batch.product_name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Calendar className="w-4 h-4" />
-                              {format(new Date(batch.production_date), "PPP")}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {batch.quantity_produced.toLocaleString()}{" "}
-                              {batch.unit}
-                            </div>
-                          </TableCell>
-                          <TableCell>
                             <Badge className={status.color}>
                               <StatusIcon className="w-3 h-3 mr-1" />
                               {status.label}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {batch.quality_rating ? (
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="w-4 h-4 text-green-600" />
-                                <span className="text-sm font-medium">
-                                  {batch.quality_rating}/10
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-gray-400">N/A</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm font-medium">
-                              <DollarSign className="w-4 h-4 text-gray-400" />₹
-                              {batch.total_cost.toLocaleString()}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Product
+                              </p>
+                              <p className="font-medium text-sm">
+                                {batch.product_name}
+                              </p>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Quantity
+                              </p>
+                              <p className="text-sm">
+                                {batch.quantity_produced.toLocaleString()}{" "}
+                                {batch.unit}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Production Date
+                              </p>
+                              <div className="flex items-center gap-1 text-sm">
+                                <Calendar className="w-3 h-3 text-gray-400" />
+                                {format(new Date(batch.production_date), "PP")}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Quality Rating
+                              </p>
+                              {batch.quality_rating ? (
+                                <div className="flex items-center gap-1">
+                                  <TrendingUp className="w-3 h-3 text-green-600" />
+                                  <span className="text-sm font-medium">
+                                    {batch.quality_rating}/10
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">
+                                  N/A
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Total Cost
+                              </p>
+                              <div className="flex items-center gap-1 text-sm font-medium">
+                                <DollarSign className="w-3 h-3 text-gray-400" />
+                                ₹{batch.total_cost.toLocaleString()}
+                              </div>
+                            </div>
                             <Link href={`/production/batches/${batch.id}`}>
                               <Button variant="ghost" size="sm">
                                 View Details
                               </Button>
                             </Link>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

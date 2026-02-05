@@ -89,7 +89,7 @@ export default function StockOverviewPage() {
       const csvContent = [
         Object.keys(csvData[0] || {}).join(","),
         ...csvData.map((row: Record<string, unknown>) =>
-          Object.values(row).join(",")
+          Object.values(row).join(","),
         ),
       ].join("\n");
 
@@ -143,13 +143,13 @@ export default function StockOverviewPage() {
       case "low_stock":
       case "out_of_stock":
         return stockData.results.filter(
-          (item: InventoryItem) => item.status === activeTab
+          (item: InventoryItem) => item.status === activeTab,
         ) as StockItem[];
       case "expiring":
         return stockData.results.filter(
           (item: StockItem) =>
             item.expiryStatus &&
-            ["expiring_soon", "critical"].includes(item.expiryStatus)
+            ["expiring_soon", "critical"].includes(item.expiryStatus),
         ) as StockItem[];
       default:
         return stockData.results as StockItem[];
@@ -227,9 +227,9 @@ export default function StockOverviewPage() {
             Monitor and manage stock across all locations
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Filter className="w-4 h-4 mr-2" />
               Filters
             </Button>
@@ -239,6 +239,7 @@ export default function StockOverviewPage() {
               variant="outline"
               onClick={handleExport}
               disabled={isExporting}
+              className="w-full sm:w-auto"
             >
               <Download className="w-4 h-4 mr-2" />
               {isExporting ? "Exporting..." : "Export"}
@@ -332,8 +333,8 @@ export default function StockOverviewPage() {
                         alert.severity === "critical"
                           ? "bg-red-100 text-red-800"
                           : alert.severity === "high"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }
                     >
                       {alert.daysToExpiry} days left

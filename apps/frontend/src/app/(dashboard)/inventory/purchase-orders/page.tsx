@@ -122,13 +122,13 @@ export default function PurchaseOrdersPage() {
               Filters
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
+          <CardContent className="flex flex-wrap gap-2 md:gap-4">
+            <div className="flex-1 min-w-[200px]">
               <Label htmlFor="status" className="text-sm">
                 Status
               </Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 w-full sm:w-[170px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,7 +147,7 @@ export default function PurchaseOrdersPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="flex-1 min-w-[200px]">
               <Label htmlFor="vendor" className="text-sm">
                 Vendor
               </Label>
@@ -171,77 +171,81 @@ export default function PurchaseOrdersPage() {
         transition={{ delay: 0.2 }}
       >
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>PO Number</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>PO Date</TableHead>
-                <TableHead>Expected Delivery</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total Amount</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    Loading...
-                  </TableCell>
+                  <TableHead>PO Number</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>PO Date</TableHead>
+                  <TableHead>Expected Delivery</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Total Amount</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : pos.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    No purchase orders found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                pos.map((po: any) => (
-                  <TableRow key={po.id}>
-                    <TableCell className="font-mono text-sm font-semibold">
-                      {po.po_number}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                      Loading...
                     </TableCell>
-                    <TableCell>
-                      {po.vendor_name || `Vendor #${po.vendor}`}
+                  </TableRow>
+                ) : pos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                      No purchase orders found
                     </TableCell>
-                    <TableCell>{format(new Date(po.po_date), "PP")}</TableCell>
-                    <TableCell>
-                      {format(new Date(po.expected_delivery_date), "PP")}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(po.status)}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₹{formatNumber(po.total_amount)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/inventory/purchase-orders/${po.id}`)
-                          }
-                        >
-                          <FileText className="h-3 w-3" />
-                        </Button>
-                        {po.status === "pending_approval" && (
+                  </TableRow>
+                ) : (
+                  pos.map((po: any) => (
+                    <TableRow key={po.id}>
+                      <TableCell className="font-mono text-sm font-semibold">
+                        {po.po_number}
+                      </TableCell>
+                      <TableCell>
+                        {po.vendor_name || `Vendor #${po.vendor}`}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(po.po_date), "PP")}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(po.expected_delivery_date), "PP")}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(po.status)}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ₹{formatNumber(po.total_amount)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-green-600"
-                            onClick={() => handleApprove(po.id)}
-                            disabled={approvePoMutation.isPending}
+                            onClick={() =>
+                              router.push(`/inventory/purchase-orders/${po.id}`)
+                            }
                           >
-                            <CheckCircle className="h-3 w-3" />
+                            <FileText className="h-3 w-3" />
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                          {po.status === "pending_approval" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600"
+                              onClick={() => handleApprove(po.id)}
+                              disabled={approvePoMutation.isPending}
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       </motion.div>
 

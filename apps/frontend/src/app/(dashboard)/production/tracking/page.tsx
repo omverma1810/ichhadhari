@@ -73,7 +73,7 @@ export default function ProductionTrackingPage() {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {columns.map((column, columnIndex) => {
           const batches = getBatchesByStatus(column.id);
           const ColumnIcon = column.icon;
@@ -84,7 +84,7 @@ export default function ProductionTrackingPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: columnIndex * 0.1 }}
-              className="bg-gray-50 rounded-xl p-4 min-h-[600px]"
+              className="bg-gray-50 rounded-xl p-4 min-h-[400px] sm:min-h-[600px]"
             >
               <div className={`${column.color} rounded-lg p-3 mb-4`}>
                 <div className="flex items-center justify-between">

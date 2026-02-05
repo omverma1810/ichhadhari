@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -167,7 +168,8 @@ export default function InvoicesPage() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -201,7 +203,7 @@ export default function InvoicesPage() {
                     <TableCell>
                       <Badge
                         className={getPaymentStatusColor(
-                          invoice.payment_status
+                          invoice.payment_status,
                         )}
                       >
                         {invoice.payment_status.replace("_", " ")}
@@ -227,6 +229,94 @@ export default function InvoicesPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-4 p-4">
+            {invoices.map((invoice) => (
+              <Card key={invoice.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500">Invoice Number</p>
+                        <p className="font-semibold text-gray-900">
+                          {invoice.invoice_number}
+                        </p>
+                      </div>
+                      <Badge className={getStatusColor(invoice.status)}>
+                        {invoice.status}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Vendor</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {invoice.vendor_name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Amount</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {formatCurrency(invoice.total_amount)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Invoice Date</p>
+                        <p className="text-sm text-gray-700">
+                          {formatDate(invoice.invoice_date)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Due Date</p>
+                        <p className="text-sm text-gray-700">
+                          {formatDate(invoice.due_date)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">
+                        Payment Status
+                      </p>
+                      <Badge
+                        className={getPaymentStatusColor(
+                          invoice.payment_status,
+                        )}
+                      >
+                        {invoice.payment_status.replace("_", " ")}
+                      </Badge>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="flex-1"
+                        size="sm"
+                      >
+                        <Link href={`/vendors/invoices/${invoice.id}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(invoice.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       )}

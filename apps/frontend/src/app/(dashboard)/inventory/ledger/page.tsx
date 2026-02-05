@@ -192,8 +192,8 @@ export default function InventoryLedgerPage() {
               Filters
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
+          <CardContent className="flex flex-wrap gap-2 md:gap-4">
+            <div className="flex-1 min-w-[150px]">
               <Label htmlFor="dateFrom" className="text-sm">
                 From Date
               </Label>
@@ -205,7 +205,7 @@ export default function InventoryLedgerPage() {
                 className="mt-1"
               />
             </div>
-            <div>
+            <div className="flex-1 min-w-[150px]">
               <Label htmlFor="dateTo" className="text-sm">
                 To Date
               </Label>
@@ -217,7 +217,7 @@ export default function InventoryLedgerPage() {
                 className="mt-1"
               />
             </div>
-            <div>
+            <div className="flex-1 min-w-[150px]">
               <Label htmlFor="transactionType" className="text-sm">
                 Transaction Type
               </Label>
@@ -225,7 +225,7 @@ export default function InventoryLedgerPage() {
                 value={transactionType}
                 onValueChange={setTransactionType}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 w-full sm:w-[170px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,7 +242,7 @@ export default function InventoryLedgerPage() {
             </div>
             <div className="flex items-end">
               <Button
-                className="w-full bg-[#8B5A3C] hover:bg-[#5D4037]"
+                className="w-full sm:w-auto bg-[#8B5A3C] hover:bg-[#5D4037]"
                 onClick={() => {
                   setPage(1);
                 }}
@@ -262,93 +262,96 @@ export default function InventoryLedgerPage() {
         transition={{ delay: 0.2 }}
       >
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Transaction ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Balance After</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Performed By</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    Loading...
-                  </TableCell>
+                  <TableHead>Transaction ID</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Balance After</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Performed By</TableHead>
                 </TableRow>
-              ) : transactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    No transactions found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                transactions.map((transaction: any) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-mono text-sm font-semibold">
-                      {transaction.transaction_id}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(transaction.transaction_date), "PPP")}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold">
-                          {transaction.item_name || `Item #${transaction.item}`}
-                        </p>
-                        {transaction.batch_number && (
-                          <p className="text-xs text-gray-500">
-                            Batch: {transaction.batch_number}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getTransactionBadge(
-                        transaction.transaction_type,
-                        transaction.is_addition,
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span
-                        className={`font-semibold ${
-                          transaction.is_addition
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {transaction.is_addition ? "+" : "-"}
-                        {formatNumber(transaction.quantity)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatNumber(transaction.balance_after_transaction)}
-                    </TableCell>
-                    <TableCell>
-                      {transaction.reference_type &&
-                      transaction.reference_id ? (
-                        <span className="text-xs">
-                          {transaction.reference_type}:{" "}
-                          {transaction.reference_id}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {transaction.performed_by_name || "—"}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : transactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      No transactions found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  transactions.map((transaction: any) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-mono text-sm font-semibold">
+                        {transaction.transaction_id}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(transaction.transaction_date), "PPP")}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-semibold">
+                            {transaction.item_name ||
+                              `Item #${transaction.item}`}
+                          </p>
+                          {transaction.batch_number && (
+                            <p className="text-xs text-gray-500">
+                              Batch: {transaction.batch_number}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getTransactionBadge(
+                          transaction.transaction_type,
+                          transaction.is_addition,
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span
+                          className={`font-semibold ${
+                            transaction.is_addition
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {transaction.is_addition ? "+" : "-"}
+                          {formatNumber(transaction.quantity)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatNumber(transaction.balance_after_transaction)}
+                      </TableCell>
+                      <TableCell>
+                        {transaction.reference_type &&
+                        transaction.reference_id ? (
+                          <span className="text-xs">
+                            {transaction.reference_type}:{" "}
+                            {transaction.reference_id}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {transaction.performed_by_name || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       </motion.div>
 

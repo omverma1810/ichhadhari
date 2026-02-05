@@ -323,7 +323,7 @@ export default function EmployeesPage() {
 
   const employees = useMemo(
     () => employeesData?.results || [],
-    [employeesData]
+    [employeesData],
   );
   const isLoading = employeesLoading;
 
@@ -343,26 +343,26 @@ export default function EmployeesPage() {
     () =>
       Array.from(
         new Set(
-          employees.map((employee) => getDepartmentString(employee.department))
-        )
+          employees.map((employee) => getDepartmentString(employee.department)),
+        ),
       )
         .filter(Boolean)
         .sort(),
-    [employees]
+    [employees],
   );
 
   const roles = useMemo(
     () =>
       Array.from(new Set(employees.map((employee) => employee.role))).sort(),
-    [employees]
+    [employees],
   );
 
   const employmentTypes = useMemo(
     () =>
       Array.from(
-        new Set(employees.map((employee) => employee.employment_type))
+        new Set(employees.map((employee) => employee.employment_type)),
       ).sort(),
-    [employees]
+    [employees],
   );
 
   const liveStatusSummary = useMemo(() => {
@@ -442,13 +442,13 @@ export default function EmployeesPage() {
     if (departmentFilter !== "all") {
       workingSet = workingSet.filter(
         (employee) =>
-          getDepartmentString(employee.department) === departmentFilter
+          getDepartmentString(employee.department) === departmentFilter,
       );
     }
 
     if (roleFilter !== "all") {
       workingSet = workingSet.filter(
-        (employee) => employee.role === roleFilter
+        (employee) => employee.role === roleFilter,
       );
     }
 
@@ -463,7 +463,7 @@ export default function EmployeesPage() {
 
     if (employmentFilter !== "all") {
       workingSet = workingSet.filter(
-        (employee) => employee.employment_type === employmentFilter
+        (employee) => employee.employment_type === employmentFilter,
       );
     }
 
@@ -500,7 +500,7 @@ export default function EmployeesPage() {
             .localeCompare(`${a.first_name} ${a.last_name}`.toLowerCase());
         case "department-asc":
           return getDepartmentString(a.department).localeCompare(
-            getDepartmentString(b.department)
+            getDepartmentString(b.department),
           );
         case "performance-desc":
           // Performance doesn't exist, sort by active status
@@ -529,7 +529,7 @@ export default function EmployeesPage() {
   useEffect(() => {
     const totalPages = Math.max(
       1,
-      Math.ceil(filteredEmployees.length / PAGE_SIZE)
+      Math.ceil(filteredEmployees.length / PAGE_SIZE),
     );
     if (page > totalPages) {
       setPage(totalPages);
@@ -541,7 +541,7 @@ export default function EmployeesPage() {
   const paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredEmployees.length / PAGE_SIZE)
+    Math.ceil(filteredEmployees.length / PAGE_SIZE),
   );
   const hasResults = filteredEmployees.length > 0;
 
@@ -564,7 +564,7 @@ export default function EmployeesPage() {
       title: "On leave today",
       value: formatNumber(attendanceSnapshot.onLeave),
       caption: `${formatNumber(
-        attendanceSnapshot.present
+        attendanceSnapshot.present,
       )} present / ${formatNumber(attendanceSnapshot.absent)} absent`,
       icon: UserMinus,
       accent: "bg-[#FEF3C7] text-[#7C4A00]",
@@ -613,7 +613,7 @@ export default function EmployeesPage() {
 
   const handleBulkAction = (action: "present" | "reminder" | "export") => {
     const selectedEmployees = employees.filter((employee) =>
-      selectedRowIds.has(employee.id)
+      selectedRowIds.has(employee.id),
     );
 
     if (selectedEmployees.length === 0) {
@@ -624,12 +624,12 @@ export default function EmployeesPage() {
     switch (action) {
       case "present":
         toast.success(
-          `${selectedEmployees.length} employees marked present for today.`
+          `${selectedEmployees.length} employees marked present for today.`,
         );
         break;
       case "reminder":
         toast.info(
-          `Reminder queued for ${selectedEmployees.length} employees.`
+          `Reminder queued for ${selectedEmployees.length} employees.`,
         );
         break;
       case "export":
@@ -640,7 +640,7 @@ export default function EmployeesPage() {
 
   const handleStatusToggleRequest = (
     employee: Employee,
-    nextStatus: EmployeeStatus
+    nextStatus: EmployeeStatus,
   ) => {
     if (employee.status === nextStatus) {
       return;
@@ -747,7 +747,7 @@ export default function EmployeesPage() {
               key={card.title}
               className={cn(
                 "border border-white/60 bg-white/80 backdrop-blur transition hover:shadow-md",
-                "hover:border-[#F4A920]/40"
+                "hover:border-[#F4A920]/40",
               )}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -768,7 +768,7 @@ export default function EmployeesPage() {
                 <span
                   className={cn(
                     "rounded-full p-2 text-sm shadow-sm",
-                    card.accent
+                    card.accent,
                   )}
                 >
                   <card.icon className="size-5" />
@@ -785,8 +785,8 @@ export default function EmployeesPage() {
           className="rounded-xl border border-[#F4A920]/20 bg-white/80 p-4 shadow-sm"
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 flex-wrap items-center gap-3">
-              <div className="relative min-w-[220px] flex-1">
+            <div className="flex flex-1 flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+              <div className="relative w-full sm:min-w-[220px] sm:flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchTerm}
@@ -799,7 +799,7 @@ export default function EmployeesPage() {
                 value={departmentFilter}
                 onValueChange={setDepartmentFilter}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
                 <SelectContent>
@@ -812,7 +812,7 @@ export default function EmployeesPage() {
                 </SelectContent>
               </Select>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -825,7 +825,7 @@ export default function EmployeesPage() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -841,7 +841,7 @@ export default function EmployeesPage() {
                 value={employmentFilter}
                 onValueChange={setEmploymentFilter}
               >
-                <SelectTrigger className="w-[170px]">
+                <SelectTrigger className="w-full sm:w-[170px]">
                   <SelectValue placeholder="Employment" />
                 </SelectTrigger>
                 <SelectContent>
@@ -859,7 +859,7 @@ export default function EmployeesPage() {
                 value={sortOption}
                 onValueChange={(value) => setSortOption(value as SortOption)}
               >
-                <SelectTrigger className="w-[190px]">
+                <SelectTrigger className="w-full sm:w-[190px]">
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent>
@@ -876,7 +876,7 @@ export default function EmployeesPage() {
                   "text-sm",
                   showAdvancedFilters
                     ? "text-[#8A5100]"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground",
                 )}
                 onClick={() => {
                   setShowAdvancedFilters((previous) => {
@@ -1046,7 +1046,7 @@ export default function EmployeesPage() {
                   <AnimatePresence initial={false}>
                     {paginatedEmployees.map((employee) => {
                       const status = getStatusMeta(
-                        employee.is_active ? "active" : "inactive"
+                        employee.is_active ? "active" : "inactive",
                       );
                       const isSelected = selectedRowIds.has(employee.id);
                       const roleClasses = getRoleBadgeClass(employee.role);
@@ -1066,7 +1066,7 @@ export default function EmployeesPage() {
                           transition={{ duration: 0.18, ease: "easeOut" }}
                           className={cn(
                             "group border-b last:border-b-0",
-                            isSelected && "bg-[#FFF4E5]/60"
+                            isSelected && "bg-[#FFF4E5]/60",
                           )}
                         >
                           <TableCell>
@@ -1077,7 +1077,7 @@ export default function EmployeesPage() {
                               onChange={(event) =>
                                 handleRowSelection(
                                   employee.id,
-                                  event.target.checked
+                                  event.target.checked,
                                 )
                               }
                               aria-label={`Select ${employee.first_name} ${employee.last_name}`}
@@ -1116,7 +1116,7 @@ export default function EmployeesPage() {
                                     variant="outline"
                                     className={cn(
                                       "border text-xs",
-                                      roleClasses
+                                      roleClasses,
                                     )}
                                   >
                                     {formatRoleLabel(employee.role)}
@@ -1126,8 +1126,8 @@ export default function EmployeesPage() {
                                     className={cn(
                                       "border bg-white text-xs",
                                       getDepartmentBadgeClass(
-                                        employee.department
-                                      )
+                                        employee.department,
+                                      ),
                                     )}
                                   >
                                     {getDepartmentString(employee.department)}
@@ -1218,7 +1218,7 @@ export default function EmployeesPage() {
                                 variant="outline"
                                 className={cn(
                                   "border text-xs",
-                                  status.className
+                                  status.className,
                                 )}
                                 title={status.description}
                               >
@@ -1231,7 +1231,7 @@ export default function EmployeesPage() {
                                   onCheckedChange={(checked) =>
                                     handleStatusToggleRequest(
                                       employee,
-                                      checked ? "active" : "suspended"
+                                      checked ? "active" : "suspended",
                                     )
                                   }
                                   title={
@@ -1289,14 +1289,14 @@ export default function EmployeesPage() {
                                     event.preventDefault();
                                     try {
                                       await navigator.clipboard.writeText(
-                                        employee.employee_id
+                                        employee.employee_id,
                                       );
                                       toast.success(
-                                        "Employee ID copied to clipboard."
+                                        "Employee ID copied to clipboard.",
                                       );
                                     } catch (error) {
                                       toast.error(
-                                        "Unable to copy employee ID."
+                                        "Unable to copy employee ID.",
                                       );
                                     }
                                   }}

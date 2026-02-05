@@ -236,8 +236,8 @@ export default function VendorPaymentsPage() {
             <CardTitle className="text-lg">Filter Payments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
+            <div className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
@@ -250,7 +250,7 @@ export default function VendorPaymentsPage() {
               </div>
 
               <Select value={vendorFilter} onValueChange={setVendorFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Vendors" />
                 </SelectTrigger>
@@ -265,7 +265,7 @@ export default function VendorPaymentsPage() {
               </Select>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[150px]">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -308,97 +308,212 @@ export default function VendorPaymentsPage() {
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Payment ID</TableHead>
-                      <TableHead>Vendor</TableHead>
-                      <TableHead>Payment Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.map((payment) => {
-                      const status = STATUS_CONFIG[payment.status];
-                      const StatusIcon = status.icon;
-                      const method =
-                        PAYMENT_METHOD_CONFIG[payment.payment_method];
-                      const MethodIcon = method.icon;
-
-                      return (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            <div className="font-mono text-sm font-semibold text-[#5D4037]">
-                              {payment.payment_id}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">
-                              {payment.vendor_name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Calendar className="w-4 h-4" />
-                              {format(new Date(payment.payment_date), "PPP")}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-semibold">
-                              ₹
-                              {parseFloat(
-                                payment.amount.toString()
-                              ).toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className={`flex items-center gap-2 ${method.color}`}
-                            >
-                              <MethodIcon className="w-4 h-4" />
-                              <span className="text-sm font-medium">
-                                {method.label}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={status.color}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {status.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {payment.is_advance ? (
-                              <Badge
-                                variant="outline"
-                                className="border-blue-200 text-blue-700"
-                              >
-                                Advance
-                              </Badge>
-                            ) : (
-                              <span className="text-sm text-gray-500">
-                                Regular
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Link href={`/vendors/payments/${payment.id}`}>
-                              <Button variant="ghost" size="sm">
-                                View Details
-                              </Button>
-                            </Link>
-                          </TableCell>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block">
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Payment ID</TableHead>
+                          <TableHead>Vendor</TableHead>
+                          <TableHead>Payment Date</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredPayments.map((payment) => {
+                          const status = STATUS_CONFIG[payment.status];
+                          const StatusIcon = status.icon;
+                          const method =
+                            PAYMENT_METHOD_CONFIG[payment.payment_method];
+                          const MethodIcon = method.icon;
+
+                          return (
+                            <TableRow key={payment.id}>
+                              <TableCell>
+                                <div className="font-mono text-sm font-semibold text-[#5D4037]">
+                                  {payment.payment_id}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-medium">
+                                  {payment.vendor_name}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Calendar className="w-4 h-4" />
+                                  {format(
+                                    new Date(payment.payment_date),
+                                    "PPP",
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-semibold">
+                                  ₹
+                                  {parseFloat(
+                                    payment.amount.toString(),
+                                  ).toLocaleString()}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div
+                                  className={`flex items-center gap-2 ${method.color}`}
+                                >
+                                  <MethodIcon className="w-4 h-4" />
+                                  <span className="text-sm font-medium">
+                                    {method.label}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={status.color}>
+                                  <StatusIcon className="w-3 h-3 mr-1" />
+                                  {status.label}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {payment.is_advance ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-blue-200 text-blue-700"
+                                  >
+                                    Advance
+                                  </Badge>
+                                ) : (
+                                  <span className="text-sm text-gray-500">
+                                    Regular
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Link href={`/vendors/payments/${payment.id}`}>
+                                  <Button variant="ghost" size="sm">
+                                    View Details
+                                  </Button>
+                                </Link>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden space-y-4">
+                  {filteredPayments.map((payment) => {
+                    const status = STATUS_CONFIG[payment.status];
+                    const StatusIcon = status.icon;
+                    const method =
+                      PAYMENT_METHOD_CONFIG[payment.payment_method];
+                    const MethodIcon = method.icon;
+
+                    return (
+                      <Card key={payment.id}>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="text-xs text-gray-500">
+                                  Payment ID
+                                </p>
+                                <p className="font-mono text-sm font-semibold text-[#5D4037]">
+                                  {payment.payment_id}
+                                </p>
+                              </div>
+                              <Badge className={status.color}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {status.label}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-xs text-gray-500">Vendor</p>
+                                <p className="text-sm font-medium">
+                                  {payment.vendor_name}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Amount</p>
+                                <p className="text-sm font-semibold">
+                                  ₹
+                                  {parseFloat(
+                                    payment.amount.toString(),
+                                  ).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Payment Date
+                              </p>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Calendar className="w-4 h-4" />
+                                {format(new Date(payment.payment_date), "PPP")}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Method
+                                </p>
+                                <div
+                                  className={`flex items-center gap-2 ${method.color}`}
+                                >
+                                  <MethodIcon className="w-4 h-4" />
+                                  <span className="text-sm font-medium">
+                                    {method.label}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Type
+                                </p>
+                                {payment.is_advance ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-blue-200 text-blue-700"
+                                  >
+                                    Advance
+                                  </Badge>
+                                ) : (
+                                  <span className="text-sm text-gray-500">
+                                    Regular
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="pt-2 border-t">
+                              <Link href={`/vendors/payments/${payment.id}`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                >
+                                  View Details
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

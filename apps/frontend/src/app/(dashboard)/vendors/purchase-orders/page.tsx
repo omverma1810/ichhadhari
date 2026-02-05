@@ -213,8 +213,8 @@ export default function PurchaseOrdersPage() {
           <CardTitle className="text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap gap-4">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B5A3C]" />
               <Input
                 placeholder="Search by PO number, vendor..."
@@ -225,7 +225,7 @@ export default function PurchaseOrdersPage() {
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <Filter className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -287,7 +287,8 @@ export default function PurchaseOrdersPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -325,7 +326,7 @@ export default function PurchaseOrdersPage() {
                         <TableCell>
                           {format(
                             new Date(order.expected_delivery_date),
-                            "MMM dd, yyyy"
+                            "MMM dd, yyyy",
                           )}
                         </TableCell>
                         <TableCell className="font-semibold">
@@ -358,7 +359,7 @@ export default function PurchaseOrdersPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/vendors/purchase-orders/${order.id}`
+                                `/vendors/purchase-orders/${order.id}`,
                               );
                             }}
                           >
@@ -369,6 +370,108 @@ export default function PurchaseOrdersPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="lg:hidden space-y-4">
+                {orders.map((order) => (
+                  <Card
+                    key={order.id}
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() =>
+                      router.push(`/vendors/purchase-orders/${order.id}`)
+                    }
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-xs text-[#8B5A3C]">PO Number</p>
+                            <p className="font-semibold text-[#5D4037]">
+                              {order.po_number}
+                            </p>
+                          </div>
+                          <StatusBadge status={order.status} />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-[#8B5A3C]">Vendor</p>
+                            <p className="text-sm font-medium text-[#5D4037]">
+                              {order.vendor_name || `Vendor #${order.vendor}`}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#8B5A3C]">
+                              Total Amount
+                            </p>
+                            <p className="text-sm font-semibold text-[#5D4037]">
+                              ₹
+                              {order.total_amount.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-[#8B5A3C]">Order Date</p>
+                            <div className="flex items-center gap-2 text-sm text-[#5D4037]">
+                              <Calendar className="h-4 w-4" />
+                              {format(new Date(order.po_date), "MMM dd, yyyy")}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#8B5A3C]">
+                              Expected Delivery
+                            </p>
+                            <p className="text-sm text-[#5D4037]">
+                              {format(
+                                new Date(order.expected_delivery_date),
+                                "MMM dd, yyyy",
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-[#8B5A3C] mb-1">
+                            Recurring
+                          </p>
+                          {order.is_recurring ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 text-purple-700"
+                            >
+                              {order.recurrence_frequency}
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-[#8B5A3C]">
+                              One-time
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(
+                                `/vendors/purchase-orders/${order.id}`,
+                              );
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Pagination */}

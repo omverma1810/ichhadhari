@@ -193,7 +193,7 @@ const vendorTypeMeta: Record<
 
 // Safe accessor for vendorTypeMeta - falls back to 'other' for unknown types
 const getVendorTypeMeta = (
-  vendorType: VendorType | string | undefined | null
+  vendorType: VendorType | string | undefined | null,
 ) => {
   if (vendorType && vendorType in vendorTypeMeta) {
     return vendorTypeMeta[vendorType as VendorType];
@@ -266,7 +266,7 @@ export default function VendorsOverviewPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | VendorType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | VendorStatus>("all");
   const [paymentFilter, setPaymentFilter] = useState<"all" | PaymentHealth>(
-    "all"
+    "all",
   );
   const [sortState, setSortState] = useState<SortState>({
     key: "recent",
@@ -377,7 +377,7 @@ export default function VendorsOverviewPage() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(sortedVendors.length / ITEMS_PER_PAGE)
+    Math.ceil(sortedVendors.length / ITEMS_PER_PAGE),
   );
 
   useEffect(() => {
@@ -394,19 +394,19 @@ export default function VendorsOverviewPage() {
   const summary = useMemo(() => {
     const totalVendors = vendors.length;
     const activeVendors = vendors.filter(
-      (vendor) => vendor.status === "active"
+      (vendor) => vendor.status === "active",
     ).length;
     const outstandingBalance = vendors.reduce(
       (total, vendor) => total + vendor.outstanding_balance,
-      0
+      0,
     );
     const averagePaymentDays =
       totalVendors > 0
         ? Math.round(
             vendors.reduce(
               (total, vendor) => total + vendor.credit_period_days,
-              0
-            ) / totalVendors
+              0,
+            ) / totalVendors,
           )
         : 0;
     return {
@@ -509,7 +509,8 @@ export default function VendorsOverviewPage() {
   const currentSortValue = useMemo(() => {
     const preset = sortPresets.find(
       (option) =>
-        option.key === sortState.key && option.direction === sortState.direction
+        option.key === sortState.key &&
+        option.direction === sortState.direction,
     );
     return preset?.value ?? "recent-desc";
   }, [sortState.direction, sortState.key]);
@@ -524,11 +525,11 @@ export default function VendorsOverviewPage() {
             "rotate-180 text-[#F4A920]",
           sortState.key === key &&
             sortState.direction === "asc" &&
-            "text-[#F4A920]"
+            "text-[#F4A920]",
         )}
       />
     ),
-    [sortState.direction, sortState.key]
+    [sortState.direction, sortState.key],
   );
 
   const renderStars = useCallback((rating: number) => {
@@ -543,7 +544,7 @@ export default function VendorsOverviewPage() {
               key={index}
               className={cn(
                 "size-4 transition-colors",
-                filled ? "text-[#F4A920]" : "text-slate-300"
+                filled ? "text-[#F4A920]" : "text-slate-300",
               )}
               fill={filled ? "#F4A920" : "none"}
             />
@@ -664,7 +665,7 @@ export default function VendorsOverviewPage() {
                 Refine results
               </div>
               <Select value={currentSortValue} onValueChange={handleSortChange}>
-                <SelectTrigger className="h-11 min-w-[220px] rounded-xl border border-[#F4A920]/40 bg-white/80 text-sm font-medium text-[#5D4037] shadow-sm">
+                <SelectTrigger className="h-11 w-full sm:min-w-[220px] rounded-xl border border-[#F4A920]/40 bg-white/80 text-sm font-medium text-[#5D4037] shadow-sm">
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-[#F4A920]/30 bg-white/95 text-[#5D4037] shadow-lg">
@@ -808,7 +809,7 @@ export default function VendorsOverviewPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="hidden md:block">
+              <div className="hidden lg:block overflow-x-auto">
                 <Table className="text-[#5D4037]">
                   <TableHeader>
                     <TableRow className="bg-[#FFFEF7] text-xs font-semibold uppercase tracking-wide text-[#8B5A3C]">
@@ -874,10 +875,10 @@ export default function VendorsOverviewPage() {
                         paginatedVendors.map((vendor, index) => {
                           const paymentStatus = calculatePaymentStatus(vendor);
                           const recentOrder = recentOrderMap.get(
-                            vendor.id.toString()
+                            vendor.id.toString(),
                           );
                           const TypeIcon = getVendorTypeMeta(
-                            vendor.category
+                            vendor.category,
                           ).icon;
                           return (
                             <motion.tr
@@ -913,7 +914,8 @@ export default function VendorsOverviewPage() {
                                 <Badge
                                   className={cn(
                                     "flex items-center gap-2 px-3 py-1 text-[13px]",
-                                    getVendorTypeMeta(vendor.category).className
+                                    getVendorTypeMeta(vendor.category)
+                                      .className,
                                   )}
                                 >
                                   <TypeIcon className="size-4" />
@@ -924,7 +926,7 @@ export default function VendorsOverviewPage() {
                                 <Badge
                                   className={cn(
                                     "px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-                                    vendorStatusStyles[vendor.status]
+                                    vendorStatusStyles[vendor.status],
                                   )}
                                 >
                                   {vendor.status.toUpperCase()}
@@ -959,7 +961,7 @@ export default function VendorsOverviewPage() {
                                       paymentStatusStyles[paymentStatus]
                                         .textClass,
                                       paymentStatus === "critical" &&
-                                        "animate-pulse"
+                                        "animate-pulse",
                                     )}
                                   >
                                     {formatCurrency(vendor.outstanding_balance)}
@@ -970,7 +972,7 @@ export default function VendorsOverviewPage() {
                                       paymentStatusStyles[paymentStatus]
                                         .badgeClass,
                                       paymentStatus === "critical" &&
-                                        "animate-pulse"
+                                        "animate-pulse",
                                     )}
                                   >
                                     {paymentStatusStyles[paymentStatus].label}
@@ -1076,13 +1078,13 @@ export default function VendorsOverviewPage() {
                 </Table>
               </div>
 
-              <div className="space-y-4 md:hidden">
+              <div className="lg:hidden space-y-4">
                 <AnimatePresence initial={false}>
                   {hasResults ? (
                     paginatedVendors.map((vendor) => {
                       const paymentStatus = calculatePaymentStatus(vendor);
                       const recentOrder = recentOrderMap.get(
-                        vendor.id.toString()
+                        vendor.id.toString(),
                       );
                       const TypeIcon = getVendorTypeMeta(vendor.category).icon;
                       return (
@@ -1109,7 +1111,7 @@ export default function VendorsOverviewPage() {
                                 <Badge
                                   className={cn(
                                     "text-xs",
-                                    vendorStatusStyles[vendor.status]
+                                    vendorStatusStyles[vendor.status],
                                   )}
                                 >
                                   {vendor.status.toUpperCase()}
@@ -1118,7 +1120,7 @@ export default function VendorsOverviewPage() {
                               <Badge
                                 className={cn(
                                   "w-fit gap-2 text-xs",
-                                  getVendorTypeMeta(vendor.category).className
+                                  getVendorTypeMeta(vendor.category).className,
                                 )}
                               >
                                 <TypeIcon className="size-4" />
@@ -1144,7 +1146,7 @@ export default function VendorsOverviewPage() {
                               <span
                                 className={cn(
                                   "font-semibold",
-                                  paymentStatusStyles[paymentStatus].textClass
+                                  paymentStatusStyles[paymentStatus].textClass,
                                 )}
                               >
                                 {formatCurrency(vendor.outstanding_balance)}
@@ -1251,7 +1253,7 @@ export default function VendorsOverviewPage() {
                           "flex size-9 items-center justify-center rounded-full border transition-all",
                           isActive
                             ? "border-transparent bg-linear-to-r from-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_24px_rgba(139,90,60,0.25)]"
-                            : "border-[#F4A920]/30 bg-white text-[#8B5A3C] hover:border-[#F4A920]/60 hover:bg-[#F4A920]/10"
+                            : "border-[#F4A920]/30 bg-white text-[#8B5A3C] hover:border-[#F4A920]/60 hover:bg-[#F4A920]/10",
                         )}
                       >
                         {pageNumber}
@@ -1356,7 +1358,7 @@ function SummaryCard({
           <span
             className={cn(
               "flex size-12 items-center justify-center rounded-2xl bg-linear-to-br text-white shadow-[0_12px_30px_rgba(139,90,60,0.22)]",
-              accentClass
+              accentClass,
             )}
           >
             <Icon className="size-6" />

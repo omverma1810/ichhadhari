@@ -145,8 +145,8 @@ export default function InventoryItemsPage() {
       >
         <Card>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="relative">
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search items..."
@@ -156,7 +156,7 @@ export default function InventoryItemsPage() {
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[190px]">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -168,7 +168,7 @@ export default function InventoryItemsPage() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +179,7 @@ export default function InventoryItemsPage() {
                   <SelectItem value="overstocked">Overstocked</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
@@ -196,107 +196,109 @@ export default function InventoryItemsPage() {
         transition={{ delay: 0.2 }}
       >
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Current Stock</TableHead>
-                <TableHead className="text-right">Reorder Level</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    Loading...
-                  </TableCell>
+                  <TableHead>Item Code</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Current Stock</TableHead>
+                  <TableHead className="text-right">Reorder Level</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    No items found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                items.map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-sm font-semibold">
-                      {item.item_code}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {item.name}
-                        </p>
-                        {item.description && (
-                          <p className="text-xs text-gray-500">
-                            {item.description.substring(0, 50)}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {item.category?.replace(/_/g, " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {item.is_below_min_stock && (
-                          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                        )}
-                        <span className="font-semibold">
-                          {formatNumber(item.current_stock)} {item.unit}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatNumber(item.reorder_level)} {item.unit}
-                    </TableCell>
-                    <TableCell>{item.storage_location || "—"}</TableCell>
-                    <TableCell>{getStatusBadge(item.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/inventory/items/${item.id}`)
-                          }
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/inventory/items/${item.id}/edit`)
-                          }
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() =>
-                            setDeleteDialog({ open: true, itemId: item.id })
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : items.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      No items found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  items.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-sm font-semibold">
+                        {item.item_code}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {item.name}
+                          </p>
+                          {item.description && (
+                            <p className="text-xs text-gray-500">
+                              {item.description.substring(0, 50)}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {item.category?.replace(/_/g, " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {item.is_below_min_stock && (
+                            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                          )}
+                          <span className="font-semibold">
+                            {formatNumber(item.current_stock)} {item.unit}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatNumber(item.reorder_level)} {item.unit}
+                      </TableCell>
+                      <TableCell>{item.storage_location || "—"}</TableCell>
+                      <TableCell>{getStatusBadge(item.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/inventory/items/${item.id}`)
+                            }
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/inventory/items/${item.id}/edit`)
+                            }
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() =>
+                              setDeleteDialog({ open: true, itemId: item.id })
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       </motion.div>
 
