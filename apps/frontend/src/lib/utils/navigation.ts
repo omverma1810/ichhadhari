@@ -77,14 +77,24 @@ export const navigationItems: NavigationItem[] = [
     icon: Package,
     children: [
       {
-        title: "Stock Overview",
+        title: "Dashboard",
+        href: "/inventory",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Stock Management",
         href: "/inventory/stock",
         icon: Warehouse,
       },
       {
-        title: "Cold Storage",
-        href: "/inventory/cold-storage",
-        icon: Snowflake,
+        title: "Ledger",
+        href: "/inventory/ledger",
+        icon: Receipt,
+      },
+      {
+        title: "Purchase Orders",
+        href: "/inventory/orders",
+        icon: ShoppingCart,
       },
     ],
   },

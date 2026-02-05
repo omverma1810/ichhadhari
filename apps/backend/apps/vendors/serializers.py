@@ -199,6 +199,7 @@ class VendorPaymentSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     purchase_orders_list = serializers.SerializerMethodField()
+    generated_invoice = serializers.SerializerMethodField()
     
     class Meta:
         model = VendorPayment
@@ -207,18 +208,42 @@ class VendorPaymentSerializer(serializers.ModelSerializer):
             'amount', 'payment_method', 'status', 'is_advance',
             'transaction_reference', 'upi_transaction_id', 'cheque_number',
             'processed_by', 'processed_by_name', 'notes', 'purchase_orders',
-            'purchase_orders_list', 'created_at', 'updated_at'
+            'purchase_orders_list', 'generated_invoice', 'created_at', 'updated_at'
         ]
         read_only_fields = ['payment_id', 'created_at', 'updated_at']
     
     def get_purchase_orders_list(self, obj):
         return [po.po_number for po in obj.purchase_orders.all()]
     
+    def get_generated_invoice(self, obj):
+        """Return the auto-generated invoice if it exists."""
+        # Find invoice with matching reference number (payment_id)
+        try:
+            invoice = VendorInvoice.objects.filter(
+                vendor=obj.vendor,
+                reference_number=obj.payment_id
+            ).first()
+            
+            if invoice:
+                return {
+                    'id': invoice.id,
+                    'invoice_number': invoice.invoice_number,
+                    'invoice_date': invoice.invoice_date,
+                    'total_amount': str(invoice.total_amount),
+                    'amount_paid': str(invoice.amount_paid),
+                    'status': invoice.status,
+                    'payment_status': invoice.payment_status
+                }
+        except:
+            pass
+        return None
+    
     def validate_amount(self, value):
         """Ensure amount is positive."""
         if value <= 0:
             raise serializers.ValidationError("Amount must be greater than 0.")
         return value
+
 
 
 class GRNItemSerializer(serializers.ModelSerializer):

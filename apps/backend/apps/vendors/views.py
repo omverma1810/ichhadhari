@@ -267,7 +267,7 @@ class VendorPaymentViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """
-        Override to generate payment ID and set processed_by.
+        Override to generate payment ID, set processed_by, and auto-create invoice.
         """
         # Generate payment ID: VP{YYYYMMDD}{0001}
         today = timezone.now().date()
@@ -297,6 +297,115 @@ class VendorPaymentViewSet(viewsets.ModelViewSet):
             if not payment.is_advance:
                 vendor.outstanding_balance -= payment.amount
             vendor.save(update_fields=['total_payments', 'outstanding_balance', 'updated_at'])
+            
+            # Auto-generate invoice for this payment
+            self._create_invoice_from_payment(payment)
+    
+    def _create_invoice_from_payment(self, payment):
+        """
+        Auto-generate invoice from payment.
+        Creates invoice with line items from associated purchase orders.
+        """
+        from .models import VendorInvoice, VendorInvoiceItem
+        from datetime import timedelta
+        
+        # Calculate due date (vendor's credit period)
+        vendor = payment.vendor
+        due_date = payment.payment_date + timedelta(days=vendor.credit_period_days)
+        
+        # Determine invoice status based on payment amount
+        if payment.amount >= payment.amount:  # Full payment
+            invoice_status = 'paid'
+            payment_status = 'paid'
+        else:
+            invoice_status = 'sent'
+            payment_status = 'partially_paid'
+        
+        # Create invoice
+        invoice = VendorInvoice.objects.create(
+            vendor=vendor,
+            invoice_date=payment.payment_date,
+            due_date=due_date,
+            status=invoice_status,
+            payment_status=payment_status,
+            total_amount=payment.amount,
+            amount_paid=payment.amount,
+            amount_due=Decimal('0.00'),
+            subtotal=payment.amount,  # Will be recalculated if PO items exist
+            tax_amount=Decimal('0.00'),
+            discount_amount=Decimal('0.00'),
+            reference_number=payment.payment_id,
+            notes=f"Auto-generated from payment {payment.payment_id}",
+            created_by=payment.processed_by
+        )
+        
+        # Get associated purchase orders
+        purchase_orders = payment.purchase_orders.all()
+        
+        if purchase_orders.exists():
+            # Create invoice items from PO items
+            subtotal = Decimal('0.00')
+            tax_total = Decimal('0.00')
+            discount_total = Decimal('0.00')
+            
+            for po in purchase_orders:
+                for po_item in po.items.all():
+                    # Calculate item financials
+                    base_amount = po_item.quantity * po_item.unit_price
+                    discount_amt = base_amount * (po_item.discount_percentage / Decimal('100'))
+                    after_discount = base_amount - discount_amt
+                    tax_amt = after_discount * (po_item.tax_percentage / Decimal('100'))
+                    line_total = after_discount + tax_amt
+                    
+                    VendorInvoiceItem.objects.create(
+                        invoice=invoice,
+                        item_description=po_item.item_name,
+                        quantity=po_item.quantity,
+                        unit=po_item.unit,
+                        unit_price=po_item.unit_price,
+                        line_total=line_total,
+                        tax_rate=po_item.tax_percentage,
+                        discount_percentage=po_item.discount_percentage
+                    )
+                    
+                    subtotal += after_discount
+                    tax_total += tax_amt
+                    discount_total += discount_amt
+            
+            # Update invoice totals
+            invoice.subtotal = subtotal
+            invoice.tax_amount = tax_total
+            invoice.discount_amount = discount_total
+            invoice.total_amount = subtotal + tax_total
+            invoice.amount_paid = payment.amount
+            invoice.amount_due = invoice.total_amount - payment.amount
+            
+            # Update payment status based on actual totals
+            if invoice.amount_paid >= invoice.total_amount:
+                invoice.payment_status = 'paid'
+                invoice.status = 'paid'
+            elif invoice.amount_paid > 0:
+                invoice.payment_status = 'partially_paid'
+                invoice.status = 'sent'
+            else:
+                invoice.payment_status = 'unpaid'
+                invoice.status = 'draft'
+            
+            invoice.save()
+        else:
+            # No PO items, create a single generic line item
+            VendorInvoiceItem.objects.create(
+                invoice=invoice,
+                item_description=f"Payment for {vendor.company_name}",
+                quantity=Decimal('1.00'),
+                unit='service',
+                unit_price=payment.amount,
+                line_total=payment.amount,
+                tax_rate=Decimal('0.00'),
+                discount_percentage=Decimal('0.00')
+            )
+        
+        return invoice
 
 
 class GoodsReceiptNoteViewSet(viewsets.ModelViewSet):
