@@ -332,3 +332,211 @@ class StockAlertViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(alert)
         return Response(serializer.data)
+
+
+class InventoryAnalyticsViewSet(viewsets.ViewSet):
+    """
+    ViewSet for inventory analytics and reports.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """
+        Get dashboard statistics for inventory overview.
+        """
+        # Get active items
+        items = InventoryItem.objects.filter(is_active=True)
+        
+        # Stock status counts
+        total_items = items.count()
+        low_stock_count = items.filter(current_stock__lt=F('min_stock_level')).count()
+        out_of_stock_count = items.filter(current_stock=0).count()
+        reorder_count = items.filter(current_stock__lte=F('reorder_point')).count()
+        
+        # Inventory valuation
+        total_value = sum(float(item.current_stock * item.cost_per_unit) for item in items)
+        
+        # Recent transactions (last 7 days)
+        week_ago = timezone.now().date() - timedelta(days=7)
+        recent_transactions = StockTransaction.objects.filter(
+            transaction_date__gte=week_ago
+        )
+        
+        inward_this_week = recent_transactions.filter(is_addition=True).count()
+        outward_this_week = recent_transactions.filter(is_addition=False).count()
+        wastage_this_week = recent_transactions.filter(transaction_type='wastage').count()
+        
+        # Expiring items (next 30 days)
+        thirty_days = timezone.now().date() + timedelta(days=30)
+        expiring_soon = RawMaterialStock.objects.filter(
+            expiry_date__lte=thirty_days,
+            expiry_date__gte=timezone.now().date(),
+            is_active=True
+        ).count()
+        
+        # Active alerts
+        active_alerts = StockAlert.objects.filter(status='active').count()
+        
+        return Response({
+            'stock_overview': {
+                'total_items': total_items,
+                'low_stock': low_stock_count,
+                'out_of_stock': out_of_stock_count,
+                'reorder_required': reorder_count,
+                'total_value': round(total_value, 2),
+            },
+            'recent_activity': {
+                'inward_transactions': inward_this_week,
+                'outward_transactions': outward_this_week,
+                'wastage_transactions': wastage_this_week,
+            },
+            'alerts': {
+                'active_alerts': active_alerts,
+                'expiring_soon': expiring_soon,
+            }
+        })
+    
+    @action(detail=False, methods=['get'])
+    def stock_movement_report(self, request):
+        """
+        Get detailed stock movement report with date range filtering.
+        """
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        item_type = request.query_params.get('item_type')
+        
+        transactions = StockTransaction.objects.select_related('item').all()
+        
+        if start_date:
+            transactions = transactions.filter(transaction_date__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(transaction_date__lte=end_date)
+        if item_type:
+            transactions = transactions.filter(item__item_type=item_type)
+        
+        # Group by transaction type
+        report = {
+            'summary': {
+                'total_transactions': transactions.count(),
+                'total_inward': float(transactions.filter(is_addition=True).aggregate(
+                    total=Sum('quantity'))['total'] or 0),
+                'total_outward': float(transactions.filter(is_addition=False).aggregate(
+                    total=Sum('quantity'))['total'] or 0),
+            },
+            'by_type': {},
+            'by_item': []
+        }
+        
+        # Transaction type breakdown
+        for trans_type, _ in StockTransaction.TRANSACTION_TYPE_CHOICES:
+            type_transactions = transactions.filter(transaction_type=trans_type)
+            report['by_type'][trans_type] = {
+                'count': type_transactions.count(),
+                'total_quantity': float(type_transactions.aggregate(
+                    total=Sum('quantity'))['total'] or 0),
+            }
+        
+        # Top items by transaction volume
+        from django.db.models import Count
+        top_items = transactions.values('item__name', 'item__item_id').annotate(
+            transaction_count=Count('id'),
+            total_quantity=Sum('quantity')
+        ).order_by('-transaction_count')[:10]
+        
+        report['by_item'] = list(top_items)
+        
+        return Response(report)
+    
+    @action(detail=False, methods=['get'])
+    def valuation_report(self, request):
+        """
+        Get inventory valuation report by item type.
+        """
+        items = InventoryItem.objects.filter(is_active=True)
+        
+        report = {
+            'total_valuation': 0,
+            'by_type': {},
+            'top_value_items': []
+        }
+        
+        # Calculate total and by type
+        for item_type, _ in InventoryItem.ITEM_TYPE_CHOICES:
+            type_items = items.filter(item_type=item_type)
+            type_value = sum(float(item.current_stock * item.cost_per_unit) for item in type_items)
+            
+            report['by_type'][item_type] = {
+                'count': type_items.count(),
+                'total_value': round(type_value, 2),
+                'total_stock': float(type_items.aggregate(
+                    total=Sum('current_stock'))['total'] or 0),
+            }
+            report['total_valuation'] += type_value
+        
+        report['total_valuation'] = round(report['total_valuation'], 2)
+        
+        # Top 10 items by value
+        items_with_value = [
+            {
+                'item_id': item.item_id,
+                'name': item.name,
+                'item_type': item.item_type,
+                'current_stock': float(item.current_stock),
+                'cost_per_unit': float(item.cost_per_unit),
+                'total_value': round(float(item.current_stock * item.cost_per_unit), 2),
+            }
+            for item in items
+        ]
+        items_with_value.sort(key=lambda x: x['total_value'], reverse=True)
+        report['top_value_items'] = items_with_value[:10]
+        
+        return Response(report)
+    
+    @action(detail=False, methods=['get'])
+    def turnover_analysis(self, request):
+        """
+        Get inventory turnover analysis.
+        """
+        days = int(request.query_params.get('days', 30))
+        start_date = timezone.now().date() - timedelta(days=days)
+        
+        items = InventoryItem.objects.filter(is_active=True)
+        transactions = StockTransaction.objects.filter(
+            transaction_date__gte=start_date
+        )
+        
+        analysis = []
+        
+        for item in items:
+            item_transactions = transactions.filter(item=item)
+            
+            # Calculate sales/outward movements
+            outward_qty = float(item_transactions.filter(
+                is_addition=False,
+                transaction_type__in=['sale', 'production']
+            ).aggregate(total=Sum('quantity'))['total'] or 0)
+            
+            # Calculate average stock
+            avg_stock = float(item.current_stock)  # Simplified - could be more accurate with historical data
+            
+            # Calculate turnover ratio
+            turnover_ratio = (outward_qty / avg_stock) if avg_stock > 0 else 0
+            
+            analysis.append({
+                'item_id': item.item_id,
+                'name': item.name,
+                'item_type': item.item_type,
+                'current_stock': float(item.current_stock),
+                'outward_quantity': outward_qty,
+                'turnover_ratio': round(turnover_ratio, 2),
+                'days_of_stock': round(days / turnover_ratio, 1) if turnover_ratio > 0 else 999,
+            })
+        
+        # Sort by turnover ratio
+        analysis.sort(key=lambda x: x['turnover_ratio'], reverse=True)
+        
+        return Response({
+            'period_days': days,
+            'items': analysis
+        })

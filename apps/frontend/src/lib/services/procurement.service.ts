@@ -217,6 +217,7 @@ export interface PurchaseOrder {
   notes?: string;
   is_recurring: boolean;
   recurrence_frequency?: "daily" | "weekly" | "monthly";
+  items?: PurchaseOrderItem[];
   created_at: string;
   updated_at: string;
 }
@@ -231,6 +232,103 @@ export interface PurchaseOrderFormData {
   notes?: string;
   is_recurring?: boolean;
   recurrence_frequency?: "daily" | "weekly" | "monthly";
+  items: PurchaseOrderItemFormData[];
+}
+
+export interface PurchaseOrderItem {
+  id: number;
+  purchase_order: number;
+  item_name: string;
+  description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  tax_percentage: number;
+  discount_percentage: number;
+  line_total: number;
+  quantity_received: number;
+  inventory_item?: number;
+  inventory_item_name?: string;
+}
+
+export interface PurchaseOrderItemFormData {
+  item_name: string;
+  description?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  tax_percentage?: number;
+  discount_percentage?: number;
+  inventory_item?: number;
+}
+
+export interface GoodsReceiptNote {
+  id: number;
+  grn_number: string;
+  purchase_order: number;
+  purchase_order_number?: string;
+  vendor?: number;
+  vendor_name?: string;
+  receipt_date: string;
+  received_by?: number;
+  received_by_name?: string;
+  quality_status: "approved" | "rejected" | "partial";
+  quality_notes?: string;
+  quality_checked_by?: number;
+  quality_checked_by_name?: string;
+  vehicle_number?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  receipt_timestamp?: string;
+  delivery_challan_number?: string;
+  invoice_number?: string;
+  notes?: string;
+  items: GRNItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GRNItem {
+  id: number;
+  grn: number;
+  po_item: number;
+  item_name?: string;
+  unit?: string;
+  ordered_quantity: number;
+  received_quantity: number;
+  accepted_quantity: number;
+  rejected_quantity: number;
+  quality_check_passed: boolean;
+  rejection_reason?: string;
+  batch_number?: string;
+  expiry_date?: string;
+}
+
+export interface GoodsReceiptNoteFormData {
+  purchase_order: number;
+  receipt_date: string;
+  quality_status: "approved" | "rejected" | "partial";
+  quality_notes?: string;
+  vehicle_number?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  receipt_timestamp?: string;
+  delivery_challan_number?: string;
+  invoice_number?: string;
+  notes?: string;
+  items: GRNItemFormData[];
+}
+
+export interface GRNItemFormData {
+  po_item: number;
+  ordered_quantity: number;
+  received_quantity: number;
+  accepted_quantity: number;
+  rejected_quantity: number;
+  quality_check_passed: boolean;
+  rejection_reason?: string;
+  batch_number?: string;
+  expiry_date?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -408,4 +506,104 @@ export const procurementService = {
         params: { status: "approved" },
       })
       .then((data) => data.results ?? []),
+
+  // Goods Receipt Notes (GRN)
+  getGoodsReceiptNotes: async (params?: {
+    page?: number;
+    purchase_order?: number;
+    quality_status?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<PaginatedResponse<GoodsReceiptNote>> =>
+    api.get<PaginatedResponse<GoodsReceiptNote>>("/api/vendors/grns/", {
+      params,
+    }),
+
+  getGoodsReceiptNote: (id: number): Promise<GoodsReceiptNote> =>
+    api.get<GoodsReceiptNote>(`/api/vendors/grns/${id}/`),
+
+  createGoodsReceiptNote: (
+    data: GoodsReceiptNoteFormData,
+  ): Promise<GoodsReceiptNote> =>
+    api.post<GoodsReceiptNote>("/api/vendors/grns/", data),
+
+  updateGoodsReceiptNote: (
+    id: number,
+    data: Partial<GoodsReceiptNoteFormData>,
+  ): Promise<GoodsReceiptNote> =>
+    api.patch<GoodsReceiptNote>(`/api/vendors/grns/${id}/`, data),
+
+  deleteGoodsReceiptNote: (id: number): Promise<void> =>
+    api.delete<void>(`/api/vendors/grns/${id}/`),
+};
+
+export const inventoryAnalyticsService = {
+  getDashboardData: (): Promise<{
+    stock_overview: {
+      total_items: number;
+      low_stock: number;
+      out_of_stock: number;
+      reorder_required: number;
+      total_value: number;
+    };
+    recent_activity: {
+      inward_transactions: number;
+      outward_transactions: number;
+      wastage_transactions: number;
+    };
+    alerts: {
+      active_alerts: number;
+      expiring_soon: number;
+    };
+  }> => api.get("/api/inventory/analytics/dashboard/"),
+
+  getStockMovementReport: (params?: {
+    start_date?: string;
+    end_date?: string;
+    item_type?: string;
+  }): Promise<{
+    summary: {
+      total_transactions: number;
+      total_inward: number;
+      total_outward: number;
+    };
+    by_type: Record<string, { count: number; total_quantity: number }>;
+    by_item: Array<{
+      item__name: string;
+      item__item_id: string;
+      transaction_count: number;
+      total_quantity: number;
+    }>;
+  }> => api.get("/api/inventory/analytics/stock_movement_report/", { params }),
+
+  getValuationReport: (): Promise<{
+    total_valuation: number;
+    by_type: Record<
+      string,
+      { count: number; total_value: number; total_stock: number }
+    >;
+    top_value_items: Array<{
+      item_id: string;
+      name: string;
+      item_type: string;
+      current_stock: number;
+      cost_per_unit: number;
+      total_value: number;
+    }>;
+  }> => api.get("/api/inventory/analytics/valuation_report/"),
+
+  getTurnoverAnalysis: (params?: {
+    days?: number;
+  }): Promise<{
+    period_days: number;
+    items: Array<{
+      item_id: string;
+      name: string;
+      item_type: string;
+      current_stock: number;
+      outward_quantity: number;
+      turnover_ratio: number;
+      days_of_stock: number;
+    }>;
+  }> => api.get("/api/inventory/analytics/turnover_analysis/", { params }),
 };

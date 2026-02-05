@@ -5,7 +5,8 @@ from .views import (
     StockTransactionViewSet,
     RawMaterialStockViewSet,
     FinishedGoodsStockViewSet,
-    StockAlertViewSet
+    StockAlertViewSet,
+    InventoryAnalyticsViewSet
 )
 
 # Create router and register viewsets
@@ -15,6 +16,7 @@ router.register(r'transactions', StockTransactionViewSet, basename='stock-transa
 router.register(r'raw-materials', RawMaterialStockViewSet, basename='raw-material-stock')
 router.register(r'finished-goods', FinishedGoodsStockViewSet, basename='finished-goods-stock')
 router.register(r'alerts', StockAlertViewSet, basename='stock-alert')
+router.register(r'analytics', InventoryAnalyticsViewSet, basename='inventory-analytics')
 
 urlpatterns = [
     path('', include(router.urls)),

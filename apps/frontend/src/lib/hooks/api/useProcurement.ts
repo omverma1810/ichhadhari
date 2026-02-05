@@ -405,7 +405,7 @@ export function useCreateVendorPayment() {
 
   return useMutation({
     mutationFn: (
-      data: import("@/lib/services/procurement.service").VendorPaymentFormData
+      data: import("@/lib/services/procurement.service").VendorPaymentFormData,
     ) => procurementService.createVendorPayment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
@@ -538,7 +538,7 @@ export function useCreatePurchaseOrder() {
 
   return useMutation({
     mutationFn: (
-      data: import("@/lib/services/procurement.service").PurchaseOrderFormData
+      data: import("@/lib/services/procurement.service").PurchaseOrderFormData,
     ) => procurementService.createPurchaseOrder(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
@@ -619,6 +619,157 @@ export function useActivePurchaseOrders() {
       "active",
     ] as const,
     queryFn: () => procurementService.getActivePurchaseOrders(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ==================== GOODS RECEIPT NOTES (GRN) HOOKS ====================
+
+export const grnKeys = {
+  all: ["grns"] as const,
+  lists: () => [...grnKeys.all, "list"] as const,
+  list: (filters?: any) => [...grnKeys.lists(), filters] as const,
+  details: () => [...grnKeys.all, "detail"] as const,
+  detail: (id: number) => [...grnKeys.details(), id] as const,
+};
+
+export function useGoodsReceiptNotes(filters?: {
+  page?: number;
+  purchase_order?: number;
+  quality_status?: string;
+  start_date?: string;
+  end_date?: string;
+}) {
+  return useQuery({
+    queryKey: grnKeys.list(filters),
+    queryFn: () => procurementService.getGoodsReceiptNotes(filters),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useGoodsReceiptNote(id: number) {
+  return useQuery({
+    queryKey: grnKeys.detail(id),
+    queryFn: () => procurementService.getGoodsReceiptNote(id),
+    enabled: !!id && id > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useCreateGoodsReceiptNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => procurementService.createGoodsReceiptNote(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: grnKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
+      toast.success("Goods receipt note created successfully!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || "Failed to create goods receipt note";
+      toast.error(message);
+    },
+  });
+}
+
+export function useUpdateGoodsReceiptNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      procurementService.updateGoodsReceiptNote(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: grnKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: grnKeys.detail(variables.id) });
+      toast.success("Goods receipt note updated successfully!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || "Failed to update goods receipt note";
+      toast.error(message);
+    },
+  });
+}
+
+export function useDeleteGoodsReceiptNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => procurementService.deleteGoodsReceiptNote(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: grnKeys.lists() });
+      toast.success("Goods receipt note deleted successfully!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || "Failed to delete goods receipt note";
+      toast.error(message);
+    },
+  });
+}
+
+// ==================== INVENTORY ANALYTICS HOOKS ====================
+
+export const analyticsKeys = {
+  all: ["inventory-analytics"] as const,
+  dashboard: () => [...analyticsKeys.all, "dashboard"] as const,
+  stockMovement: (filters?: any) =>
+    [...analyticsKeys.all, "stock-movement", filters] as const,
+  valuation: () => [...analyticsKeys.all, "valuation"] as const,
+  turnover: (days?: number) =>
+    [...analyticsKeys.all, "turnover", days] as const,
+};
+
+export function useInventoryDashboard() {
+  return useQuery({
+    queryKey: analyticsKeys.dashboard(),
+    queryFn: () => {
+      // Import dynamically to avoid circular dependency
+      return import("@/lib/services/procurement.service").then((mod) =>
+        mod.inventoryAnalyticsService.getDashboardData(),
+      );
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+}
+
+export function useStockMovementReport(filters?: {
+  start_date?: string;
+  end_date?: string;
+  item_type?: string;
+}) {
+  return useQuery({
+    queryKey: analyticsKeys.stockMovement(filters),
+    queryFn: () =>
+      import("@/lib/services/procurement.service").then((mod) =>
+        mod.inventoryAnalyticsService.getStockMovementReport(filters),
+      ),
+    staleTime: 2 * 60 * 1000,
+    enabled: !!(filters?.start_date && filters?.end_date),
+  });
+}
+
+export function useValuationReport() {
+  return useQuery({
+    queryKey: analyticsKeys.valuation(),
+    queryFn: () =>
+      import("@/lib/services/procurement.service").then((mod) =>
+        mod.inventoryAnalyticsService.getValuationReport(),
+      ),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useTurnoverAnalysis(days: number = 30) {
+  return useQuery({
+    queryKey: analyticsKeys.turnover(days),
+    queryFn: () =>
+      import("@/lib/services/procurement.service").then((mod) =>
+        mod.inventoryAnalyticsService.getTurnoverAnalysis({ days }),
+      ),
     staleTime: 5 * 60 * 1000,
   });
 }

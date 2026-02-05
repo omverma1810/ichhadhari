@@ -304,6 +304,7 @@ class GoodsReceiptNoteSerializer(serializers.ModelSerializer):
             'id', 'grn_number', 'purchase_order', 'po_number', 'vendor_name',
             'receipt_date', 'received_by', 'received_by_name', 'quality_status',
             'quality_notes', 'quality_checked_by', 'quality_checked_by_name',
+            'vehicle_number', 'driver_name', 'driver_phone', 'receipt_timestamp',
             'delivery_challan_number', 'invoice_number', 'notes', 'items',
             'created_at', 'updated_at'
         ]
@@ -320,6 +321,7 @@ class GoodsReceiptNoteCreateSerializer(serializers.ModelSerializer):
         model = GoodsReceiptNote
         fields = [
             'purchase_order', 'receipt_date', 'quality_status', 'quality_notes',
+            'vehicle_number', 'driver_name', 'driver_phone', 'receipt_timestamp',
             'delivery_challan_number', 'invoice_number', 'notes', 'items'
         ]
     

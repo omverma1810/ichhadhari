@@ -339,6 +339,12 @@ class GoodsReceiptNote(TimeStampedModel):
         related_name='quality_checked_grns'
     )
     
+    # Delivery Tracking
+    vehicle_number = models.CharField(max_length=50, blank=True)
+    driver_name = models.CharField(max_length=200, blank=True)
+    driver_phone = models.CharField(max_length=15, blank=True)
+    receipt_timestamp = models.DateTimeField(null=True, blank=True)
+    
     # Document References
     delivery_challan_number = models.CharField(max_length=50, blank=True)
     invoice_number = models.CharField(max_length=50, blank=True)
