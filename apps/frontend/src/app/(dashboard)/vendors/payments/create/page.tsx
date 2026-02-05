@@ -18,6 +18,8 @@ import {
   FileText,
   Save,
   Loader2,
+  CheckCircle,
+  Receipt,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -47,6 +49,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   useVendors,
   useCreateVendorPayment,
 } from "@/lib/hooks/api/useProcurement";
@@ -56,6 +66,7 @@ const paymentSchema = z.object({
   payment_date: z.string().min(1, "Payment date is required"),
   amount: z.string().min(1, "Amount is required"),
   payment_method: z.enum(["cash", "bank_transfer", "upi", "cheque"]),
+  status: z.enum(["pending", "completed", "failed"]),
   is_advance: z.boolean().optional(),
   transaction_reference: z.string().optional(),
   upi_transaction_id: z.string().optional(),
@@ -95,6 +106,8 @@ const PAYMENT_METHOD_OPTIONS = [
 export default function CreateVendorPaymentPage() {
   const router = useRouter();
   const [paymentDate, setPaymentDate] = useState<Date>(new Date());
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [generatedInvoice, setGeneratedInvoice] = useState<any>(null);
 
   const { data: vendorsData } = useVendors({ status: "active" });
   const createPayment = useCreateVendorPayment();
@@ -112,6 +125,7 @@ export default function CreateVendorPaymentPage() {
     defaultValues: {
       is_advance: false,
       payment_method: "cash",
+      status: "completed",
     },
   });
 
@@ -125,6 +139,7 @@ export default function CreateVendorPaymentPage() {
         payment_date: data.payment_date,
         amount: parseFloat(data.amount),
         payment_method: data.payment_method,
+        status: data.status,
         is_advance: data.is_advance || false,
         transaction_reference: data.transaction_reference || undefined,
         upi_transaction_id: data.upi_transaction_id || undefined,
@@ -132,10 +147,18 @@ export default function CreateVendorPaymentPage() {
         notes: data.notes || undefined,
       },
       {
-        onSuccess: () => {
-          router.push("/vendors/payments");
+        onSuccess: (response) => {
+          const generated =
+            (response as any).generated_invoice ||
+            (response as any).generatedInvoice;
+          if (generated) {
+            setGeneratedInvoice(generated);
+            setShowInvoiceModal(true);
+          } else {
+            router.push("/vendors/payments");
+          }
         },
-      }
+      },
     );
   };
 
@@ -189,7 +212,7 @@ export default function CreateVendorPaymentPage() {
                 <SelectContent>
                   {vendors.map((vendor) => (
                     <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.name} - {vendor.milk_type}
+                      {vendor.company_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -260,6 +283,32 @@ export default function CreateVendorPaymentPage() {
                 {errors.amount && (
                   <p className="text-sm text-red-600">
                     {errors.amount.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">
+                  Payment Status <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  defaultValue="completed"
+                  onValueChange={(value) =>
+                    setValue("status", value as PaymentFormData["status"])
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.status && (
+                  <p className="text-sm text-red-600">
+                    {errors.status.message}
                   </p>
                 )}
               </div>
@@ -417,6 +466,94 @@ export default function CreateVendorPaymentPage() {
           </Button>
         </div>
       </form>
+
+      {/* Invoice Generated Modal */}
+      <Dialog open={showInvoiceModal} onOpenChange={setShowInvoiceModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <DialogTitle className="text-center">
+              Payment Recorded Successfully!
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              An invoice has been automatically generated for this payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {generatedInvoice && (
+            <div className="space-y-4 rounded-lg border bg-gray-50 p-4">
+              <div className="flex items-center gap-2 text-sm">
+                <Receipt className="h-4 w-4 text-[#F4A920]" />
+                <span className="font-semibold">Invoice Details</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Invoice Number:</span>
+                  <span className="font-medium">
+                    {generatedInvoice.invoice_number ||
+                      generatedInvoice.invoiceNumber}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">
+                    {format(
+                      new Date(
+                        generatedInvoice.invoice_date ||
+                          generatedInvoice.invoiceDate,
+                      ),
+                      "PPP",
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Amount:</span>
+                  <span className="font-medium">
+                    ₹
+                    {parseFloat(
+                      generatedInvoice.total_amount ||
+                        generatedInvoice.totalAmount,
+                    ).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Status:</span>
+                  <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                    {generatedInvoice.payment_status ||
+                      generatedInvoice.paymentStatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowInvoiceModal(false);
+                router.push("/vendors/payments");
+              }}
+              className="w-full sm:w-auto"
+            >
+              Back to Payments
+            </Button>
+            <Button
+              onClick={() => {
+                if (generatedInvoice) {
+                  router.push(`/vendors/invoices/${generatedInvoice.id}`);
+                }
+              }}
+              className="w-full bg-[#F4A920] hover:bg-[#F4A920]/90 sm:w-auto"
+            >
+              <Receipt className="mr-2 h-4 w-4" />
+              View Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.section>
   );
 }

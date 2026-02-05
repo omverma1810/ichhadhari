@@ -163,6 +163,15 @@ export interface VendorPayment {
     last_name: string;
   };
   notes?: string;
+  generated_invoice?: {
+    id: number;
+    invoice_number: string;
+    invoice_date: string;
+    total_amount: string;
+    amount_paid: string;
+    status: string;
+    payment_status: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -172,6 +181,7 @@ export interface VendorPaymentFormData {
   payment_date: string;
   amount: number;
   payment_method: "cash" | "bank_transfer" | "upi" | "cheque";
+  status?: "pending" | "completed" | "failed";
   is_advance?: boolean;
   transaction_reference?: string;
   upi_transaction_id?: string;
@@ -272,13 +282,13 @@ export const procurementService = {
     api.get<MilkCollection>(`/api/milk/collections/${id}/`),
 
   createMilkCollection: (
-    data: MilkCollectionFormData
+    data: MilkCollectionFormData,
   ): Promise<MilkCollection> =>
     api.post<MilkCollection>("/api/milk/collections/", data),
 
   updateMilkCollection: (
     id: number,
-    data: Partial<MilkCollectionFormData>
+    data: Partial<MilkCollectionFormData>,
   ): Promise<MilkCollection> =>
     api.patch<MilkCollection>(`/api/milk/collections/${id}/`, data),
 
@@ -303,7 +313,7 @@ export const procurementService = {
 
   updateQualityTest: (
     id: number,
-    data: Partial<QualityTestFormData>
+    data: Partial<QualityTestFormData>,
   ): Promise<QualityTest> =>
     api.patch<QualityTest>(`/api/milk/quality-tests/${id}/`, data),
 
@@ -330,7 +340,7 @@ export const procurementService = {
 
   updateVendorPayment: (
     id: number,
-    data: Partial<VendorPaymentFormData>
+    data: Partial<VendorPaymentFormData>,
   ): Promise<VendorPayment> =>
     api.patch<VendorPayment>(`/api/vendors/payments/${id}/`, data),
 
@@ -339,7 +349,7 @@ export const procurementService = {
 
   processVendorPayment: (
     id: number,
-    transactionReference: string
+    transactionReference: string,
   ): Promise<VendorPayment> =>
     api.patch<VendorPayment>(`/api/vendors/payments/${id}/`, {
       status: "completed",
@@ -380,7 +390,7 @@ export const procurementService = {
 
   updatePurchaseOrder: (
     id: number,
-    data: Partial<PurchaseOrderFormData>
+    data: Partial<PurchaseOrderFormData>,
   ): Promise<PurchaseOrder> =>
     api.patch<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/`, data),
 

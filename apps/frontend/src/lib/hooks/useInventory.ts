@@ -160,24 +160,6 @@ export function useTransferStock() {
   });
 }
 
-// Cold Storage
-export function useColdStorageZones() {
-  return useQuery({
-    queryKey: ["cold-storage-zones"],
-    queryFn: () => inventoryAPI.getColdStorageZones(),
-    refetchInterval: 60_000,
-  });
-}
-
-export function useColdStorageZone(id: string | undefined) {
-  return useQuery({
-    queryKey: ["cold-storage-zone", id],
-    queryFn: () => inventoryAPI.getColdStorageZone(id as string),
-    enabled: Boolean(id),
-    refetchInterval: 30_000,
-  });
-}
-
 // Expiry Alerts
 export function useExpiryAlerts() {
   return useQuery({

@@ -4,7 +4,6 @@ export { Butter } from "./Butter";
 export { MilkDrop } from "./MilkDrop";
 export { Yogurt } from "./Yogurt";
 export { Paneer } from "./Paneer";
-export { ColdStorage } from "./ColdStorage";
 export { Factory } from "./Factory";
 export { Recipe } from "./Recipe";
 export { BatchIcon } from "./BatchIcon";

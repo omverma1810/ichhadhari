@@ -80,26 +80,6 @@ export interface StockAdjustment {
   status: "pending" | "approved" | "rejected";
 }
 
-export interface ColdStorageZone {
-  id: string;
-  name: string;
-  zoneNumber: string;
-  temperature: number;
-  targetTemperature: number;
-  humidity?: number;
-  capacity: number;
-  currentOccupancy: number;
-  occupancyPercentage: number;
-  status: "active" | "maintenance" | "offline";
-  productsStored: number;
-  alerts: Array<{
-    type: "temperature" | "humidity" | "capacity";
-    message: string;
-    severity: "low" | "medium" | "high";
-  }>;
-  lastChecked: string;
-}
-
 export interface InventoryStats {
   totalStockValue: number;
   totalItems: number;

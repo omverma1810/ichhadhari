@@ -11,8 +11,6 @@ import type {
   InventoryItemFormData,
   StockTransaction,
   StockTransactionFormData,
-  ColdStorage,
-  ColdStorageFormData,
   InventoryFilters,
 } from "@/lib/services/inventory.service";
 
@@ -29,10 +27,6 @@ export const inventoryKeys = {
   transaction: (id: number) => [...inventoryKeys.transactions(), id] as const,
   transactionsList: (filters?: InventoryFilters) =>
     [...inventoryKeys.transactions(), "list", filters] as const,
-  storages: () => [...inventoryKeys.all, "cold-storage"] as const,
-  storage: (id: number) => [...inventoryKeys.storages(), id] as const,
-  storagesList: (filters?: InventoryFilters) =>
-    [...inventoryKeys.storages(), "list", filters] as const,
 };
 
 // ==================== INVENTORY ITEMS ====================
@@ -229,226 +223,19 @@ export function useDeleteStockTransaction() {
   });
 }
 
-// ==================== COLD STORAGE ====================
-// NOTE: Cold Storage endpoints are not yet implemented in the backend.
-// Using mock data until backend API is ready.
-
-const mockColdStorages = {
-  count: 4,
-  next: null,
-  previous: null,
-  results: [
-    {
-      id: 1,
-      unit_id: "CS-001",
-      location: "Main Warehouse - Section A",
-      capacity_liters: 5000,
-      current_load_liters: 3200,
-      temperature_celsius: 4.2,
-      target_temperature: 4.0,
-      humidity_percentage: 65,
-      status: "operational",
-      power_backup: true,
-      assigned_technician: "Rajesh Kumar",
-      next_maintenance_due: "2025-11-15",
-      last_maintenance: "2025-10-10",
-      created_at: "2024-01-15T10:00:00Z",
-      updated_at: "2025-10-26T08:30:00Z",
-    },
-    {
-      id: 2,
-      unit_id: "CS-002",
-      location: "Main Warehouse - Section B",
-      capacity_liters: 5000,
-      current_load_liters: 4800,
-      temperature_celsius: 3.8,
-      target_temperature: 4.0,
-      humidity_percentage: 68,
-      status: "operational",
-      power_backup: true,
-      assigned_technician: "Priya Sharma",
-      next_maintenance_due: "2025-12-01",
-      last_maintenance: "2025-10-15",
-      created_at: "2024-01-15T10:00:00Z",
-      updated_at: "2025-10-26T08:30:00Z",
-    },
-    {
-      id: 3,
-      unit_id: "CS-003",
-      location: "Secondary Storage - Floor 2",
-      capacity_liters: 3000,
-      current_load_liters: 1500,
-      temperature_celsius: 5.5,
-      target_temperature: 4.0,
-      humidity_percentage: 70,
-      status: "maintenance",
-      power_backup: false,
-      assigned_technician: "Amit Patel",
-      next_maintenance_due: "2025-10-20",
-      last_maintenance: "2025-09-20",
-      created_at: "2024-02-01T10:00:00Z",
-      updated_at: "2025-10-26T08:30:00Z",
-    },
-    {
-      id: 4,
-      unit_id: "CS-004",
-      location: "Distribution Center",
-      capacity_liters: 4000,
-      current_load_liters: 2800,
-      temperature_celsius: 4.0,
-      target_temperature: 4.0,
-      humidity_percentage: 62,
-      status: "operational",
-      power_backup: true,
-      assigned_technician: "Sunita Verma",
-      next_maintenance_due: "2025-11-25",
-      last_maintenance: "2025-10-12",
-      created_at: "2024-02-15T10:00:00Z",
-      updated_at: "2025-10-26T08:30:00Z",
-    },
-  ],
-};
-
-export function useColdStorages(filters?: InventoryFilters) {
+export function useItemTransactionHistory(
+  itemId: string | number,
+  filters?: InventoryFilters,
+) {
   return useQuery({
-    queryKey: inventoryKeys.storagesList(filters),
-    queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockColdStorages;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
-  });
-}
-
-export function useColdStorage(id: number) {
-  return useQuery({
-    queryKey: inventoryKeys.storage(id),
-    queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const storage = mockColdStorages.results.find((s: any) => s.id === id);
-      if (!storage) throw new Error("Storage unit not found");
-      return storage;
-    },
-    enabled: !!id && id > 0,
-    staleTime: 1 * 60 * 1000, // 1 minute (more frequent for monitoring)
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
-  });
-}
-
-export function useCreateColdStorage() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: ColdStorageFormData) =>
-      inventoryService.createStorage(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.storages() });
-      toast.success("Cold storage unit created successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create cold storage unit");
-    },
-  });
-}
-
-export function useUpdateColdStorage() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: Partial<ColdStorageFormData>;
-    }) => inventoryService.updateStorage(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.storages() });
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.storage(variables.id),
-      });
-      toast.success("Cold storage unit updated successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update cold storage unit");
-    },
-  });
-}
-
-export function useDeleteColdStorage() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: number) => inventoryService.deleteStorage(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.storages() });
-      toast.success("Cold storage unit deleted successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete cold storage unit");
-    },
-  });
-}
-
-export function useUpdateTemperature() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      temperature,
-      humidity,
-    }: {
-      id: number;
-      temperature: number;
-      humidity: number;
-    }) => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      // Update the mock data
-      const storage = mockColdStorages.results.find((s: any) => s.id === id);
-      if (storage) {
-        storage.temperature_celsius = temperature;
-        storage.humidity_percentage = humidity;
-        storage.updated_at = new Date().toISOString();
-      }
-      return storage;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.storages() });
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.storage(variables.id),
-      });
-      toast.success("Temperature updated successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update temperature");
-    },
-  });
-}
-
-export function useMaintenanceAlerts() {
-  return useQuery({
-    queryKey: [...inventoryKeys.storages(), "maintenance-alerts"] as const,
-    queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      // Return storage units with overdue maintenance
-      const today = new Date().toISOString().split("T")[0];
-      const overdueUnits = mockColdStorages.results.filter(
-        (s: any) => s.next_maintenance_due < today
-      );
-      return {
-        count: overdueUnits.length,
-        next: null,
-        previous: null,
-        results: overdueUnits,
-      };
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    queryKey: [
+      ...inventoryKeys.item(Number(itemId)),
+      "transactions",
+      filters,
+    ] as const,
+    queryFn: () =>
+      inventoryService.getTransactions({ ...filters, item: Number(itemId) }),
+    enabled: !!itemId,
+    staleTime: 2 * 60 * 1000,
   });
 }
