@@ -125,7 +125,7 @@ export interface MilkCollection extends AuditFields {
   quantity: number | string; // Decimal field
   fat: number | string; // Fat content (kg per liter)
   snf: number | string; // SNF content (kg per liter)
-  temperature: number | string; // Decimal field
+  clr: number | string; // Corrected Lactometer Reading for milk density
   quality_status: QualityStatus;
   quality_score: number | string; // Auto-calculated by backend
   rejection_reason?: string | null;
@@ -145,7 +145,7 @@ export interface CreateMilkCollectionPayload {
   quantity: number | string; // Decimal value
   fat: number | string; // Fat content (kg per liter)
   snf: number | string; // SNF content (kg per liter)
-  temperature: number | string; // Decimal value
+  clr: number | string; // CLR - Corrected Lactometer Reading
   quality_status?: QualityStatus; // Defaults to 'accepted'
   rejection_reason?: string; // Required if quality_status is 'rejected'
   rate_per_fat: number | string; // Rate per kg of fat

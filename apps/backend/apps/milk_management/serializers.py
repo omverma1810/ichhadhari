@@ -138,7 +138,7 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
             'quantity',
             'fat',
             'snf',
-            'temperature',
+            'clr',
             'quality_score',
             'quality_status',
             'rejection_reason',
@@ -184,13 +184,13 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("SNF content must be between 0 and 15 kg/L")
         return value
     
-    def validate_temperature(self, value):
-        """Validate temperature is within reasonable range."""
+    def validate_clr(self, value):
+        """Validate CLR (Corrected Lactometer Reading) is within reasonable range."""
         if value < Decimal('0.0'):
-            raise serializers.ValidationError("Temperature cannot be negative")
+            raise serializers.ValidationError("CLR cannot be negative")
         if value > Decimal('50.0'):
             raise serializers.ValidationError(
-                "Temperature seems unusually high. Please verify the reading."
+                "CLR value seems unusually high. Please verify the reading."
             )
         return value
     

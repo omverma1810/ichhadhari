@@ -70,6 +70,9 @@ export interface ProductionBatch extends AuditFields {
   status: BatchStatus;
   quality_check_passed: boolean;
   quality_notes?: string;
+  fat?: number | null;
+  snf?: number | null;
+  clr?: number | null;
   yield_percentage: number; // read-only
   efficiency_score: number; // read-only
   supervisor?: number;
@@ -86,14 +89,16 @@ export interface CreateProductionBatchPayload {
   start_time?: string;
   planned_quantity: number;
   milk_allocated: number;
+  fat?: number | null;
+  snf?: number | null;
+  clr?: number | null;
   supervisor?: number;
   operators?: number[];
   notes?: string;
   recipe_details?: Record<string, any>;
 }
 
-export interface UpdateProductionBatchPayload
-  extends Partial<CreateProductionBatchPayload> {
+export interface UpdateProductionBatchPayload extends Partial<CreateProductionBatchPayload> {
   end_time?: string;
   actual_quantity?: number;
   wastage_quantity?: number;
@@ -214,8 +219,7 @@ export interface CreateQualityControlPayload {
   corrective_action?: string;
 }
 
-export interface UpdateQualityControlPayload
-  extends Partial<CreateQualityControlPayload> {
+export interface UpdateQualityControlPayload extends Partial<CreateQualityControlPayload> {
   status?: QualityCheckStatus;
 }
 
@@ -265,8 +269,7 @@ export interface CreateProductionSchedulePayload {
   remarks?: string;
 }
 
-export interface UpdateProductionSchedulePayload
-  extends Partial<CreateProductionSchedulePayload> {
+export interface UpdateProductionSchedulePayload extends Partial<CreateProductionSchedulePayload> {
   status?: ProductionScheduleStatus;
 }
 

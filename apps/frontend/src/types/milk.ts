@@ -4,7 +4,7 @@ export interface MilkIntake {
   quantity: number;
   fat: number;
   snf?: number;
-  temperature?: number;
+  clr?: number;
   category: "premium" | "standard" | "other";
   source?: string;
   supplierName?: string;
@@ -25,7 +25,7 @@ export interface MilkIntakeFormData {
   quantity: number;
   fat: number;
   snf?: number;
-  temperature?: number;
+  clr?: number;
   ratePerFat: number;
   ratePerSnf: number;
   collectionTime?: string; // HH:MM from time input

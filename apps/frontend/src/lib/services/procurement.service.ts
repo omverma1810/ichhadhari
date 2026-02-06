@@ -76,7 +76,7 @@ export interface MilkCollection {
   quantity_liters: number;
   fat: number;
   snf: number;
-  temperature: number;
+  clr: number;
   rate_per_fat: number;
   rate_per_snf: number;
   price_per_liter: number;
@@ -100,7 +100,7 @@ export interface MilkCollectionFormData {
   quantity_liters: number;
   fat: number;
   snf: number;
-  temperature: number;
+  clr: number;
   rate_per_fat: number;
   rate_per_snf: number;
 }

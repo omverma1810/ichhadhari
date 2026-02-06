@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,6 +13,8 @@ import {
   Save,
   Loader2,
   AlertCircle,
+  User,
+  FileText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,84 +35,110 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useVendor, useUpdateVendor } from "@/lib/hooks/api/useProcurement";
+import { useVendor, useUpdateVendor } from "@/hooks/api/useVendorsEmployees";
+import type { UpdateVendorPayload, VendorCategory, VendorPaymentMethod, VendorStatus } from "@/types/api/vendors";
 
 const vendorSchema = z.object({
-  name: z.string().min(2, "Vendor name is required"),
+  company_name: z.string().min(2, "Company name is required"),
+  category: z.enum(["raw_material", "packaging", "equipment", "service", "other"]),
   contact_person: z.string().min(2, "Contact person is required"),
-  phone: z
-    .string()
-    .min(10, "Phone number must be at least 10 digits")
-    .regex(/^\+?[\d\s-()]+$/, "Invalid phone number format"),
-  email: z.string().email("Invalid email address"),
-  address: z.string().min(5, "Address is required"),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
-  pincode: z
-    .string()
-    .min(6, "Pincode must be 6 characters")
-    .max(6, "Pincode must be 6 characters"),
-  milk_type: z.enum(["cow", "buffalo", "mixed"]),
-  rate_per_liter: z.string().min(1, "Rate per liter is required"),
-  bank_account_number: z.string().optional(),
-  ifsc_code: z.string().optional(),
+  phone: z.string().min(10, "Phone must be at least 10 digits"),
+  alternate_phone: z.string().optional(),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  website: z.string().optional(),
+  billing_address: z.string().min(5, "Billing address is required"),
+  shipping_address: z.string().optional(),
+  gst_number: z.string().optional(),
   pan_number: z.string().optional(),
+  company_registration_number: z.string().optional(),
+  bank_name: z.string().optional(),
+  account_number: z.string().optional(),
+  ifsc_code: z.string().optional(),
+  account_holder_name: z.string().optional(),
+  credit_period_days: z.coerce.number().min(0).optional(),
+  credit_limit: z.coerce.number().min(0).optional(),
+  payment_method: z.enum(["cash", "cheque", "bank_transfer", "upi"]).optional(),
+  discount_percentage: z.coerce.number().min(0).max(100).optional(),
+  notes: z.string().optional(),
   status: z.enum(["active", "inactive", "suspended"]).optional(),
 });
 
 type VendorFormData = z.infer<typeof vendorSchema>;
 
+const categoryLabels: Record<string, string> = {
+  raw_material: "Raw Material",
+  packaging: "Packaging",
+  equipment: "Equipment",
+  service: "Service",
+  other: "Other",
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  cash: "Cash",
+  cheque: "Cheque",
+  bank_transfer: "Bank Transfer",
+  upi: "UPI",
+};
+
 export default function EditVendorPage() {
   const params = useParams<{ vendor_id: string }>();
   const router = useRouter();
   const vendorId = params?.vendor_id ? parseInt(params.vendor_id) : 0;
+  const isValidId = vendorId > 0;
 
-  const { data: vendor, isLoading, isError } = useVendor(vendorId);
+  const { data: vendor, isLoading, isError } = useVendor(vendorId, isValidId);
   const updateVendor = useUpdateVendor();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     setValue,
     watch,
+    reset,
   } = useForm<VendorFormData>({
     resolver: zodResolver(vendorSchema),
   });
 
-  const milkType = watch("milk_type");
-
   useEffect(() => {
     if (vendor) {
-      setValue("name", vendor.name);
-      setValue("contact_person", vendor.contact_person);
-      setValue("phone", vendor.phone);
-      setValue("email", vendor.email);
-      setValue("address", vendor.address);
-      setValue("city", vendor.city);
-      setValue("state", vendor.state);
-      setValue("pincode", vendor.pincode);
-      setValue("milk_type", vendor.milk_type);
-      setValue("rate_per_liter", vendor.rate_per_liter.toString());
-      setValue("bank_account_number", vendor.bank_account_number || "");
-      setValue("ifsc_code", vendor.ifsc_code || "");
-      setValue("pan_number", vendor.pan_number || "");
-      setValue("status", vendor.status);
+      reset({
+        company_name: vendor.company_name || "",
+        category: vendor.category as VendorCategory,
+        contact_person: vendor.contact_person || "",
+        phone: vendor.phone || "",
+        alternate_phone: vendor.alternate_phone || "",
+        email: vendor.email || "",
+        website: vendor.website || "",
+        billing_address: vendor.billing_address || "",
+        shipping_address: vendor.shipping_address || "",
+        gst_number: vendor.gst_number || "",
+        pan_number: vendor.pan_number || "",
+        company_registration_number: vendor.company_registration_number || "",
+        bank_name: vendor.bank_name || "",
+        account_number: vendor.account_number || "",
+        ifsc_code: vendor.ifsc_code || "",
+        account_holder_name: vendor.account_holder_name || "",
+        credit_period_days: vendor.credit_period_days || 0,
+        credit_limit: vendor.credit_limit || 0,
+        payment_method: vendor.payment_method as VendorPaymentMethod,
+        discount_percentage: vendor.discount_percentage || 0,
+        notes: vendor.notes || "",
+        status: vendor.status as VendorStatus,
+      });
     }
-  }, [vendor, setValue]);
+  }, [vendor, reset]);
 
   const onSubmit = (data: VendorFormData) => {
+    const payload: UpdateVendorPayload = {
+      ...data,
+      email: data.email || undefined,
+    };
     updateVendor.mutate(
-      {
-        id: vendorId,
-        data: {
-          ...data,
-          rate_per_liter: parseFloat(data.rate_per_liter),
-        },
-      },
+      { id: vendorId, data: payload },
       {
         onSuccess: () => {
-          router.push("/vendors/list");
+          router.push(`/vendors/${vendorId}`);
         },
       }
     );
@@ -143,11 +170,11 @@ export default function EditVendorPage() {
               The vendor you are looking for could not be found.
             </p>
             <Button
-              onClick={() => router.push("/vendors/list")}
+              onClick={() => router.back()}
               className="mt-4"
               variant="outline"
             >
-              Back to Vendors
+              Go Back
             </Button>
           </CardContent>
         </Card>
@@ -156,25 +183,20 @@ export default function EditVendorPage() {
   }
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="space-y-6"
-    >
-      <header className="flex items-center justify-between">
+    <section className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <Button
             type="button"
             variant="ghost"
-            onClick={() => router.push("/vendors/list")}
+            onClick={() => router.push(`/vendors/${vendorId}`)}
             className="mb-2 rounded-full hover:bg-[#F4A920]/10"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vendors
+            Back to Vendor
           </Button>
-          <h1 className="text-3xl font-bold text-[#5D4037]">
-            Edit {vendor.name}
+          <h1 className="text-2xl font-bold text-[#5D4037] sm:text-3xl">
+            Edit {vendor.company_name}
           </h1>
           <p className="text-sm text-[#8B5A3C]">
             Update vendor information and settings
@@ -183,130 +205,50 @@ export default function EditVendorPage() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Basic Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-[#F4A920]" />
               Basic Information
             </CardTitle>
-            <CardDescription>Core details about the vendor</CardDescription>
+            <CardDescription>Company details and classification</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">
-                  Vendor Name <span className="text-red-500">*</span>
+                <Label htmlFor="company_name">
+                  Company Name <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="name"
-                  {...register("name")}
-                  placeholder="e.g., Shri Krishna Dairy"
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-600">{errors.name.message}</p>
-                )}
+                <Input id="company_name" {...register("company_name")} placeholder="e.g., Shri Krishna Dairy" />
+                {errors.company_name && <p className="text-sm text-red-600">{errors.company_name.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contact_person">
-                  Contact Person <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="contact_person"
-                  {...register("contact_person")}
-                  placeholder="e.g., Ramesh Kumar"
-                />
-                {errors.contact_person && (
-                  <p className="text-sm text-red-600">
-                    {errors.contact_person.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Phone <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="phone"
-                  {...register("phone")}
-                  placeholder="+91 9876543210"
-                />
-                {errors.phone && (
-                  <p className="text-sm text-red-600">{errors.phone.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">
-                  Email <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  {...register("email")}
-                  placeholder="contact@vendor.com"
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="milk_type">
-                  Milk Type <span className="text-red-500">*</span>
+                <Label htmlFor="category">
+                  Category <span className="text-red-500">*</span>
                 </Label>
                 <Select
-                  value={milkType}
-                  onValueChange={(value) =>
-                    setValue("milk_type", value as VendorFormData["milk_type"])
-                  }
+                  value={watch("category")}
+                  onValueChange={(v) => setValue("category", v as VendorCategory, { shouldDirty: true })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select milk type" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cow">Cow Milk</SelectItem>
-                    <SelectItem value="buffalo">Buffalo Milk</SelectItem>
-                    <SelectItem value="mixed">Mixed Milk</SelectItem>
+                    {Object.entries(categoryLabels).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {errors.milk_type && (
-                  <p className="text-sm text-red-600">
-                    {errors.milk_type.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="rate_per_liter">
-                  Rate per Liter (₹) <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="rate_per_liter"
-                  type="number"
-                  step="0.01"
-                  {...register("rate_per_liter")}
-                  placeholder="e.g., 45.50"
-                />
-                {errors.rate_per_liter && (
-                  <p className="text-sm text-red-600">
-                    {errors.rate_per_liter.message}
-                  </p>
-                )}
+                {errors.category && <p className="text-sm text-red-600">{errors.category.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={watch("status")}
-                  onValueChange={(value) =>
-                    setValue("status", value as VendorFormData["status"])
-                  }
+                  onValueChange={(v) => setValue("status", v as VendorStatus, { shouldDirty: true })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
@@ -318,133 +260,198 @@ export default function EditVendorPage() {
           </CardContent>
         </Card>
 
+        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-[#F4A920]" />
+              Contact Information
+            </CardTitle>
+            <CardDescription>Contact person and reach details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contact_person">
+                  Contact Person <span className="text-red-500">*</span>
+                </Label>
+                <Input id="contact_person" {...register("contact_person")} placeholder="e.g., Ramesh Kumar" />
+                {errors.contact_person && <p className="text-sm text-red-600">{errors.contact_person.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">
+                  Phone <span className="text-red-500">*</span>
+                </Label>
+                <Input id="phone" {...register("phone")} placeholder="+91 9876543210" />
+                {errors.phone && <p className="text-sm text-red-600">{errors.phone.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alternate_phone">Alternate Phone</Label>
+                <Input id="alternate_phone" {...register("alternate_phone")} placeholder="+91 9876543211" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" {...register("email")} placeholder="contact@vendor.com" />
+                {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="website">Website</Label>
+                <Input id="website" {...register("website")} placeholder="https://vendor.com" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-[#F4A920]" />
               Address
             </CardTitle>
-            <CardDescription>Physical location details</CardDescription>
+            <CardDescription>Billing and shipping addresses</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="address">
-                Street Address <span className="text-red-500">*</span>
+              <Label htmlFor="billing_address">
+                Billing Address <span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                id="address"
-                {...register("address")}
-                placeholder="Enter complete street address"
-                rows={2}
-              />
-              {errors.address && (
-                <p className="text-sm text-red-600">{errors.address.message}</p>
-              )}
+              <Textarea id="billing_address" {...register("billing_address")} placeholder="Enter full billing address" rows={2} />
+              {errors.billing_address && <p className="text-sm text-red-600">{errors.billing_address.message}</p>}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="shipping_address">Shipping Address</Label>
+              <Textarea id="shipping_address" {...register("shipping_address")} placeholder="Enter shipping address (if different)" rows={2} />
+            </div>
+          </CardContent>
+        </Card>
 
-            <div className="grid gap-4 md:grid-cols-3">
+        {/* Legal & Tax */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-[#F4A920]" />
+              Legal & Tax Information
+            </CardTitle>
+            <CardDescription>GST, PAN, and registration details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="city">
-                  City <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="city"
-                  {...register("city")}
-                  placeholder="e.g., Mumbai"
-                />
-                {errors.city && (
-                  <p className="text-sm text-red-600">{errors.city.message}</p>
-                )}
+                <Label htmlFor="gst_number">GST Number</Label>
+                <Input id="gst_number" {...register("gst_number")} placeholder="22AAAAA0000A1Z5" />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="state">
-                  State <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="state"
-                  {...register("state")}
-                  placeholder="e.g., Maharashtra"
-                />
-                {errors.state && (
-                  <p className="text-sm text-red-600">{errors.state.message}</p>
-                )}
+                <Label htmlFor="pan_number">PAN Number</Label>
+                <Input id="pan_number" {...register("pan_number")} placeholder="ABCDE1234F" />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="pincode">
-                  Pincode <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="pincode"
-                  {...register("pincode")}
-                  placeholder="400001"
-                  maxLength={6}
-                />
-                {errors.pincode && (
-                  <p className="text-sm text-red-600">
-                    {errors.pincode.message}
-                  </p>
-                )}
+                <Label htmlFor="company_registration_number">Registration No.</Label>
+                <Input id="company_registration_number" {...register("company_registration_number")} placeholder="CIN/LLPIN" />
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Banking */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-[#F4A920]" />
-              Banking & Tax Details
+              Banking Details
             </CardTitle>
-            <CardDescription>
-              Bank account and tax information (optional)
-            </CardDescription>
+            <CardDescription>Bank account for payments</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="bank_account_number">Bank Account Number</Label>
-                <Input
-                  id="bank_account_number"
-                  {...register("bank_account_number")}
-                  placeholder="1234567890"
-                />
+                <Label htmlFor="bank_name">Bank Name</Label>
+                <Input id="bank_name" {...register("bank_name")} placeholder="e.g., State Bank of India" />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="account_holder_name">Account Holder</Label>
+                <Input id="account_holder_name" {...register("account_holder_name")} placeholder="Account holder name" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="account_number">Account Number</Label>
+                <Input id="account_number" {...register("account_number")} placeholder="1234567890" />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="ifsc_code">IFSC Code</Label>
-                <Input
-                  id="ifsc_code"
-                  {...register("ifsc_code")}
-                  placeholder="SBIN0001234"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pan_number">PAN Number</Label>
-                <Input
-                  id="pan_number"
-                  {...register("pan_number")}
-                  placeholder="ABCDE1234F"
-                />
+                <Input id="ifsc_code" {...register("ifsc_code")} placeholder="SBIN0001234" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3">
+        {/* Payment Terms */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-[#F4A920]" />
+              Payment Terms
+            </CardTitle>
+            <CardDescription>Credit and payment settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="credit_period_days">Credit Period (days)</Label>
+                <Input id="credit_period_days" type="number" {...register("credit_period_days")} placeholder="30" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="credit_limit">Credit Limit (\u20b9)</Label>
+                <Input id="credit_limit" type="number" {...register("credit_limit")} placeholder="100000" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment_method">Payment Method</Label>
+                <Select
+                  value={watch("payment_method")}
+                  onValueChange={(v) => setValue("payment_method", v as VendorPaymentMethod, { shouldDirty: true })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(paymentMethodLabels).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="discount_percentage">Discount %</Label>
+                <Input id="discount_percentage" type="number" step="0.01" {...register("discount_percentage")} placeholder="0" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea {...register("notes")} placeholder="Any additional notes about this vendor..." rows={3} />
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/vendors/list")}
+            onClick={() => router.push(`/vendors/${vendorId}`)}
             disabled={updateVendor.isPending}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={updateVendor.isPending}
+            disabled={updateVendor.isPending || !isDirty}
             className="bg-[#F4A920] hover:bg-[#F4A920]/90"
           >
             {updateVendor.isPending ? (
@@ -461,6 +468,6 @@ export default function EditVendorPage() {
           </Button>
         </div>
       </form>
-    </motion.section>
+    </section>
   );
 }

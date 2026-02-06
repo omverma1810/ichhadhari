@@ -65,11 +65,7 @@ const milkIntakeSchema = z.object({
     .min(0)
     .max(15, "SNF content must be between 0 and 15 kg/L")
     .optional(),
-  temperature: z
-    .number()
-    .min(0)
-    .max(50, "Temperature must be between 0 and 50°C")
-    .optional(),
+  clr: z.number().min(0).max(50, "CLR must be between 0 and 50").optional(),
   notes: z.string().optional(),
   recordedAt: z.date(),
 });
@@ -129,7 +125,7 @@ export function MilkIntakeForm({
       quantity: initialData?.quantity ?? 0,
       fat: initialData?.fat ?? 0,
       snf: initialData?.snf,
-      temperature: initialData?.temperature,
+      clr: initialData?.clr,
       notes: initialData?.notes,
       recordedAt: initialData?.recordedAt ?? new Date(),
     },
@@ -168,7 +164,7 @@ export function MilkIntakeForm({
       quantity: data.quantity.toFixed(2),
       fat: data.fat.toFixed(2),
       snf: (data.snf ?? 0).toFixed(2),
-      temperature: (data.temperature ?? 0).toFixed(1),
+      clr: (data.clr ?? 0).toFixed(1),
       rate_per_fat: data.ratePerFat.toFixed(2),
       rate_per_snf: data.ratePerSnf.toFixed(2),
       notes: data.notes,
@@ -383,20 +379,20 @@ export function MilkIntakeForm({
         </motion.div>
 
         <motion.div className="space-y-2" variants={staggerItem}>
-          <Label htmlFor="temperature" className="flex items-center gap-2">
+          <Label htmlFor="clr" className="flex items-center gap-2">
             <Thermometer className="h-4 w-4 text-red-500" />
-            Temperature (°C)
+            CLR (Density)
           </Label>
           <Input
-            id="temperature"
+            id="clr"
             type="number"
             step="0.1"
-            placeholder="0.0"
-            {...register("temperature", { valueAsNumber: true })}
+            placeholder="28.0"
+            {...register("clr", { valueAsNumber: true })}
             className="h-12"
           />
-          {errors.temperature ? (
-            <p className="text-sm text-red-600">{errors.temperature.message}</p>
+          {errors.clr ? (
+            <p className="text-sm text-red-600">{errors.clr.message}</p>
           ) : null}
         </motion.div>
 

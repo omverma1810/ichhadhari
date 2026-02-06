@@ -230,14 +230,15 @@ class MilkCollection(TimeStampedModel):
         ],
         help_text="SNF - Solids Not Fat (kg per liter)"
     )
-    temperature = models.DecimalField(
+    clr = models.DecimalField(
         max_digits=4,
         decimal_places=1,
+        default=Decimal('0.0'),
         validators=[
             MinValueValidator(Decimal('0.0')),
-            MaxValueValidator(Decimal('100.0'))
+            MaxValueValidator(Decimal('50.0'))
         ],
-        help_text="Milk temperature in Celsius"
+        help_text="Corrected Lactometer Reading for milk density (normal range: 25-32)"
     )
     
     # Quality Assessment
@@ -308,12 +309,12 @@ class MilkCollection(TimeStampedModel):
     
     def calculate_quality_score(self) -> Decimal:
         """
-        Calculate quality score based on fat, SNF, and temperature.
+        Calculate quality score based on fat, SNF, and CLR.
         
         Scoring:
         - Fat: 0-50 points (proportional to fat content, max at 6.0 kg/L+)
         - SNF: 0-30 points (proportional to SNF content, max at 9.0 kg/L+)
-        - Temperature: 20 points if between 2-6°C, else 0
+        - CLR: 20 points if between 25-32 (normal density range), else 0
         
         Returns:
             Decimal: Quality score between 0 and 100
@@ -330,11 +331,11 @@ class MilkCollection(TimeStampedModel):
             30.0
         )
         
-        # Temperature score (20 points if in ideal range 2-6°C)
-        temp = float(self.temperature)
-        temp_score = 20.0 if 2.0 <= temp <= 6.0 else 0.0
+        # CLR score (20 points if in normal density range 25-32)
+        clr_val = float(self.clr)
+        clr_score = 20.0 if 25.0 <= clr_val <= 32.0 else 0.0
         
-        total_score = fat_score + snf_score + temp_score
+        total_score = fat_score + snf_score + clr_score
         # Ensure score is between 0 and 100, rounded to 2 decimal places
         total_score = max(0.0, min(100.0, total_score))
         return Decimal(str(round(total_score, 2)))
@@ -375,14 +376,14 @@ class MilkCollection(TimeStampedModel):
             self.snf = Decimal('0.00')
             
         try:
-            if self.temperature is None or self.temperature == '':
-                self.temperature = Decimal('0.0')
+            if self.clr is None or self.clr == '':
+                self.clr = Decimal('0.0')
             else:
-                # Temperature has decimal_places=1, so quantize to 0.1
-                self.temperature = Decimal(str(self.temperature)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
+                # CLR has decimal_places=1, so quantize to 0.1
+                self.clr = Decimal(str(self.clr)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
         except (InvalidOperation, ValueError, TypeError):
-            logger.error(f"Invalid temperature value: {self.temperature}")
-            self.temperature = Decimal('0.0')
+            logger.error(f"Invalid CLR value: {self.clr}")
+            self.clr = Decimal('0.0')
             
         try:
             if self.rate_per_fat is None or self.rate_per_fat == '':
@@ -448,10 +449,10 @@ class MilkCollection(TimeStampedModel):
                 "Rejection reason is required when quality status is 'rejected'"
             )
         
-        # Validate temperature is reasonable
-        if self.temperature > Decimal('50.0'):
+        # Validate CLR is reasonable
+        if self.clr > Decimal('50.0'):
             raise ValidationError(
-                "Temperature seems unusually high. Please verify."
+                "CLR value seems unusually high. Please verify."
             )
 
 

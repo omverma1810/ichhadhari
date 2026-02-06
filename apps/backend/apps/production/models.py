@@ -6,7 +6,7 @@ Defines models for products, production batches, and scheduling.
 
 from decimal import Decimal
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import TimeStampedModel
@@ -194,6 +194,40 @@ class ProductionBatch(TimeStampedModel):
     quality_notes = models.TextField(
         blank=True,
         help_text="Quality check notes"
+    )
+    # Milk quality parameters
+    fat = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('15.00'))
+        ],
+        help_text="Fat content (kg per liter)"
+    )
+    snf = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('15.00'))
+        ],
+        help_text="SNF - Solids Not Fat (kg per liter)"
+    )
+    clr = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.0')),
+            MaxValueValidator(Decimal('50.0'))
+        ],
+        help_text="Corrected Lactometer Reading for milk density (normal range: 25-32)"
     )
     yield_percentage = models.DecimalField(
         max_digits=5,

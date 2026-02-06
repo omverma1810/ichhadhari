@@ -218,7 +218,7 @@ export default function BatchesPage() {
             <CardDescription>5-stage batch status progression</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               {Object.entries(statusConfig).map(([key, config], index) => {
                 const Icon = config.icon;
                 const count = batches.filter(
