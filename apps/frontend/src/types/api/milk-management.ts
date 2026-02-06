@@ -109,7 +109,11 @@ export type MilkType = "cow" | "buffalo" | "mixed";
 export type QualityStatus =
   | "accepted" // Default status
   | "rejected" // Rejected milk
-  | "pending"; // Pending quality check
+  | "pending" // Pending quality check
+  | "excellent" // Quality grade
+  | "good" // Quality grade
+  | "average" // Quality grade
+  | "poor"; // Quality grade
 export type CollectionShift = "morning" | "evening";
 
 export interface MilkCollection extends AuditFields {

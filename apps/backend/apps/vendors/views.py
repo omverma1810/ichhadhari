@@ -11,7 +11,7 @@ from decimal import Decimal
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
     VendorPayment, GoodsReceiptNote, GRNItem,
-    VendorInvoice
+    VendorInvoice, VendorProductPrice
 )
 from .serializers import (
     VendorSerializer, VendorListSerializer,
@@ -19,7 +19,8 @@ from .serializers import (
     PurchaseOrderCreateSerializer, PurchaseOrderItemSerializer,
     VendorPaymentSerializer, GoodsReceiptNoteSerializer,
     GoodsReceiptNoteCreateSerializer,
-    VendorInvoiceSerializer, VendorInvoiceListSerializer
+    VendorInvoiceSerializer, VendorInvoiceListSerializer,
+    VendorProductPriceSerializer, VendorProductPriceListSerializer
 )
 from apps.inventory.models import StockTransaction
 
@@ -663,3 +664,91 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
         lines.append("=" * 40)
         
         return Response({'text': '\n'.join(lines)})
+
+
+class VendorProductPriceViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing vendor-specific product pricing.
+    
+    Allows setting custom prices for vendor-product combinations,
+    enabling bulk deals and special pricing arrangements.
+    """
+    queryset = VendorProductPrice.objects.select_related('vendor', 'product').all()
+    serializer_class = VendorProductPriceSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['vendor', 'product', 'is_active']
+    search_fields = ['vendor__company_name', 'product__name', 'notes']
+    ordering_fields = ['vendor_price', 'created_at', 'valid_from']
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        """Use lightweight serializer for list view."""
+        if self.action == 'list':
+            return VendorProductPriceListSerializer
+        return VendorProductPriceSerializer
+    
+    def get_queryset(self):
+        """Filter by vendor or product if specified in query params."""
+        queryset = super().get_queryset()
+        
+        # Additional filtering options
+        active_only = self.request.query_params.get('active_only')
+        if active_only and active_only.lower() == 'true':
+            queryset = queryset.filter(is_active=True)
+        
+        # Filter by validity date
+        valid_on = self.request.query_params.get('valid_on')
+        if valid_on:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(valid_from__isnull=True) | Q(valid_from__lte=valid_on),
+                Q(valid_until__isnull=True) | Q(valid_until__gte=valid_on)
+            )
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def for_vendor(self, request):
+        """Get all active product prices for a specific vendor."""
+        vendor_id = request.query_params.get('vendor_id')
+        if not vendor_id:
+            return Response(
+                {'error': 'vendor_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        prices = self.get_queryset().filter(
+            vendor_id=vendor_id,
+            is_active=True
+        )
+        
+        serializer = VendorProductPriceListSerializer(prices, many=True)
+        return Response({
+            'vendor_id': vendor_id,
+            'prices': serializer.data,
+            'count': prices.count()
+        })
+    
+    @action(detail=False, methods=['get'])
+    def for_product(self, request):
+        """Get all active vendor prices for a specific product."""
+        product_id = request.query_params.get('product_id')
+        if not product_id:
+            return Response(
+                {'error': 'product_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        prices = self.get_queryset().filter(
+            product_id=product_id,
+            is_active=True
+        )
+        
+        serializer = VendorProductPriceListSerializer(prices, many=True)
+        return Response({
+            'product_id': product_id,
+            'prices': serializer.data,
+            'count': prices.count()
+        })
+

@@ -36,11 +36,22 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useVendor, useUpdateVendor } from "@/hooks/api/useVendorsEmployees";
-import type { UpdateVendorPayload, VendorCategory, VendorPaymentMethod, VendorStatus } from "@/types/api/vendors";
+import type {
+  UpdateVendorPayload,
+  VendorCategory,
+  VendorPaymentMethod,
+  VendorStatus,
+} from "@/types/api/vendors";
 
 const vendorSchema = z.object({
   company_name: z.string().min(2, "Company name is required"),
-  category: z.enum(["raw_material", "packaging", "equipment", "service", "other"]),
+  category: z.enum([
+    "raw_material",
+    "packaging",
+    "equipment",
+    "service",
+    "other",
+  ]),
   contact_person: z.string().min(2, "Contact person is required"),
   phone: z.string().min(10, "Phone must be at least 10 digits"),
   alternate_phone: z.string().optional(),
@@ -97,7 +108,7 @@ export default function EditVendorPage() {
     watch,
     reset,
   } = useForm<VendorFormData>({
-    resolver: zodResolver(vendorSchema),
+    resolver: zodResolver(vendorSchema) as any,
   });
 
   useEffect(() => {
@@ -140,7 +151,7 @@ export default function EditVendorPage() {
         onSuccess: () => {
           router.push(`/vendors/${vendorId}`);
         },
-      }
+      },
     );
   };
 
@@ -204,7 +215,7 @@ export default function EditVendorPage() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -212,7 +223,9 @@ export default function EditVendorPage() {
               <Building2 className="h-5 w-5 text-[#F4A920]" />
               Basic Information
             </CardTitle>
-            <CardDescription>Company details and classification</CardDescription>
+            <CardDescription>
+              Company details and classification
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -220,8 +233,16 @@ export default function EditVendorPage() {
                 <Label htmlFor="company_name">
                   Company Name <span className="text-red-500">*</span>
                 </Label>
-                <Input id="company_name" {...register("company_name")} placeholder="e.g., Shri Krishna Dairy" />
-                {errors.company_name && <p className="text-sm text-red-600">{errors.company_name.message}</p>}
+                <Input
+                  id="company_name"
+                  {...register("company_name")}
+                  placeholder="e.g., Shri Krishna Dairy"
+                />
+                {errors.company_name && (
+                  <p className="text-sm text-red-600">
+                    {errors.company_name.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -230,25 +251,41 @@ export default function EditVendorPage() {
                 </Label>
                 <Select
                   value={watch("category")}
-                  onValueChange={(v) => setValue("category", v as VendorCategory, { shouldDirty: true })}
+                  onValueChange={(v) =>
+                    setValue("category", v as VendorCategory, {
+                      shouldDirty: true,
+                    })
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(categoryLabels).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.category && <p className="text-sm text-red-600">{errors.category.message}</p>}
+                {errors.category && (
+                  <p className="text-sm text-red-600">
+                    {errors.category.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={watch("status")}
-                  onValueChange={(v) => setValue("status", v as VendorStatus, { shouldDirty: true })}
+                  onValueChange={(v) =>
+                    setValue("status", v as VendorStatus, { shouldDirty: true })
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
@@ -275,32 +312,61 @@ export default function EditVendorPage() {
                 <Label htmlFor="contact_person">
                   Contact Person <span className="text-red-500">*</span>
                 </Label>
-                <Input id="contact_person" {...register("contact_person")} placeholder="e.g., Ramesh Kumar" />
-                {errors.contact_person && <p className="text-sm text-red-600">{errors.contact_person.message}</p>}
+                <Input
+                  id="contact_person"
+                  {...register("contact_person")}
+                  placeholder="e.g., Ramesh Kumar"
+                />
+                {errors.contact_person && (
+                  <p className="text-sm text-red-600">
+                    {errors.contact_person.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone">
                   Phone <span className="text-red-500">*</span>
                 </Label>
-                <Input id="phone" {...register("phone")} placeholder="+91 9876543210" />
-                {errors.phone && <p className="text-sm text-red-600">{errors.phone.message}</p>}
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="+91 9876543210"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-600">{errors.phone.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="alternate_phone">Alternate Phone</Label>
-                <Input id="alternate_phone" {...register("alternate_phone")} placeholder="+91 9876543211" />
+                <Input
+                  id="alternate_phone"
+                  {...register("alternate_phone")}
+                  placeholder="+91 9876543211"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" {...register("email")} placeholder="contact@vendor.com" />
-                {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="contact@vendor.com"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="website">Website</Label>
-                <Input id="website" {...register("website")} placeholder="https://vendor.com" />
+                <Input
+                  id="website"
+                  {...register("website")}
+                  placeholder="https://vendor.com"
+                />
               </div>
             </div>
           </CardContent>
@@ -320,12 +386,26 @@ export default function EditVendorPage() {
               <Label htmlFor="billing_address">
                 Billing Address <span className="text-red-500">*</span>
               </Label>
-              <Textarea id="billing_address" {...register("billing_address")} placeholder="Enter full billing address" rows={2} />
-              {errors.billing_address && <p className="text-sm text-red-600">{errors.billing_address.message}</p>}
+              <Textarea
+                id="billing_address"
+                {...register("billing_address")}
+                placeholder="Enter full billing address"
+                rows={2}
+              />
+              {errors.billing_address && (
+                <p className="text-sm text-red-600">
+                  {errors.billing_address.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="shipping_address">Shipping Address</Label>
-              <Textarea id="shipping_address" {...register("shipping_address")} placeholder="Enter shipping address (if different)" rows={2} />
+              <Textarea
+                id="shipping_address"
+                {...register("shipping_address")}
+                placeholder="Enter shipping address (if different)"
+                rows={2}
+              />
             </div>
           </CardContent>
         </Card>
@@ -337,21 +417,37 @@ export default function EditVendorPage() {
               <FileText className="h-5 w-5 text-[#F4A920]" />
               Legal & Tax Information
             </CardTitle>
-            <CardDescription>GST, PAN, and registration details</CardDescription>
+            <CardDescription>
+              GST, PAN, and registration details
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="gst_number">GST Number</Label>
-                <Input id="gst_number" {...register("gst_number")} placeholder="22AAAAA0000A1Z5" />
+                <Input
+                  id="gst_number"
+                  {...register("gst_number")}
+                  placeholder="22AAAAA0000A1Z5"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pan_number">PAN Number</Label>
-                <Input id="pan_number" {...register("pan_number")} placeholder="ABCDE1234F" />
+                <Input
+                  id="pan_number"
+                  {...register("pan_number")}
+                  placeholder="ABCDE1234F"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company_registration_number">Registration No.</Label>
-                <Input id="company_registration_number" {...register("company_registration_number")} placeholder="CIN/LLPIN" />
+                <Label htmlFor="company_registration_number">
+                  Registration No.
+                </Label>
+                <Input
+                  id="company_registration_number"
+                  {...register("company_registration_number")}
+                  placeholder="CIN/LLPIN"
+                />
               </div>
             </div>
           </CardContent>
@@ -370,19 +466,35 @@ export default function EditVendorPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="bank_name">Bank Name</Label>
-                <Input id="bank_name" {...register("bank_name")} placeholder="e.g., State Bank of India" />
+                <Input
+                  id="bank_name"
+                  {...register("bank_name")}
+                  placeholder="e.g., State Bank of India"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="account_holder_name">Account Holder</Label>
-                <Input id="account_holder_name" {...register("account_holder_name")} placeholder="Account holder name" />
+                <Input
+                  id="account_holder_name"
+                  {...register("account_holder_name")}
+                  placeholder="Account holder name"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="account_number">Account Number</Label>
-                <Input id="account_number" {...register("account_number")} placeholder="1234567890" />
+                <Input
+                  id="account_number"
+                  {...register("account_number")}
+                  placeholder="1234567890"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ifsc_code">IFSC Code</Label>
-                <Input id="ifsc_code" {...register("ifsc_code")} placeholder="SBIN0001234" />
+                <Input
+                  id="ifsc_code"
+                  {...register("ifsc_code")}
+                  placeholder="SBIN0001234"
+                />
               </div>
             </div>
           </CardContent>
@@ -401,29 +513,53 @@ export default function EditVendorPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="credit_period_days">Credit Period (days)</Label>
-                <Input id="credit_period_days" type="number" {...register("credit_period_days")} placeholder="30" />
+                <Input
+                  id="credit_period_days"
+                  type="number"
+                  {...register("credit_period_days")}
+                  placeholder="30"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="credit_limit">Credit Limit (\u20b9)</Label>
-                <Input id="credit_limit" type="number" {...register("credit_limit")} placeholder="100000" />
+                <Input
+                  id="credit_limit"
+                  type="number"
+                  {...register("credit_limit")}
+                  placeholder="100000"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select
                   value={watch("payment_method")}
-                  onValueChange={(v) => setValue("payment_method", v as VendorPaymentMethod, { shouldDirty: true })}
+                  onValueChange={(v) =>
+                    setValue("payment_method", v as VendorPaymentMethod, {
+                      shouldDirty: true,
+                    })
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(paymentMethodLabels).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="discount_percentage">Discount %</Label>
-                <Input id="discount_percentage" type="number" step="0.01" {...register("discount_percentage")} placeholder="0" />
+                <Input
+                  id="discount_percentage"
+                  type="number"
+                  step="0.01"
+                  {...register("discount_percentage")}
+                  placeholder="0"
+                />
               </div>
             </div>
           </CardContent>
@@ -435,7 +571,11 @@ export default function EditVendorPage() {
             <CardTitle>Additional Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea {...register("notes")} placeholder="Any additional notes about this vendor..." rows={3} />
+            <Textarea
+              {...register("notes")}
+              placeholder="Any additional notes about this vendor..."
+              rows={3}
+            />
           </CardContent>
         </Card>
 

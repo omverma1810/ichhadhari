@@ -3,25 +3,20 @@ import { toast } from "sonner";
 
 import { inventoryAPI } from "@/lib/api/inventory";
 import { getErrorMessage } from "@/lib/utils/api-helpers";
-import type {
-  StockAdjustment,
-  StockTransferRequest,
-  StockMovement,
-} from "@/types/inventory";
 import type { PaginationParams } from "@/lib/api/milk";
 
-// Locations
+// Items (mapped to existing API methods)
 export function useLocations() {
   return useQuery({
     queryKey: ["locations"],
-    queryFn: () => inventoryAPI.getLocations(),
+    queryFn: () => inventoryAPI.getStockLevels(),
   });
 }
 
 export function useLocation(id: string | undefined) {
   return useQuery({
     queryKey: ["location", id],
-    queryFn: () => inventoryAPI.getLocation(id as string),
+    queryFn: () => inventoryAPI.getItem(Number(id)),
     enabled: Boolean(id),
   });
 }
@@ -30,7 +25,7 @@ export function useLocation(id: string | undefined) {
 export function useStock(params?: PaginationParams) {
   return useQuery({
     queryKey: ["inventory-stock", params],
-    queryFn: () => inventoryAPI.getStock(params),
+    queryFn: () => inventoryAPI.getItems(params),
     refetchInterval: 30_000,
   });
 }
@@ -38,16 +33,16 @@ export function useStock(params?: PaginationParams) {
 export function useStockByLocation(locationId: string | undefined) {
   return useQuery({
     queryKey: ["stock-by-location", locationId],
-    queryFn: () => inventoryAPI.getStockByLocation(locationId as string),
+    queryFn: () => inventoryAPI.getLowStock({ search: locationId }),
     enabled: Boolean(locationId),
   });
 }
 
-// Stock Movements
+// Stock Movements (mapped to Transactions)
 export function useMovements(params?: PaginationParams) {
   return useQuery({
     queryKey: ["stock-movements", params],
-    queryFn: () => inventoryAPI.getMovements(params),
+    queryFn: () => inventoryAPI.getTransactions(params),
   });
 }
 
@@ -55,8 +50,7 @@ export function useCreateMovement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<StockMovement>) =>
-      inventoryAPI.createMovement(data),
+    mutationFn: (data: any) => inventoryAPI.createTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-stock"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
@@ -71,11 +65,12 @@ export function useCreateMovement() {
   });
 }
 
-// Stock Adjustments
+// Stock Adjustments (mapped to Transactions)
 export function useAdjustments(params?: PaginationParams) {
   return useQuery({
     queryKey: ["stock-adjustments", params],
-    queryFn: () => inventoryAPI.getAdjustments(params),
+    queryFn: () =>
+      inventoryAPI.getTransactions({ ...params, type: "adjustment" } as any),
   });
 }
 
@@ -83,8 +78,8 @@ export function useCreateAdjustment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<StockAdjustment>) =>
-      inventoryAPI.createAdjustment(data),
+    mutationFn: (data: any) =>
+      inventoryAPI.createTransaction({ ...data, type: "adjustment" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });
       toast.success("Adjustment request created!", {
@@ -103,7 +98,8 @@ export function useApproveAdjustment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => inventoryAPI.approveAdjustment(id),
+    mutationFn: (id: string) =>
+      inventoryAPI.updateTransaction(Number(id), { status: "approved" } as any),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-stock"] });
@@ -125,7 +121,10 @@ export function useRejectAdjustment() {
 
   return useMutation({
     mutationFn: (variables: { id: string; reason: string }) =>
-      inventoryAPI.rejectAdjustment(variables.id, variables.reason),
+      inventoryAPI.updateTransaction(Number(variables.id), {
+        status: "rejected",
+        notes: variables.reason,
+      } as any),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });
       toast.success("Adjustment rejected", {
@@ -145,8 +144,8 @@ export function useTransferStock() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: StockTransferRequest) =>
-      inventoryAPI.transferStock(data),
+    mutationFn: (data: any) =>
+      inventoryAPI.createTransaction({ ...data, type: "transfer" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-stock"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
@@ -164,7 +163,7 @@ export function useTransferStock() {
 export function useExpiryAlerts() {
   return useQuery({
     queryKey: ["expiry-alerts"],
-    queryFn: () => inventoryAPI.getExpiryAlerts(),
+    queryFn: () => inventoryAPI.getAlerts({ type: "expiry" } as any),
     refetchInterval: 60_000,
   });
 }
@@ -173,7 +172,7 @@ export function useExpiryAlerts() {
 export function useInventoryStats() {
   return useQuery({
     queryKey: ["inventory-stats"],
-    queryFn: () => inventoryAPI.getInventoryStats(),
+    queryFn: () => inventoryAPI.getStats(),
     refetchInterval: 30_000,
   });
 }

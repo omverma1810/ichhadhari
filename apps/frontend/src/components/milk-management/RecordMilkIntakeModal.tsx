@@ -51,12 +51,13 @@ export function RecordMilkIntakeModal({
 
   const [formData, setFormData] = useState({
     quantity: "",
-    fatPercentage: "",
-    snfPercentage: "",
+    fat: "",
+    snf: "",
     temperature: "4.0",
     milkType: "cow" as MilkType,
     shift: "morning" as CollectionShift,
-    ratePerLiter: "",
+    ratePerFat: "",
+    ratePerSnf: "",
     collectionDate: new Date().toISOString().split("T")[0],
     notes: "",
   });
@@ -98,7 +99,7 @@ export function RecordMilkIntakeModal({
         rate_per_snf: parseFloat(formData.ratePerSnf),
         collection_date: formData.collectionDate,
         notes: formData.notes,
-      });
+      } as any);
 
       console.log("✅ Milk collection created successfully:", result);
 
@@ -108,12 +109,13 @@ export function RecordMilkIntakeModal({
       // Reset form
       setFormData({
         quantity: "",
-        fatPercentage: "",
-        snfPercentage: "",
+        fat: "",
+        snf: "",
         temperature: "4.0",
         milkType: "cow",
         shift: "morning",
-        ratePerLiter: "",
+        ratePerFat: "",
+        ratePerSnf: "",
         collectionDate: new Date().toISOString().split("T")[0],
         notes: "",
       });

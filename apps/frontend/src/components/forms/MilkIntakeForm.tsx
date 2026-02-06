@@ -45,14 +45,14 @@ import type { MilkIntakeFormData } from "@/types/milk";
 
 const milkIntakeSchema = z.object({
   supplierId: z
-    .number({ required_error: "Supplier is required" })
+    .number({ message: "Supplier is required" })
     .min(1, "Supplier is required"),
   milkType: z.enum(["cow", "buffalo", "mixed"]),
   ratePerFat: z
-    .number({ required_error: "Rate per fat is required" })
+    .number({ message: "Rate per fat is required" })
     .positive("Rate per fat is required"),
   ratePerSnf: z
-    .number({ required_error: "Rate per SNF is required" })
+    .number({ message: "Rate per SNF is required" })
     .positive("Rate per SNF is required"),
   collectionTime: z
     .string()

@@ -115,6 +115,7 @@ export interface InventoryFilters {
   storage_status?: string;
   start_date?: string;
   end_date?: string;
+  item?: number;
   page?: number;
   page_size?: number;
 }

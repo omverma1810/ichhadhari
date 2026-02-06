@@ -150,10 +150,6 @@ export interface CreateStockTransactionPayload {
   reference_id?: string;
   batch_number?: string;
   expiry_date?: string;
-  notes?: string;
-}
-  reference_type?: string;
-  reference_id?: string;
   from_location?: string;
   to_location?: string;
   notes?: string;

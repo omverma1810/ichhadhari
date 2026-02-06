@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
     VendorPayment, GoodsReceiptNote, GRNItem,
-    VendorInvoice, VendorInvoiceItem
+    VendorInvoice, VendorInvoiceItem, VendorProductPrice
 )
 from decimal import Decimal
 
@@ -426,3 +426,118 @@ class VendorInvoiceListSerializer(serializers.ModelSerializer):
     
     def get_items_count(self, obj):
         return obj.items.count()
+
+
+# ==================== VENDOR PRODUCT PRICING ====================
+
+class VendorProductPriceListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for vendor product price list views."""
+    vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_unit = serializers.CharField(source='product.unit', read_only=True)
+    
+    class Meta:
+        model = VendorProductPrice
+        fields = [
+            'id', 'vendor', 'vendor_name', 'product', 'product_name',
+            'product_unit', 'vendor_price', 'min_quantity', 'is_active',
+            'valid_from', 'valid_until', 'notes', 'created_at'
+        ]
+
+
+class VendorProductPriceSerializer(serializers.ModelSerializer):
+    """Full serializer for vendor product price CRUD operations."""
+    vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_unit = serializers.CharField(source='product.unit', read_only=True)
+    market_price = serializers.DecimalField(
+        source='product.cost_price',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    discount_percentage = serializers.SerializerMethodField()
+    discount_amount = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VendorProductPrice
+        fields = [
+            'id', 'vendor', 'vendor_name', 'product', 'product_name',
+            'product_unit', 'vendor_price', 'min_quantity', 'is_active',
+            'valid_from', 'valid_until', 'notes',
+            'market_price', 'discount_percentage', 'discount_amount',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_discount_percentage(self, obj):
+        """Calculate discount percentage from market price."""
+        try:
+            if obj.product and obj.product.cost_price and obj.product.cost_price > 0:
+                discount = ((obj.product.cost_price - obj.vendor_price) / obj.product.cost_price) * 100
+                return round(discount, 2)
+        except:
+            pass
+        return 0
+    
+    def get_discount_amount(self, obj):
+        """Calculate discount amount from market price."""
+        try:
+            if obj.product and obj.product.cost_price:
+                return float(obj.product.cost_price - obj.vendor_price)
+        except:
+            pass
+        return 0
+    
+    def validate(self, data):
+        """Ensure unique vendor-product combination for overlapping dates."""
+        vendor = data.get('vendor')
+        product = data.get('product')
+        valid_from = data.get('valid_from')
+        valid_until = data.get('valid_until')
+        
+        if valid_from and valid_until and valid_from > valid_until:
+            raise serializers.ValidationError({
+                'valid_until': 'Valid until date must be after valid from date.'
+            })
+        
+        # Check for overlapping active prices
+        instance = getattr(self, 'instance', None)
+        qs = VendorProductPrice.objects.filter(
+            vendor=vendor,
+            product=product,
+            is_active=True
+        )
+        
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        
+        if qs.exists() and data.get('is_active', True):
+            # Check if there's an overlapping date range
+            for existing in qs:
+                if self._dates_overlap(valid_from, valid_until, existing.valid_from, existing.valid_until):
+                    raise serializers.ValidationError({
+                        'product': f'An active price for this vendor-product already exists for the specified date range.'
+                    })
+        
+        return data
+    
+    def _dates_overlap(self, start1, end1, start2, end2):
+        """Check if two date ranges overlap."""
+        # If either range has no dates, consider them as overlapping
+        if not start1 and not end1:
+            return True
+        if not start2 and not end2:
+            return True
+        
+        # Convert None to min/max dates for comparison
+        from datetime import date
+        min_date = date.min
+        max_date = date.max
+        
+        s1 = start1 or min_date
+        e1 = end1 or max_date
+        s2 = start2 or min_date
+        e2 = end2 or max_date
+        
+        return s1 <= e2 and s2 <= e1

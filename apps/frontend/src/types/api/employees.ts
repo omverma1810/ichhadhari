@@ -24,8 +24,7 @@ export interface CreateDepartmentPayload {
   is_active?: boolean;
 }
 
-export interface UpdateDepartmentPayload
-  extends Partial<CreateDepartmentPayload> {}
+export interface UpdateDepartmentPayload extends Partial<CreateDepartmentPayload> {}
 
 export interface DepartmentFilters extends CommonFilters {
   is_active?: boolean;
@@ -46,7 +45,8 @@ export type EmploymentStatus =
   | "inactive"
   | "on_leave"
   | "suspended"
-  | "terminated";
+  | "terminated"
+  | "resigned";
 export type EmploymentType =
   | "full_time"
   | "part_time"
@@ -69,6 +69,7 @@ export interface Employee extends AuditFields {
   last_name: string;
   full_name: string;
   email?: string;
+  personal_email?: string;
   phone: string;
   date_of_birth: string;
   gender: "male" | "female" | "other";
@@ -77,11 +78,15 @@ export interface Employee extends AuditFields {
   state: string;
   pincode: string;
   department: DepartmentType;
+  designation?: string;
   role: EmployeeRole;
   employment_type: EmploymentType;
   employment_status: EmploymentStatus;
+  is_active: boolean;
   date_of_joining: string;
   date_of_leaving?: string;
+  reporting_manager?: number;
+  reporting_manager_name?: string;
   basic_salary: number;
   allowances?: number;
   deductions?: number;
@@ -94,6 +99,7 @@ export interface Employee extends AuditFields {
   emergency_contact_phone?: string;
   photo_url?: string;
   notes?: string;
+  status?: EmploymentStatus;
 }
 
 export interface CreateEmployeePayload {
@@ -128,6 +134,7 @@ export interface CreateEmployeePayload {
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {
   employment_status?: EmploymentStatus;
   date_of_leaving?: string;
+  is_active?: boolean;
 }
 
 export interface EmployeeFilters extends CommonFilters {
@@ -201,8 +208,7 @@ export interface CreateAttendancePayload {
   remarks?: string;
 }
 
-export interface UpdateAttendancePayload
-  extends Partial<CreateAttendancePayload> {}
+export interface UpdateAttendancePayload extends Partial<CreateAttendancePayload> {}
 
 export interface BulkAttendancePayload {
   date: string;
@@ -284,8 +290,7 @@ export interface CreateLeaveTypePayload {
   is_active?: boolean;
 }
 
-export interface UpdateLeaveTypePayload
-  extends Partial<CreateLeaveTypePayload> {}
+export interface UpdateLeaveTypePayload extends Partial<CreateLeaveTypePayload> {}
 
 export interface LeaveTypeFilters extends CommonFilters {
   is_active?: boolean;
@@ -369,8 +374,7 @@ export interface CreateLeaveRequestPayload {
   remarks?: string;
 }
 
-export interface UpdateLeaveRequestPayload
-  extends Partial<CreateLeaveRequestPayload> {
+export interface UpdateLeaveRequestPayload extends Partial<CreateLeaveRequestPayload> {
   status?: LeaveRequestStatus;
 }
 
@@ -428,8 +432,7 @@ export interface CreatePerformanceReviewPayload {
   comments?: string;
 }
 
-export interface UpdatePerformanceReviewPayload
-  extends Partial<CreatePerformanceReviewPayload> {}
+export interface UpdatePerformanceReviewPayload extends Partial<CreatePerformanceReviewPayload> {}
 
 export interface PerformanceReviewFilters extends CommonFilters {
   employee?: number;
@@ -479,8 +482,7 @@ export interface CreateSalaryStructurePayload {
   is_active?: boolean;
 }
 
-export interface UpdateSalaryStructurePayload
-  extends Partial<CreateSalaryStructurePayload> {}
+export interface UpdateSalaryStructurePayload extends Partial<CreateSalaryStructurePayload> {}
 
 export interface SalaryStructureFilters extends CommonFilters {
   employee?: number;
@@ -541,8 +543,7 @@ export interface CreatePayrollRecordPayload {
   remarks?: string;
 }
 
-export interface UpdatePayrollRecordPayload
-  extends Partial<CreatePayrollRecordPayload> {
+export interface UpdatePayrollRecordPayload extends Partial<CreatePayrollRecordPayload> {
   status?: PayrollStatus;
   payment_date?: string;
   payment_method?: string;
@@ -605,4 +606,18 @@ export interface Salary extends AuditFields {
     id: number;
     name: string;
   };
+}
+
+// ============ TYPE ALIASES ============
+// For backward compatibility with useVendorsEmployees.ts
+
+export type DepartmentRecord = Department;
+export type SalaryStructureRecord = SalaryStructure;
+export type LeaveBalanceRecord = LeaveBalance;
+export type SalaryFilters = PayrollRecordFilters;
+export type MarkAttendancePayload = CreateAttendancePayload;
+export type ProcessSalaryPayload = CreatePayrollRecordPayload;
+
+export interface UpdateSalaryPayload extends Partial<CreatePayrollRecordPayload> {
+  status?: PayrollStatus;
 }

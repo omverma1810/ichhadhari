@@ -3,12 +3,11 @@ import { toast } from "sonner";
 
 import { milkAPI, type PaginationParams } from "@/lib/api/milk";
 import { getErrorMessage } from "@/lib/utils/api-helpers";
-import type { MilkIntakeFormData } from "@/types/milk";
 
 export function useMilkIntakes(params: PaginationParams) {
   return useQuery({
     queryKey: ["milk-intakes", params],
-    queryFn: () => milkAPI.getIntakes(params),
+    queryFn: () => milkAPI.getCollections(params),
     staleTime: 30_000,
   });
 }
@@ -16,7 +15,7 @@ export function useMilkIntakes(params: PaginationParams) {
 export function useMilkIntake(id: string) {
   return useQuery({
     queryKey: ["milk-intake", id],
-    queryFn: () => milkAPI.getIntake(id),
+    queryFn: () => milkAPI.getCollection(Number(id)),
     enabled: Boolean(id),
   });
 }
@@ -25,7 +24,7 @@ export function useCreateMilkIntake() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: MilkIntakeFormData) => milkAPI.createIntake(data),
+    mutationFn: (data: any) => milkAPI.createCollection(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["milk-intakes"] });
       queryClient.invalidateQueries({ queryKey: ["milk-segregation-stats"] });
@@ -33,7 +32,7 @@ export function useCreateMilkIntake() {
         description: "The data has been saved and categorized.",
       });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       const message = getErrorMessage(error);
       toast.error("Failed to record milk intake", {
         description: message,
@@ -46,19 +45,14 @@ export function useUpdateMilkIntake() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<MilkIntakeFormData>;
-    }) => milkAPI.updateIntake(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      milkAPI.updateCollection(Number(id), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["milk-intakes"] });
       queryClient.invalidateQueries({ queryKey: ["milk-segregation-stats"] });
       toast.success("Milk intake updated successfully!");
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       const message = getErrorMessage(error);
       toast.error("Failed to update milk intake", {
         description: message,
@@ -71,13 +65,13 @@ export function useDeleteMilkIntake() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => milkAPI.deleteIntake(id),
+    mutationFn: (id: string) => milkAPI.deleteCollection(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["milk-intakes"] });
       queryClient.invalidateQueries({ queryKey: ["milk-segregation-stats"] });
       toast.success("Milk intake deleted successfully!");
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       const message = getErrorMessage(error);
       toast.error("Failed to delete milk intake", {
         description: message,
@@ -89,7 +83,7 @@ export function useDeleteMilkIntake() {
 export function useSegregationStats() {
   return useQuery({
     queryKey: ["milk-segregation-stats"],
-    queryFn: () => milkAPI.getSegregationStats(),
+    queryFn: () => milkAPI.getCollectionStats(),
     refetchInterval: 30_000,
   });
 }
@@ -97,7 +91,7 @@ export function useSegregationStats() {
 export function useMilkTrends(days: number = 7) {
   return useQuery({
     queryKey: ["milk-trends", days],
-    queryFn: () => milkAPI.getTrendData(days),
+    queryFn: () => milkAPI.getCollectionStats({ period: `${days}d` } as any),
     staleTime: 60_000,
   });
 }

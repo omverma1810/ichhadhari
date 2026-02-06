@@ -44,6 +44,7 @@ import {
   useVendors,
   useCreatePurchaseOrder,
 } from "@/hooks/api/useVendorsEmployees";
+import { useProducts } from "@/lib/hooks/useProduction";
 import type { CreatePurchaseOrderPayload } from "@/types/api/vendors";
 
 const itemSchema = z.object({
@@ -58,9 +59,9 @@ const itemSchema = z.object({
 
 const orderSchema = z.object({
   vendor: z.string().min(1, "Vendor is required"),
-  po_date: z.date({ required_error: "PO date is required" }),
+  po_date: z.date({ message: "PO date is required" }),
   expected_delivery_date: z.date({
-    required_error: "Expected delivery date is required",
+    message: "Expected delivery date is required",
   }),
   delivery_address: z.string().min(5, "Delivery address is required"),
   shipping_method: z.string().optional(),
@@ -79,9 +80,19 @@ export default function CreateOrderPage() {
     page_size: 200,
     status: "active",
   });
+  const { data: productsData } = useProducts();
   const createOrder = useCreatePurchaseOrder();
 
   const vendors = vendorsData?.results ?? [];
+  const products = productsData?.results ?? [];
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find((p) => String(p.id) === productId);
+    if (product) {
+      setValue(`items.${index}.item_name` as const, product.name);
+      setValue(`items.${index}.unit` as const, product.unit);
+    }
+  };
 
   const {
     register,
@@ -91,7 +102,7 @@ export default function CreateOrderPage() {
     watch,
     formState: { errors },
   } = useForm<OrderFormData>({
-    resolver: zodResolver(orderSchema),
+    resolver: zodResolver(orderSchema) as any,
     defaultValues: {
       po_date: new Date(),
       items: [
@@ -114,7 +125,8 @@ export default function CreateOrderPage() {
 
   const items = watch("items");
   const subtotal = items.reduce(
-    (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0),
+    (sum, item) =>
+      sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0),
     0,
   );
 
@@ -161,7 +173,7 @@ export default function CreateOrderPage() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Order Details */}
         <Card>
           <CardHeader>
@@ -330,14 +342,9 @@ export default function CreateOrderPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-lg border p-4 space-y-3"
-              >
+              <div key={field.id} className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    Item {index + 1}
-                  </span>
+                  <span className="text-sm font-medium">Item {index + 1}</span>
                   {fields.length > 1 && (
                     <Button
                       type="button"
@@ -352,10 +359,29 @@ export default function CreateOrderPage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-1 sm:col-span-2">
-                    <Label className="text-xs">Item Name *</Label>
-                    <Input
-                      {...register("items." + index + ".item_name")}
-                      placeholder="Item name"
+                    <Label className="text-xs">Product *</Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handleProductSelect(index, value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem
+                            key={product.id}
+                            value={String(product.id)}
+                          >
+                            {product.name} ({product.unit})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <input
+                      type="hidden"
+                      {...register(`items.${index}.item_name` as const)}
                     />
                   </div>
                   <div className="space-y-1">
@@ -363,15 +389,15 @@ export default function CreateOrderPage() {
                     <Input
                       type="number"
                       step="0.01"
-                      {...register("items." + index + ".quantity")}
+                      {...register(`items.${index}.quantity` as const)}
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Unit</Label>
                     <Select
-                      value={watch("items." + index + ".unit")}
+                      value={watch(`items.${index}.unit` as const)}
                       onValueChange={(v) =>
-                        setValue("items." + index + ".unit", v)
+                        setValue(`items.${index}.unit` as const, v)
                       }
                     >
                       <SelectTrigger className="w-full">
@@ -387,11 +413,11 @@ export default function CreateOrderPage() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Unit Price (\u20b9) *</Label>
+                    <Label className="text-xs">Unit Price (₹) *</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      {...register("items." + index + ".unit_price")}
+                      {...register(`items.${index}.unit_price` as const)}
                     />
                   </div>
                   <div className="space-y-1">
@@ -399,7 +425,7 @@ export default function CreateOrderPage() {
                     <Input
                       type="number"
                       step="0.01"
-                      {...register("items." + index + ".tax_percentage")}
+                      {...register(`items.${index}.tax_percentage` as const)}
                     />
                   </div>
                   <div className="space-y-1">
@@ -408,7 +434,7 @@ export default function CreateOrderPage() {
                       type="number"
                       step="0.01"
                       {...register(
-                        "items." + index + ".discount_percentage",
+                        `items.${index}.discount_percentage` as const,
                       )}
                     />
                   </div>

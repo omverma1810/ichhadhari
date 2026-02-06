@@ -87,6 +87,13 @@ export interface AlertFilters {
 
 // Additional analytics endpoints
 
+export interface MilkTrend {
+  date: string;
+  quantity: number;
+  fat_percentage?: number;
+  snf_percentage?: number;
+}
+
 export type MilkCollectionTrendPeriod = "7d" | "30d" | "90d";
 
 export interface MilkCollectionTrendEntry {

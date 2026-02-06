@@ -262,7 +262,6 @@ export default function SuppliersPage() {
   const handleCreate = async (formValues: SupplierFormValues) => {
     try {
       await createSupplier.mutateAsync({
-        supplier_id: formValues.supplier_id,
         name: formValues.name,
         supplier_type: formValues.supplier_type,
         phone: formValues.phone,

@@ -138,6 +138,16 @@ const statusMeta: Record<
     className: "bg-slate-100 text-slate-500 border-slate-200",
     description: "Employee has resigned",
   },
+  inactive: {
+    label: "Inactive",
+    className: "bg-gray-50 text-gray-500 border-gray-200",
+    description: "Employee is inactive",
+  },
+  terminated: {
+    label: "Terminated",
+    className: "bg-red-100 text-red-800 border-red-300",
+    description: "Employee has been terminated",
+  },
 };
 
 // Safe accessor for statusMeta - falls back to 'active' for unknown statuses

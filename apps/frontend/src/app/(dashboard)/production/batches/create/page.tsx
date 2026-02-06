@@ -44,16 +44,14 @@ import type { CreateProductionBatchPayload } from "@/types/api/production";
 
 const batchSchema = z.object({
   product: z.string().min(1, "Product is required"),
-  batch_date: z.date({ required_error: "Batch date is required" }),
+  batch_date: z.date({ message: "Batch date is required" }),
   planned_quantity: z.number().min(0.01, "Planned quantity must be > 0"),
   milk_allocated: z.number().min(0.01, "Milk allocated must be > 0"),
   fat: z.number().min(0).max(15, "Fat must be 0-15").optional(),
   snf: z.number().min(0).max(15, "SNF must be 0-15").optional(),
   clr: z.number().min(0).max(50, "CLR must be 0-50").optional(),
-  status: z
-    .enum(["planned", "in_progress", "completed", "cancelled"])
-    .default("planned"),
-  supervisor: z.coerce.number().optional(),
+  status: z.enum(["planned", "in_progress", "completed", "cancelled"]),
+  supervisor: z.number().optional(),
   notes: z.string().optional(),
 });
 
@@ -127,35 +125,58 @@ export default function CreateBatchPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Batch Information</CardTitle>
-            <CardDescription>Basic details for the production batch</CardDescription>
+            <CardDescription>
+              Basic details for the production batch
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="product">Product *</Label>
                 <Select
-                  onValueChange={(value) => setValue("product", value, { shouldValidate: true })}
+                  onValueChange={(value) =>
+                    setValue("product", value, { shouldValidate: true })
+                  }
                   disabled={loadingProducts}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={loadingProducts ? "Loading products..." : "Select product"} />
+                    <SelectValue
+                      placeholder={
+                        loadingProducts
+                          ? "Loading products..."
+                          : "Select product"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {products.map((product: any) => (
-                      <SelectItem key={product.id} value={product.id.toString()}>
+                      <SelectItem
+                        key={product.id}
+                        value={product.id.toString()}
+                      >
                         {product.name} ({product.category})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.product && <p className="text-sm text-red-500">{errors.product.message}</p>}
+                {errors.product && (
+                  <p className="text-sm text-red-500">
+                    {errors.product.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Batch Date *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={"w-full justify-start text-left font-normal " + (!batchDate ? "text-muted-foreground" : "")}>
+                    <Button
+                      variant="outline"
+                      className={
+                        "w-full justify-start text-left font-normal " +
+                        (!batchDate ? "text-muted-foreground" : "")
+                      }
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {batchDate ? format(batchDate, "PPP") : "Pick a date"}
                     </Button>
@@ -164,29 +185,66 @@ export default function CreateBatchPage() {
                     <Calendar
                       mode="single"
                       selected={batchDate}
-                      onSelect={(date) => { setBatchDate(date); if (date) setValue("batch_date", date, { shouldValidate: true }); }}
+                      onSelect={(date) => {
+                        setBatchDate(date);
+                        if (date)
+                          setValue("batch_date", date, {
+                            shouldValidate: true,
+                          });
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
-                {errors.batch_date && <p className="text-sm text-red-500">{errors.batch_date.message}</p>}
+                {errors.batch_date && (
+                  <p className="text-sm text-red-500">
+                    {errors.batch_date.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="planned_quantity">Planned Quantity *</Label>
-                <Input id="planned_quantity" type="number" step="0.01" placeholder="e.g., 100" {...register("planned_quantity", { valueAsNumber: true })} />
-                {errors.planned_quantity && <p className="text-sm text-red-500">{errors.planned_quantity.message}</p>}
+                <Input
+                  id="planned_quantity"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g., 100"
+                  {...register("planned_quantity", { valueAsNumber: true })}
+                />
+                {errors.planned_quantity && (
+                  <p className="text-sm text-red-500">
+                    {errors.planned_quantity.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="milk_allocated">Milk Allocated (Liters) *</Label>
-                <Input id="milk_allocated" type="number" step="0.01" placeholder="e.g., 500" {...register("milk_allocated", { valueAsNumber: true })} />
-                {errors.milk_allocated && <p className="text-sm text-red-500">{errors.milk_allocated.message}</p>}
+                <Label htmlFor="milk_allocated">
+                  Milk Allocated (Liters) *
+                </Label>
+                <Input
+                  id="milk_allocated"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g., 500"
+                  {...register("milk_allocated", { valueAsNumber: true })}
+                />
+                {errors.milk_allocated && (
+                  <p className="text-sm text-red-500">
+                    {errors.milk_allocated.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Initial Status</Label>
-                <Select value={watch("status")} onValueChange={(value) => setValue("status", value as BatchFormData["status"])}>
+                <Select
+                  value={watch("status")}
+                  onValueChange={(value) =>
+                    setValue("status", value as BatchFormData["status"])
+                  }
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -200,7 +258,12 @@ export default function CreateBatchPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="supervisor">Supervisor (Employee ID)</Label>
-                <Input id="supervisor" type="number" placeholder="Enter supervisor ID" {...register("supervisor")} />
+                <Input
+                  id="supervisor"
+                  type="number"
+                  placeholder="Enter supervisor ID"
+                  {...register("supervisor")}
+                />
               </div>
             </div>
           </CardContent>
@@ -212,7 +275,9 @@ export default function CreateBatchPage() {
               <Droplet className="h-5 w-5" />
               Milk Quality Parameters
             </CardTitle>
-            <CardDescription>Record fat, SNF, and CLR of the milk used in this batch</CardDescription>
+            <CardDescription>
+              Record fat, SNF, and CLR of the milk used in this batch
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -221,8 +286,16 @@ export default function CreateBatchPage() {
                   <Droplet className="h-4 w-4 text-orange-500" />
                   Fat (kg/L)
                 </Label>
-                <Input id="fat" type="number" step="0.1" placeholder="e.g., 4.5" {...register("fat", { valueAsNumber: true })} />
-                {errors.fat && <p className="text-sm text-red-500">{errors.fat.message}</p>}
+                <Input
+                  id="fat"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 4.5"
+                  {...register("fat", { valueAsNumber: true })}
+                />
+                {errors.fat && (
+                  <p className="text-sm text-red-500">{errors.fat.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -230,8 +303,16 @@ export default function CreateBatchPage() {
                   <Droplet className="h-4 w-4 text-green-500" />
                   SNF (kg/L)
                 </Label>
-                <Input id="snf" type="number" step="0.1" placeholder="e.g., 8.5" {...register("snf", { valueAsNumber: true })} />
-                {errors.snf && <p className="text-sm text-red-500">{errors.snf.message}</p>}
+                <Input
+                  id="snf"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 8.5"
+                  {...register("snf", { valueAsNumber: true })}
+                />
+                {errors.snf && (
+                  <p className="text-sm text-red-500">{errors.snf.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -239,9 +320,19 @@ export default function CreateBatchPage() {
                   <Thermometer className="h-4 w-4 text-blue-500" />
                   CLR (Density)
                 </Label>
-                <Input id="clr" type="number" step="0.1" placeholder="e.g., 28.0" {...register("clr", { valueAsNumber: true })} />
-                {errors.clr && <p className="text-sm text-red-500">{errors.clr.message}</p>}
-                <p className="text-xs text-muted-foreground">Normal range: 25-32</p>
+                <Input
+                  id="clr"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 28.0"
+                  {...register("clr", { valueAsNumber: true })}
+                />
+                {errors.clr && (
+                  <p className="text-sm text-red-500">{errors.clr.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Normal range: 25-32
+                </p>
               </div>
             </div>
           </CardContent>
@@ -252,19 +343,40 @@ export default function CreateBatchPage() {
             <CardTitle className="text-base">Additional Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea id="notes" placeholder="Enter any additional notes..." {...register("notes")} rows={3} />
+            <Textarea
+              id="notes"
+              placeholder="Enter any additional notes..."
+              {...register("notes")}
+              rows={3}
+            />
           </CardContent>
         </Card>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Link href="/production/batches">
-            <Button type="button" variant="outline" className="w-full sm:w-auto">Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
           </Link>
-          <Button type="submit" disabled={createBatch.isPending} className="w-full sm:w-auto">
+          <Button
+            type="submit"
+            disabled={createBatch.isPending}
+            className="w-full sm:w-auto"
+          >
             {createBatch.isPending ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</>
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
             ) : (
-              <><Package className="mr-2 h-4 w-4" />Create Batch</>
+              <>
+                <Package className="mr-2 h-4 w-4" />
+                Create Batch
+              </>
             )}
           </Button>
         </div>

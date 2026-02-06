@@ -21,6 +21,9 @@ export interface Product {
   category: "milk" | "curd" | "paneer" | "ghee" | "butter" | "cheese" | "other";
   description: string;
   unit_of_measurement: "liters" | "kg" | "grams" | "pieces";
+  unit: string; // Alias for unit_of_measurement for compatibility
+  cost_price: number; // For purchase order forms
+  selling_price?: number; // Optional selling price
   shelf_life_days: number;
   storage_temperature_min: number;
   storage_temperature_max: number;

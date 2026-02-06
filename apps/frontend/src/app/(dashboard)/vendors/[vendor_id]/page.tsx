@@ -14,6 +14,7 @@ import {
   Wallet,
   FileText,
   Inbox,
+  IndianRupee,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ import {
 } from "@/hooks/api/useVendorsEmployees";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorMessage } from "@/components/common/ErrorMessage";
+import VendorPricingTab from "@/components/vendors/VendorPricingTab";
 import type { VendorStatus } from "@/types/api/vendors";
 
 const formatCurrency = (value: number | string) =>
@@ -121,8 +123,10 @@ export default function VendorDetailPage() {
     );
   }
 
-  const purchaseOrders = purchaseOrdersData?.results ?? purchaseOrdersData ?? [];
-  const payments = paymentsData?.results ?? [];
+  const purchaseOrders =
+    (purchaseOrdersData as any)?.results ??
+    (Array.isArray(purchaseOrdersData) ? purchaseOrdersData : []);
+  const payments = (paymentsData as any)?.results ?? [];
 
   const handleDelete = () => {
     deleteVendor.mutate(vendorId, {
@@ -235,6 +239,10 @@ export default function VendorDetailPage() {
             <Wallet className="mr-1 h-4 w-4 hidden sm:inline" />
             Payments
           </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex-1">
+            <IndianRupee className="mr-1 h-4 w-4 hidden sm:inline" />
+            Pricing
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -316,9 +324,16 @@ export default function VendorDetailPage() {
                     <InfoRow label="Bank Name" value={vendor.bank_name} />
                     <InfoRow
                       label="Account No."
-                      value={vendor.account_number ? `XXXX${vendor.account_number.slice(-4)}` : "—"}
+                      value={
+                        vendor.account_number
+                          ? `XXXX${vendor.account_number.slice(-4)}`
+                          : "—"
+                      }
                     />
-                    <InfoRow label="IFSC Code" value={vendor.ifsc_code ?? "—"} />
+                    <InfoRow
+                      label="IFSC Code"
+                      value={vendor.ifsc_code ?? "—"}
+                    />
                     <InfoRow
                       label="Account Holder"
                       value={vendor.account_holder_name ?? "—"}
@@ -460,6 +475,14 @@ export default function VendorDetailPage() {
             </Card>
           )}
         </TabsContent>
+
+        {/* Pricing Tab */}
+        <TabsContent value="pricing">
+          <VendorPricingTab
+            vendorId={vendorId}
+            vendorName={vendor.company_name}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Delete Dialog */}
@@ -470,7 +493,8 @@ export default function VendorDetailPage() {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Are you sure you want to delete{" "}
-            <strong>{vendor.company_name}</strong>? This action cannot be undone.
+            <strong>{vendor.company_name}</strong>? This action cannot be
+            undone.
           </p>
           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
@@ -506,7 +530,9 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start gap-2">
-      {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+      {Icon && (
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="break-words">{value || "—"}</p>

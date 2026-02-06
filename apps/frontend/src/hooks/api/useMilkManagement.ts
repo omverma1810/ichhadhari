@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   suppliersService,
   collectionsService,
@@ -270,7 +270,7 @@ export const useSegregationStats = (days: number = 7) => {
     queryFn: () => fetchCollectionsForAnalytics(days),
     select: ({ collections }) => buildSegregationStats(collections),
     staleTime: 2 * 60 * 1000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -284,7 +284,7 @@ export const useMilkTrends = (days: number = 7) => {
     select: ({ collections, range }) =>
       buildTrendData(collections, range.startDate, range.endDate),
     staleTime: 2 * 60 * 1000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -11,7 +11,6 @@ export * from "./useDashboard";
 
 // Milk Management
 export * from "./useMilkManagement";
-export * from "./milk-management/suppliers";
 
 // Production
 export * from "./useProduction";

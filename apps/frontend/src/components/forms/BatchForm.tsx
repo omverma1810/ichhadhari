@@ -87,13 +87,15 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
 
   const selectedProduct = useMemo(
     () =>
-      productsData?.results.find((product) => product.id === selectedProductId),
-    [productsData?.results, selectedProductId]
+      productsData?.results.find(
+        (product) => String(product.id) === selectedProductId,
+      ),
+    [productsData?.results, selectedProductId],
   );
 
   const milkRequired =
     selectedProduct && quantity
-      ? selectedProduct.milkRequirementPerUnit * quantity
+      ? ((selectedProduct as any).milkRequirementPerUnit ?? 0) * quantity
       : 0;
 
   const onSubmit = async (data: BatchFormValues) => {
@@ -136,7 +138,7 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {productsData?.results.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
+                  <SelectItem key={product.id} value={String(product.id)}>
                     <div className="flex items-center justify-between w-full">
                       <span>{product.name}</span>
                       <span className="text-xs text-gray-500 ml-2">
@@ -188,8 +190,10 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
               </p>
               <p className="text-sm text-blue-700 mt-1">
                 Expected yield:{" "}
-                {formatNumber(selectedProduct.expectedYield * quantity)}{" "}
-                {selectedProduct.yieldUnit}
+                {formatNumber(
+                  ((selectedProduct as any).expectedYield ?? 0) * quantity,
+                )}{" "}
+                {(selectedProduct as any).yieldUnit ?? "units"}
               </p>
             </div>
           </div>
@@ -218,7 +222,7 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
           Assign Workers *
         </Label>
         <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-48 overflow-y-auto">
-          {workers?.map((worker) => (
+          {(workers as any)?.results?.map((worker: any) => (
             <label
               key={worker.id}
               className="flex items-center gap-2 p-2 rounded hover:bg-white transition-colors cursor-pointer"

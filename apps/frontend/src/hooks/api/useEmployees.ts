@@ -131,27 +131,22 @@ export const useEmployeeAttendanceSummary = (
   id: number,
   month?: number,
   year?: number,
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery<AttendanceSummary>({
     queryKey: ["employees", id, "attendance-summary", month, year],
-    queryFn: () => employeesService.getAttendanceSummary(id, month, year),
+    queryFn: () =>
+      employeesService.getAttendanceSummary(
+        id,
+        month !== undefined ? String(month) : undefined,
+        year !== undefined ? String(year) : undefined,
+      ),
     enabled: enabled && !!id,
   });
 };
 
 export const useEmployeePerformanceHistory = (id: number, enabled = true) => {
-  return useQuery<{
-    reviews: PerformanceReview[];
-    average_ratings: {
-      avg_quality: number;
-      avg_productivity: number;
-      avg_communication: number;
-      avg_teamwork: number;
-      avg_initiative: number;
-      avg_overall: number;
-    };
-  }>({
+  return useQuery({
     queryKey: ["employees", id, "performance-history"],
     queryFn: () => employeesService.getPerformanceHistory(id),
     enabled: enabled && !!id,

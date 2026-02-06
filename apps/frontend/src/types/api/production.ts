@@ -8,6 +8,7 @@ import { AuditFields, CommonFilters } from "./common";
 
 export type ProductCategory = "dairy" | "sweets" | "beverages";
 export type UnitType = "kg" | "liter" | "piece" | "pack";
+export type ProductStatus = "active" | "inactive" | "discontinued";
 
 export interface Product extends AuditFields {
   id: number;

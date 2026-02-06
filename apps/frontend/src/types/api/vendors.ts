@@ -202,8 +202,7 @@ export interface CreatePurchaseOrderPayload {
   items: Omit<PurchaseOrderItem, "id" | "line_total" | "quantity_received">[];
 }
 
-export interface UpdatePurchaseOrderPayload
-  extends Partial<CreatePurchaseOrderPayload> {
+export interface UpdatePurchaseOrderPayload extends Partial<CreatePurchaseOrderPayload> {
   status?: PurchaseOrderStatus;
 }
 
@@ -257,8 +256,7 @@ export interface CreateVendorPaymentPayload {
   purchase_orders?: number[];
 }
 
-export interface UpdateVendorPaymentPayload
-  extends Partial<CreateVendorPaymentPayload> {}
+export interface UpdateVendorPaymentPayload extends Partial<CreateVendorPaymentPayload> {}
 
 export interface VendorPaymentFilters extends CommonFilters {
   vendor?: number;
@@ -325,8 +323,7 @@ export interface CreateGoodsReceiptNotePayload {
   items: Omit<GRNItem, "id">[];
 }
 
-export interface UpdateGoodsReceiptNotePayload
-  extends Partial<CreateGoodsReceiptNotePayload> {}
+export interface UpdateGoodsReceiptNotePayload extends Partial<CreateGoodsReceiptNotePayload> {}
 
 export interface GoodsReceiptNoteFilters extends CommonFilters {
   purchase_order?: number;
@@ -344,7 +341,7 @@ export type VendorInvoiceStatus =
   | "paid"
   | "overdue"
   | "cancelled";
-export type VendorPaymentStatus = "unpaid" | "partially_paid" | "paid";
+export type VendorInvoicePaymentStatus = "unpaid" | "partially_paid" | "paid";
 
 export interface VendorInvoiceItem {
   id?: number;
@@ -365,7 +362,7 @@ export interface VendorInvoice extends AuditFields {
   invoice_date: string;
   due_date: string;
   status: VendorInvoiceStatus;
-  payment_status: VendorPaymentStatus;
+  payment_status: VendorInvoicePaymentStatus;
   subtotal: string;
   tax_amount: string;
   discount_amount: string;
@@ -414,17 +411,16 @@ export interface CreateVendorInvoicePayload {
   reference_number?: string;
 }
 
-export interface UpdateVendorInvoicePayload
-  extends Partial<CreateVendorInvoicePayload> {
+export interface UpdateVendorInvoicePayload extends Partial<CreateVendorInvoicePayload> {
   status?: VendorInvoiceStatus;
-  payment_status?: VendorPaymentStatus;
+  payment_status?: VendorInvoicePaymentStatus;
   amount_paid?: string | number;
 }
 
 export interface VendorInvoiceFilters extends CommonFilters {
   vendor?: number;
   status?: VendorInvoiceStatus;
-  payment_status?: VendorPaymentStatus;
+  payment_status?: VendorInvoicePaymentStatus;
   date_from?: string;
   date_to?: string;
 }

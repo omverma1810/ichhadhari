@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tailwindcss/utilities";
 @import "../styles/invoice-print.css";
 
 @layer base {
@@ -323,4 +322,72 @@ body:has([data-slot="dialog-overlay"]) {
 label {
   font-weight: 500;
   color: var(--dairy-charcoal);
+}
+
+/* ==============================================
+   RESPONSIVE TABLE STYLES
+   ============================================== */
+
+/* Base table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+table th,
+table td {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Responsive table container */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+/* ==============================================
+   GLOBAL RESPONSIVE OVERRIDES
+   ============================================== */
+
+@media (max-width: 768px) {
+  /* Ensure the dashboard main content doesn't clip scroll containers */
+  main {
+    overflow-x: auto;
+  }
+
+  /* Reduce padding on mobile for page wrappers */
+  .space-y-6.p-6 {
+    padding: 1rem;
+  }
+
+  /* Page header responsiveness */
+  .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  /* Headings size on mobile */
+  h1.text-3xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  /* Card grid stacking */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4,
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Single column on very small screens */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4,
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
 }

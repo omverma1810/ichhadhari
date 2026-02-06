@@ -89,7 +89,7 @@ export default function VendorPaymentsPage() {
   const { data: vendorsData } = useVendors();
 
   const payments = paymentsData?.results || [];
-  const pendingPayments = pendingPaymentsData?.results || [];
+  const pendingPayments = pendingPaymentsData || [];
   const vendors = vendorsData?.results || [];
 
   const filteredPayments = payments.filter((payment) => {
@@ -258,7 +258,7 @@ export default function VendorPaymentsPage() {
                   <SelectItem value="all">All Vendors</SelectItem>
                   {vendors.map((vendor) => (
                     <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.vendor_name}
+                      {vendor.company_name}
                     </SelectItem>
                   ))}
                 </SelectContent>

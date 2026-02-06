@@ -73,12 +73,12 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <motion.div
-      className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-dairy"
+      className="rounded-xl border border-gray-100 bg-white shadow-dairy"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-between gap-4 border-b border-gray-100 p-4">
+      <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="max-w-md flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -119,16 +119,16 @@ export function DataTable<T extends { id: string }>({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="-mx-px overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="border-b border-gray-100 bg-gray-50">
                 <tr>
                   {columns.map((column) => (
                     <th
                       key={String(column.key)}
                       className={cn(
-                        "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700",
-                        column.className
+                        "whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-4",
+                        column.className,
                       )}
                     >
                       {column.label}
@@ -155,8 +155,8 @@ export function DataTable<T extends { id: string }>({
                           <td
                             key={String(column.key)}
                             className={cn(
-                              "px-6 py-4 text-sm text-gray-900",
-                              column.className
+                              "whitespace-nowrap px-4 py-3 text-sm text-gray-900 sm:px-6 sm:py-4",
+                              column.className,
                             )}
                           >
                             {column.render
@@ -173,7 +173,7 @@ export function DataTable<T extends { id: string }>({
           </div>
 
           {pagination ? (
-            <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
+            <div className="flex flex-col items-center gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:justify-between sm:px-6 sm:py-4">
               <p className="text-sm text-gray-600">
                 Page {pagination.page} of {pagination.totalPages}
               </p>

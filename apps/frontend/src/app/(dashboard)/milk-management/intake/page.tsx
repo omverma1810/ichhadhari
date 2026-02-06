@@ -61,6 +61,8 @@ export default function MilkIntakePage() {
         },
         poor: { label: "Poor", className: "bg-orange-100 text-orange-800" },
         rejected: { label: "Rejected", className: "bg-red-100 text-red-800" },
+        pending: { label: "Pending", className: "bg-blue-100 text-blue-800" },
+        accepted: { label: "Accepted", className: "bg-teal-100 text-teal-800" },
       };
     const { label, className } =
       config[status as QualityStatus] ?? config.average;
@@ -135,30 +137,30 @@ export default function MilkIntakePage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 className="flex items-center gap-3 text-3xl font-bold text-dairy-charcoal">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-dairy-charcoal sm:gap-3 sm:text-3xl">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             >
-              <Milk className="h-8 w-8 text-dairy-blue" />
+              <Milk className="h-6 w-6 text-dairy-blue sm:h-8 sm:w-8" />
             </motion.div>
             Milk Intake & Recording
           </h1>
-          <p className="mt-1 text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             Track and manage daily milk procurement
           </p>
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={() => setIsModalOpen(true)}
-            className="h-11 bg-gradient-to-r from-dairy-blue to-dairy-darkBlue hover:from-dairy-darkBlue hover:to-dairy-blue"
+            className="h-10 w-full bg-gradient-to-r from-dairy-blue to-dairy-darkBlue hover:from-dairy-darkBlue hover:to-dairy-blue sm:h-11 sm:w-auto"
           >
             <Plus className="mr-2 h-4 w-4" />
             Record new intake
@@ -212,7 +214,7 @@ export default function MilkIntakePage() {
             value={
               displayStats.count > 0
                 ? Number(
-                    (displayStats.totalLiters / displayStats.count).toFixed(1)
+                    (displayStats.totalLiters / displayStats.count).toFixed(1),
                   )
                 : 0
             }
@@ -235,7 +237,7 @@ export default function MilkIntakePage() {
             ? {
                 page,
                 totalPages: Math.ceil(
-                  collectionsData.count / (collectionsData.results.length || 1)
+                  collectionsData.count / (collectionsData.results.length || 1),
                 ),
                 onPageChange: setPage,
               }

@@ -143,16 +143,16 @@ export default function StockOverviewPage() {
       case "low_stock":
       case "out_of_stock":
         return stockData.results.filter(
-          (item: InventoryItem) => item.status === activeTab,
-        ) as StockItem[];
+          (item) => (item as any).status === activeTab,
+        ) as unknown as StockItem[];
       case "expiring":
         return stockData.results.filter(
-          (item: StockItem) =>
-            item.expiryStatus &&
-            ["expiring_soon", "critical"].includes(item.expiryStatus),
-        ) as StockItem[];
+          (item) =>
+            (item as any).expiryStatus &&
+            ["expiring_soon", "critical"].includes((item as any).expiryStatus),
+        ) as unknown as StockItem[];
       default:
-        return stockData.results as StockItem[];
+        return stockData.results as unknown as StockItem[];
     }
   }, [stockData?.results, activeTab]);
 
@@ -257,7 +257,7 @@ export default function StockOverviewPage() {
         <motion.div variants={staggerItem}>
           <StatsCard
             title="Total Stock Value"
-            value={stats?.totalStockValue ?? 0}
+            value={(stats as any)?.total_value ?? 0}
             icon={Package}
             color="blue"
             change={8.5}
@@ -269,7 +269,7 @@ export default function StockOverviewPage() {
         <motion.div variants={staggerItem}>
           <StatsCard
             title="Total Items"
-            value={stats?.totalItems ?? 0}
+            value={(stats as any)?.total_in ?? 0}
             icon={BoxStack}
             color="green"
           />
@@ -278,7 +278,7 @@ export default function StockOverviewPage() {
         <motion.div variants={staggerItem}>
           <StatsCard
             title="Low Stock Items"
-            value={stats?.lowStockItems ?? 0}
+            value={(stats as any)?.total_adjustments ?? 0}
             icon={TrendingDown}
             color="orange"
           />
@@ -287,14 +287,14 @@ export default function StockOverviewPage() {
         <motion.div variants={staggerItem}>
           <StatsCard
             title="Expiring Soon"
-            value={stats?.expiringItems ?? 0}
+            value={(stats as any)?.total_out ?? 0}
             icon={AlertTriangle}
             color="red"
           />
         </motion.div>
       </motion.div>
 
-      {expiryAlerts && expiryAlerts.length > 0 ? (
+      {expiryAlerts && (expiryAlerts as any)?.results?.length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -310,41 +310,44 @@ export default function StockOverviewPage() {
             </motion.div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-orange-900 mb-2">
-                {expiryAlerts.length} Product
-                {expiryAlerts.length > 1 ? "s" : ""} Expiring Soon!
+                {(expiryAlerts as any).results.length} Product
+                {(expiryAlerts as any).results.length > 1 ? "s" : ""} Expiring
+                Soon!
               </h3>
               <div className="space-y-2">
-                {expiryAlerts.slice(0, 3).map((alert: ExpiryAlert) => (
-                  <div
-                    key={alert.id}
-                    className="flex items-center justify-between p-3 bg-white rounded-lg"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {alert.productName}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Batch: {alert.batchNumber} • {alert.locationName} •{" "}
-                        {alert.quantity} units
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        alert.severity === "critical"
-                          ? "bg-red-100 text-red-800"
-                          : alert.severity === "high"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-yellow-100 text-yellow-800"
-                      }
+                {(expiryAlerts as any).results
+                  .slice(0, 3)
+                  .map((alert: ExpiryAlert) => (
+                    <div
+                      key={alert.id}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg"
                     >
-                      {alert.daysToExpiry} days left
-                    </Badge>
-                  </div>
-                ))}
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {alert.productName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Batch: {alert.batchNumber} • {alert.locationName} •{" "}
+                          {alert.quantity} units
+                        </p>
+                      </div>
+                      <Badge
+                        className={
+                          alert.severity === "critical"
+                            ? "bg-red-100 text-red-800"
+                            : alert.severity === "high"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-yellow-100 text-yellow-800"
+                        }
+                      >
+                        {alert.daysToExpiry} days left
+                      </Badge>
+                    </div>
+                  ))}
               </div>
-              {expiryAlerts.length > 3 ? (
+              {(expiryAlerts as any).results.length > 3 ? (
                 <Button variant="link" className="mt-2 text-orange-700">
-                  View all {expiryAlerts.length} alerts →
+                  View all {(expiryAlerts as any).results.length} alerts →
                 </Button>
               ) : null}
             </div>

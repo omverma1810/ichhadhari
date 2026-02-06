@@ -84,7 +84,7 @@ export default function CreateInvoicePage() {
     watch,
     control,
   } = useForm<InvoiceFormData>({
-    resolver: zodResolver(invoiceSchema),
+    resolver: zodResolver(invoiceSchema) as any,
     defaultValues: {
       vendor: "",
       invoice_date: format(new Date(), "yyyy-MM-dd"),
@@ -128,7 +128,7 @@ export default function CreateInvoicePage() {
 
   const totalAmount = items.reduce(
     (sum, item) => sum + calculateLineTotal(item),
-    0
+    0,
   );
 
   const onSubmit = async (data: InvoiceFormData) => {
@@ -196,7 +196,7 @@ export default function CreateInvoicePage() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Vendor Selection */}
         <Card>
           <CardHeader>
@@ -220,7 +220,7 @@ export default function CreateInvoicePage() {
                 <SelectContent>
                   {vendors.map((vendor) => (
                     <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                      {vendor.company_name || vendor.name}
+                      {vendor.company_name}
                     </SelectItem>
                   ))}
                 </SelectContent>

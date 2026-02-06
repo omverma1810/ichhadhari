@@ -26,9 +26,9 @@ export function DashboardLayout({
   return (
     <div className="min-h-screen bg-dairy-background overflow-x-hidden">
       {renderedSidebar}
-      <div className="flex min-h-screen flex-col lg:pl-64 overflow-x-hidden">
+      <div className="flex min-h-screen flex-col lg:pl-64">
         {renderedHeader}
-        <main className="flex-1 px-4 py-6 md:px-8 lg:py-10 overflow-x-hidden">
+        <main className="flex-1 px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:py-10 min-w-0">
           {children}
         </main>
       </div>

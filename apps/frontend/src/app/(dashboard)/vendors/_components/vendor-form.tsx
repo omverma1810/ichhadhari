@@ -42,7 +42,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useVendor, useCreateVendor, useUpdateVendor } from "@/hooks/api/useVendorsEmployees";
+import {
+  useVendor,
+  useCreateVendor,
+  useUpdateVendor,
+} from "@/hooks/api/useVendorsEmployees";
 import type {
   Address,
   BankDetails,
@@ -173,7 +177,7 @@ const vendorFormSchema = z
           ctx.addIssue({
             ...issue,
             path: ["bank_details", ...(issue.path ?? [])],
-          })
+          }),
         );
       }
     }
@@ -238,7 +242,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
       payment_terms_enforced: vendor?.status !== "inactive",
       notes: "",
     }),
-    [vendor]
+    [vendor],
   );
 
   const form = useForm<VendorFormValues>({
@@ -326,13 +330,13 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
 
   const handleCopyAddress = (
     from: "billing_address" | "shipping_address",
-    to: "billing_address" | "shipping_address" | "warehouse_address"
+    to: "billing_address" | "shipping_address" | "warehouse_address",
   ) => {
     const source = watch(from);
     if (!source) return;
     setValue(to, source, { shouldDirty: true, shouldValidate: true });
     toast.success(
-      `Copied ${from.replace("_", " ")} to ${to.replace("_", " ")}`
+      `Copied ${from.replace("_", " ")} to ${to.replace("_", " ")}`,
     );
   };
 
@@ -362,6 +366,9 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
     }
   };
 
+  const createVendor = useCreateVendor();
+  const updateVendor = useUpdateVendor();
+
   const onSubmit = handleSubmit(
     async (values) => {
       setIsSubmitting(true);
@@ -373,7 +380,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
             : `contact-${Date.now()}-${index}`;
 
         const sanitizedWarehouse = values.warehouse_enabled
-          ? values.warehouse_address ?? createEmptyAddress()
+          ? (values.warehouse_address ?? createEmptyAddress())
           : undefined;
         const sanitizedBank = values.bank_details ?? undefined;
 
@@ -381,99 +388,41 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
           (contact, index) => ({
             ...contact,
             id: ensureContactId(contact as ContactPerson, index),
-          })
+          }),
         );
 
+        const vendorPayload: any = {
+          company_name: values.company_name,
+          vendor_type: values.vendor_type,
+          status: values.status,
+          contact_persons: preparedContacts,
+          phone: values.phone,
+          email: values.email,
+          gst_number: values.gst_number || undefined,
+          pan_number: values.pan_number || undefined,
+          registration_number: values.registration_number || undefined,
+          billing_address: values.billing_address,
+          shipping_address: values.shipping_address,
+          warehouse_address: sanitizedWarehouse,
+          bank_details: sanitizedBank,
+          credit_period_days: values.credit_period_days,
+          credit_limit: values.credit_limit,
+          payment_methods: values.payment_methods,
+          preferred_payment_method:
+            values.preferred_payment_method ?? undefined,
+          discount_percentage: values.discount_percentage,
+        };
+
         if (mode === "create") {
-          const generatedNumericId = mockVendors.length + 1;
-          const generatedVendorId = `VEN-${String(
-            generatedNumericId + 100
-          ).slice(-3)}`;
-          const newVendor: Vendor = {
-            id: `vendor-${Date.now()}`,
-            vendor_id: generatedVendorId,
-            company_name: values.company_name,
-            vendor_type: values.vendor_type,
-            status: values.status,
-            contact_persons: preparedContacts,
-            phone: values.phone,
-            email: values.email,
-            gst_number: values.gst_number || undefined,
-            pan_number: values.pan_number || undefined,
-            registration_number: values.registration_number || undefined,
-            billing_address: values.billing_address,
-            shipping_address: values.shipping_address,
-            warehouse_address: sanitizedWarehouse,
-            bank_details: sanitizedBank,
-            credit_period_days: values.credit_period_days,
-            credit_limit: values.credit_limit,
-            payment_methods: values.payment_methods,
-            preferred_payment_method:
-              values.preferred_payment_method ?? undefined,
-            discount_percentage: values.discount_percentage,
-            rating: 4.2,
-            total_purchases: 0,
-            total_payments: 0,
-            outstanding_balance: 0,
-            documents: [],
-            created_at: now,
-            updated_at: now,
-            created_by: "admin@ichhadhari.com",
-          };
-
-          mockVendors.push(newVendor);
-          mockVendorPerformance.push({
-            vendor_id: newVendor.id,
-            quality_score: 80,
-            delivery_punctuality: 82,
-            order_accuracy: 78,
-            payment_reliability: 86,
-            overall_rating: 4.2,
-            total_orders: 0,
-            on_time_deliveries: 0,
-            defective_items_count: 0,
-            performance_level: "good",
-            recommendation: "continue",
-            last_updated: now,
-          });
-
+          const result = await createVendor.mutateAsync(vendorPayload);
           toast.success("Vendor created successfully");
           localStorage.removeItem(LOCAL_STORAGE_KEY);
-          router.push(`/vendors/${newVendor.id}`);
+          router.push(`/vendors/${(result as any)?.id ?? ""}`);
         } else if (mode === "edit" && vendor) {
-          const index = mockVendors.findIndex(
-            (entry) => entry.id === vendor.id
-          );
-          if (index === -1) {
-            toast.error("Unable to locate vendor in mock data");
-            return;
-          }
-
-          const updatedVendor: Vendor = {
-            ...mockVendors[index],
-            company_name: values.company_name,
-            vendor_type: values.vendor_type,
-            status: values.status,
-            contact_persons: preparedContacts,
-            phone: values.phone,
-            email: values.email,
-            gst_number: values.gst_number || undefined,
-            pan_number: values.pan_number || undefined,
-            registration_number: values.registration_number || undefined,
-            billing_address: values.billing_address,
-            shipping_address: values.shipping_address,
-            warehouse_address: sanitizedWarehouse,
-            bank_details: sanitizedBank,
-            credit_period_days: values.credit_period_days,
-            credit_limit: values.credit_limit,
-            payment_methods: values.payment_methods,
-            preferred_payment_method:
-              values.preferred_payment_method ?? undefined,
-            discount_percentage: values.discount_percentage,
-            updated_at: now,
-          };
-
-          mockVendors[index] = updatedVendor;
+          await updateVendor.mutateAsync({
+            id: vendor.id as any,
+            data: vendorPayload,
+          });
           toast.success("Vendor details updated");
           router.refresh();
         }
@@ -490,7 +439,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
         setFocus(firstPath as Path<VendorFormValues>);
       }
       toast.error("Please resolve the highlighted issues before saving");
-    }
+    },
   );
 
   const handleRestoreDefaults = () => {
@@ -679,7 +628,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
                   <Input
                     placeholder="Operations Manager"
                     {...register(
-                      `contact_persons.${index}.designation` as const
+                      `contact_persons.${index}.designation` as const,
                     )}
                     className="rounded-xl border-[#F4A920]/40"
                   />
@@ -931,7 +880,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
                     "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium capitalize shadow-sm transition",
                     selected
                       ? "border-[#F4A920] bg-[#F4A920]/15 text-[#8B5A3C]"
-                      : "border-[#F4A920]/40 text-[#8B5A3C]/80 hover:border-[#F4A920] hover:bg-[#F4A920]/10"
+                      : "border-[#F4A920]/40 text-[#8B5A3C]/80 hover:border-[#F4A920] hover:bg-[#F4A920]/10",
                   )}
                 >
                   {selected ? (
@@ -964,7 +913,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
                   {
                     shouldDirty: true,
                     shouldValidate: true,
-                  }
+                  },
                 )
               }
               className="h-11 w-full rounded-xl border border-[#F4A920]/40 bg-white px-3 text-sm text-[#5D4037]"
@@ -1211,11 +1160,11 @@ function AddressFields({
 }
 
 function findFirstErrorPath<TFieldValues extends FieldValues>(
-  errors: FieldErrors<TFieldValues>
+  errors: FieldErrors<TFieldValues>,
 ): string | null {
   const explore = (
     errorMap: FieldErrors<TFieldValues>,
-    prefix = ""
+    prefix = "",
   ): string | null => {
     for (const key in errorMap) {
       if (!Object.prototype.hasOwnProperty.call(errorMap, key)) continue;

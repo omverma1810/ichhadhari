@@ -1,17 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Activity, Clock, AlertCircle, CheckCircle, Package, Calendar } from "lucide-react";
 import { useBatches } from "@/lib/hooks/useProduction";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { BatchCard } from "@/components/cards/BatchCard";
 import { Factory } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
+import { Badge } from "@/components/ui/badge";
+import { formatDateTime, formatNumber } from "@/lib/utils/formatters";
+import type { ProductionBatch } from "@/lib/api/production";
 
 const columns = [
   {
-    id: "not_started",
-    title: "Not Started",
+    id: "planned",
+    title: "Planned",
     icon: Clock,
     color: "bg-gray-100",
   },
@@ -22,18 +24,69 @@ const columns = [
     color: "bg-blue-100",
   },
   {
-    id: "on_hold",
-    title: "On Hold",
-    icon: AlertCircle,
-    color: "bg-orange-100",
-  },
-  {
     id: "completed",
     title: "Completed",
     icon: CheckCircle,
     color: "bg-green-100",
   },
+  {
+    id: "cancelled",
+    title: "Cancelled",
+    icon: AlertCircle,
+    color: "bg-red-100",
+  },
 ] as const;
+
+const statusConfig: Record<string, { color: string; label: string }> = {
+  planned: { color: "bg-gray-100 text-gray-800", label: "Planned" },
+  in_progress: { color: "bg-blue-100 text-blue-800", label: "In Progress" },
+  completed: { color: "bg-green-100 text-green-800", label: "Completed" },
+  cancelled: { color: "bg-red-100 text-red-800", label: "Cancelled" },
+};
+
+function SimpleBatchCard({ batch }: { batch: ProductionBatch }) {
+  const config = statusConfig[batch.status] || statusConfig.planned;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ y: -4, boxShadow: "0 12px 24px rgba(0,0,0,0.1)" }}
+      className="bg-white rounded-xl p-4 border border-gray-100 shadow-dairy"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <p className="font-mono text-xs font-semibold text-dairy-blue">
+            {batch.batch_number}
+          </p>
+          <h3 className="font-semibold text-dairy-charcoal">
+            {batch.product_name || `Product #${batch.product}`}
+          </h3>
+        </div>
+        <Badge className={config.color}>{config.label}</Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-gray-400" />
+          <div>
+            <p className="text-xs text-gray-500">Quantity</p>
+            <p className="font-semibold">{formatNumber(batch.planned_quantity)}</p>
+          </div>
+        </div>
+        {batch.start_date && (
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-xs text-gray-500">Started</p>
+              <p className="font-semibold text-sm">{formatDateTime(batch.start_date)}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function ProductionTrackingPage() {
   const { data: batchesData, isLoading } = useBatches();
@@ -106,7 +159,7 @@ export default function ProductionTrackingPage() {
               >
                 {batches.map((batch) => (
                   <motion.div key={batch.id} variants={staggerItem}>
-                    <BatchCard batch={batch} />
+                    <SimpleBatchCard batch={batch} />
                   </motion.div>
                 ))}
 
@@ -124,3 +177,4 @@ export default function ProductionTrackingPage() {
     </div>
   );
 }
+

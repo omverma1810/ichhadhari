@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useVendors } from "@/lib/hooks/api/useProcurement";
 import { useCreatePurchaseOrder } from "@/lib/hooks/api/useProcurement";
+import { useProducts } from "@/lib/hooks/useProduction";
 
 const poItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
@@ -50,8 +51,18 @@ type POFormData = z.infer<typeof poSchema>;
 export default function CreatePurchaseOrderPage() {
   const router = useRouter();
   const { data: vendorsData } = useVendors({ page: 1 });
+  const { data: productsData } = useProducts();
   const vendors = vendorsData?.results || [];
+  const products = productsData?.results || [];
   const createPoMutation = useCreatePurchaseOrder();
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find((p) => String(p.id) === productId);
+    if (product) {
+      setValue(`items.${index}.item_name`, product.name);
+      setValue(`items.${index}.unit`, product.unit);
+    }
+  };
 
   const {
     register,
@@ -277,10 +288,29 @@ export default function CreatePurchaseOrderPage() {
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Item Name *</Label>
-                      <Input
+                      <Label>Product *</Label>
+                      <Select
+                        onValueChange={(value) =>
+                          handleProductSelect(index, value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem
+                              key={product.id}
+                              value={String(product.id)}
+                            >
+                              {product.name} ({product.unit})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <input
+                        type="hidden"
                         {...register(`items.${index}.item_name`)}
-                        placeholder="Enter item name"
                       />
                     </div>
 

@@ -43,7 +43,7 @@ export default function CreateVendorSimplePage() {
 
   const onSubmit = async (data: VendorFormData) => {
     try {
-      await createVendor.mutateAsync(data);
+      await createVendor.mutateAsync(data as any);
       router.push("/vendors/list");
     } catch (error) {
       // Error handled by mutation
