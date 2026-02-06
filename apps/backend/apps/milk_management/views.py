@@ -114,7 +114,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         
         stats = collections.aggregate(
             total_quantity=Sum('quantity'),
-            avg_fat=Avg('fat_percentage'),
+            avg_fat=Avg('fat'),
             avg_snf=Avg('snf_percentage'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),
@@ -247,7 +247,7 @@ class MilkCollectionViewSet(viewsets.ModelViewSet):
         
         stats = collections.aggregate(
             total_quantity=Sum('quantity'),
-            avg_fat=Avg('fat_percentage'),
+            avg_fat=Avg('fat'),
             avg_snf=Avg('snf_percentage'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),
@@ -296,7 +296,7 @@ class MilkCollectionViewSet(viewsets.ModelViewSet):
             'supplier__name'
         ).annotate(
             total_quantity=Sum('quantity'),
-            avg_fat=Avg('fat_percentage'),
+            avg_fat=Avg('fat'),
             avg_snf=Avg('snf_percentage'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),

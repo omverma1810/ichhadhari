@@ -196,7 +196,7 @@ class MilkCollectionModelTest(TestCase):
     def test_percentage_validation(self):
         """Test that percentages are within valid range."""
         # Test fat percentage > 100
-        self.collection_data['fat_percentage'] = Decimal('150.0')
+        self.collection_data['fat'] = Decimal('150.0')
         collection = MilkCollection(**self.collection_data)
         
         with self.assertRaises(ValidationError):
@@ -327,7 +327,7 @@ class MilkPaymentModelTest(TestCase):
             collection_time=time(6, 30),
             milk_type='cow',
             quantity=Decimal('10.5'),
-            fat_percentage=Decimal('4.5'),
+            fat=Decimal('4.5'),
             snf_percentage=Decimal('8.5'),
             temperature=Decimal('4.0'),
             rate_per_liter=Decimal('35.00'),

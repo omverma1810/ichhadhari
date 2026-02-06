@@ -161,7 +161,7 @@ class MilkCollectionAdmin(admin.ModelAdmin):
         }),
         ('Quality Parameters', {
             'fields': (
-                'fat_percentage',
+                'fat',
                 'snf_percentage',
                 'temperature',
                 'quality_score',
