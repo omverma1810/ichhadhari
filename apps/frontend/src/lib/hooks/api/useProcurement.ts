@@ -605,7 +605,66 @@ export function useApprovePurchaseOrder() {
     },
     onError: (error: any) => {
       const message =
-        error?.response?.data?.message || "Failed to approve purchase order";
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to approve purchase order";
+      toast.error(message);
+    },
+  });
+}
+
+export function useSendPurchaseOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => procurementService.sendPurchaseOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
+      toast.success("Purchase order sent to vendor!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to send purchase order";
+      toast.error(message);
+    },
+  });
+}
+
+export function useConfirmPurchaseOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => procurementService.confirmPurchaseOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
+      toast.success("Purchase order confirmed!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to confirm purchase order";
+      toast.error(message);
+    },
+  });
+}
+
+export function useCancelPurchaseOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => procurementService.cancelPurchaseOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
+      toast.success("Purchase order cancelled");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to cancel purchase order";
       toast.error(message);
     },
   });

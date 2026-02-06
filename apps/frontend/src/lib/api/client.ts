@@ -159,7 +159,7 @@ class APIClient {
             // Attempt to refresh token - use full URL for auth endpoints
             const API_BASE_URL =
               process.env.NEXT_PUBLIC_API_URL ||
-              "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+              "https://ichhadhari-backend-2ljhubczcq-el.a.run.app";
             const response = await axios.post(
               `${API_BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken },

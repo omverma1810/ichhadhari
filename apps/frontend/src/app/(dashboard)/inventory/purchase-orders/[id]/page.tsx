@@ -1,8 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Edit, Trash2, CheckCircle, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  CheckCircle,
+  FileText,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,9 +25,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   usePurchaseOrder,
   useApprovePurchaseOrder,
   useDeletePurchaseOrder,
+  useSendPurchaseOrder,
+  useConfirmPurchaseOrder,
+  useCancelPurchaseOrder,
 } from "@/lib/hooks/api/useProcurement";
 import { formatNumber } from "@/lib/utils/formatters";
 
@@ -26,9 +45,16 @@ export default function PurchaseOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = parseInt(params?.id as string);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "approve" | "send" | "confirm" | "cancel" | "delete";
+    label: string;
+  } | null>(null);
 
   const { data: po, isLoading } = usePurchaseOrder(id);
   const approvePoMutation = useApprovePurchaseOrder();
+  const sendPoMutation = useSendPurchaseOrder();
+  const confirmPoMutation = useConfirmPurchaseOrder();
+  const cancelPoMutation = useCancelPurchaseOrder();
   const deletePoMutation = useDeletePurchaseOrder();
 
   const getStatusBadge = (status: string) => {
@@ -55,25 +81,39 @@ export default function PurchaseOrderDetailPage() {
     return <Badge className={config_item.color}>{config_item.label}</Badge>;
   };
 
-  const handleApprove = () => {
-    if (confirm("Are you sure you want to approve this purchase order?")) {
-      approvePoMutation.mutate(id);
+  const handleAction = () => {
+    if (!confirmAction) return;
+    const onDone = () => setConfirmAction(null);
+    switch (confirmAction.type) {
+      case "approve":
+        approvePoMutation.mutate(id, { onSuccess: onDone });
+        break;
+      case "send":
+        sendPoMutation.mutate(id, { onSuccess: onDone });
+        break;
+      case "confirm":
+        confirmPoMutation.mutate(id, { onSuccess: onDone });
+        break;
+      case "cancel":
+        cancelPoMutation.mutate(id, { onSuccess: onDone });
+        break;
+      case "delete":
+        deletePoMutation.mutate(id, {
+          onSuccess: () => {
+            onDone();
+            router.push("/inventory/purchase-orders");
+          },
+        });
+        break;
     }
   };
 
-  const handleDelete = () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this purchase order? This action cannot be undone.",
-      )
-    ) {
-      deletePoMutation.mutate(id, {
-        onSuccess: () => {
-          router.push("/inventory/purchase-orders");
-        },
-      });
-    }
-  };
+  const isActionPending =
+    approvePoMutation.isPending ||
+    sendPoMutation.isPending ||
+    confirmPoMutation.isPending ||
+    cancelPoMutation.isPending ||
+    deletePoMutation.isPending;
 
   if (isLoading) {
     return (
@@ -116,17 +156,43 @@ export default function PurchaseOrderDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {po.status === "pending_approval" && (
+            {(po.status === "draft" || po.status === "pending_approval") && (
               <Button
-                onClick={handleApprove}
+                onClick={() =>
+                  setConfirmAction({ type: "approve", label: "Approve" })
+                }
                 className="bg-green-600 hover:bg-green-700"
-                disabled={approvePoMutation.isPending}
+                disabled={isActionPending}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Approve
               </Button>
             )}
             {po.status === "approved" && (
+              <Button
+                onClick={() =>
+                  setConfirmAction({ type: "send", label: "Send to Vendor" })
+                }
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isActionPending}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Send to Vendor
+              </Button>
+            )}
+            {po.status === "sent" && (
+              <Button
+                onClick={() =>
+                  setConfirmAction({ type: "confirm", label: "Confirm" })
+                }
+                className="bg-indigo-600 hover:bg-indigo-700"
+                disabled={isActionPending}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Confirm
+              </Button>
+            )}
+            {(po.status === "approved" || po.status === "confirmed") && (
               <Button
                 onClick={() => router.push(`/inventory/grns/create?po=${id}`)}
                 className="bg-[#F4A920] hover:bg-[#F4A920]/90"
@@ -135,19 +201,36 @@ export default function PurchaseOrderDetailPage() {
                 Create GRN
               </Button>
             )}
-            <Button
-              variant="outline"
-              onClick={() =>
-                router.push(`/inventory/purchase-orders/${id}/edit`)
-              }
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
+            {po.status !== "fully_received" && po.status !== "cancelled" && (
+              <Button
+                variant="outline"
+                className="text-red-600 hover:bg-red-50"
+                onClick={() =>
+                  setConfirmAction({ type: "cancel", label: "Cancel Order" })
+                }
+                disabled={isActionPending}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+            )}
+            {(po.status === "draft" || po.status === "pending_approval") && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(`/inventory/purchase-orders/${id}/edit`)
+                }
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            )}
             <Button
               variant="destructive"
-              onClick={handleDelete}
-              disabled={deletePoMutation.isPending}
+              onClick={() =>
+                setConfirmAction({ type: "delete", label: "Delete" })
+              }
+              disabled={isActionPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
@@ -398,6 +481,51 @@ export default function PurchaseOrderDetailPage() {
           )}
         </motion.div>
       )}
+
+      {/* Action Confirmation Dialog */}
+      <Dialog
+        open={!!confirmAction}
+        onOpenChange={(open) => !open && setConfirmAction(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.type === "delete"
+                ? "Delete Purchase Order"
+                : `${confirmAction?.label} Purchase Order`}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {confirmAction?.type === "delete"
+              ? `Are you sure you want to delete PO ${po.po_number}? This action cannot be undone.`
+              : confirmAction?.type === "cancel"
+                ? `Are you sure you want to cancel PO ${po.po_number}?`
+                : `Are you sure you want to ${confirmAction?.label?.toLowerCase()} PO ${po.po_number}?`}
+          </p>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmAction(null)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={
+                confirmAction?.type === "delete" ||
+                confirmAction?.type === "cancel"
+                  ? "destructive"
+                  : "default"
+              }
+              onClick={handleAction}
+              disabled={isActionPending}
+              className="w-full sm:w-auto"
+            >
+              {isActionPending ? "Processing..." : confirmAction?.label}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -499,9 +499,16 @@ export const procurementService = {
     api.delete<void>(`/api/vendors/purchase-orders/${id}/`),
 
   approvePurchaseOrder: (id: number): Promise<PurchaseOrder> =>
-    api.patch<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/`, {
-      status: "approved",
-    }),
+    api.post<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/approve/`, {}),
+
+  sendPurchaseOrder: (id: number): Promise<PurchaseOrder> =>
+    api.post<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/send/`, {}),
+
+  confirmPurchaseOrder: (id: number): Promise<PurchaseOrder> =>
+    api.post<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/confirm/`, {}),
+
+  cancelPurchaseOrder: (id: number): Promise<PurchaseOrder> =>
+    api.post<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/cancel/`, {}),
 
   getActivePurchaseOrders: (): Promise<PurchaseOrder[]> =>
     api

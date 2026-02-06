@@ -5,7 +5,7 @@
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+  "https://ichhadhari-backend-2ljhubczcq-el.a.run.app";
 
 interface ApiError {
   message: string;

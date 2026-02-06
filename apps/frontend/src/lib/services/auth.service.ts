@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 // API Base URL
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://ichhadhari-backend-162541991773.asia-south1.run.app";
+  "https://ichhadhari-backend-2ljhubczcq-el.a.run.app";
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = "access_token";
@@ -126,7 +126,7 @@ class AuthService {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Response interceptor - Handle token refresh
@@ -161,7 +161,7 @@ class AuthService {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -172,7 +172,7 @@ class AuthService {
     try {
       const response = await axios.post<RegisterResponse>(
         `${API_BASE_URL}/api/auth/register/`,
-        credentials
+        credentials,
       );
 
       const { tokens, user } = response.data;
@@ -212,7 +212,7 @@ class AuthService {
         {
           username,
           password: credentials.password,
-        }
+        },
       );
 
       // Django returns: { message, user, tokens: { access, refresh } }
@@ -296,7 +296,7 @@ class AuthService {
         `${API_BASE_URL}/api/auth/token/refresh/`,
         {
           refresh: refreshToken,
-        }
+        },
       );
 
       const { access } = response.data;
@@ -416,7 +416,7 @@ class AuthService {
   private setTokens(
     accessToken: string,
     refreshToken: string,
-    rememberMe?: boolean
+    rememberMe?: boolean,
   ): void {
     if (typeof window === "undefined") {
       return;
@@ -470,7 +470,7 @@ class AuthService {
    */
   async confirmPasswordReset(
     token: string,
-    newPassword: string
+    newPassword: string,
   ): Promise<void> {
     await this.axiosInstance.post("/api/auth/password-reset/confirm/", {
       token,
@@ -484,7 +484,7 @@ class AuthService {
   async getMe(): Promise<User> {
     try {
       const response = await this.axiosInstance.get<{ user: User }>(
-        "/api/auth/me/"
+        "/api/auth/me/",
       );
       const user = response.data.user;
       this.setUserData(user);
@@ -540,7 +540,7 @@ class AuthService {
     try {
       const response = await this.axiosInstance.post<{ message: string }>(
         "/api/auth/change-password/",
-        data
+        data,
       );
       return response.data;
     } catch (error) {
@@ -566,7 +566,7 @@ class AuthService {
     try {
       const response = await this.axiosInstance.get<PermissionCheckResponse>(
         "/api/auth/check-permission/",
-        { params: { permission } }
+        { params: { permission } },
       );
       return response.data;
     } catch (error) {
