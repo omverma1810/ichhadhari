@@ -13,10 +13,8 @@ import {
   Search,
   Filter,
   ArrowRight,
-  AlertCircle,
   Factory,
   Calendar,
-  DollarSign,
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,8 +45,14 @@ import {
 import { useBatches, useProducts } from "@/lib/hooks/api/useProduction";
 import type { ProductionBatch } from "@/lib/services/production.service";
 
-// Status configuration with 5 states
+// Status configuration matching backend values
 const statusConfig = {
+  planned: {
+    label: "Planned",
+    color: "bg-slate-100 text-slate-800 border-slate-200",
+    icon: Calendar,
+    description: "Scheduled to start",
+  },
   in_progress: {
     label: "In Progress",
     color: "bg-blue-100 text-blue-800 border-blue-200",
@@ -57,27 +61,15 @@ const statusConfig = {
   },
   completed: {
     label: "Completed",
-    color: "bg-purple-100 text-purple-800 border-purple-200",
-    icon: Package,
-    description: "Production finished",
-  },
-  quality_check: {
-    label: "Quality Check",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: AlertCircle,
-    description: "Under quality inspection",
-  },
-  approved: {
-    label: "Approved",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle,
-    description: "Quality approved",
+    description: "Production finished",
   },
-  rejected: {
-    label: "Rejected",
+  cancelled: {
+    label: "Cancelled",
     color: "bg-red-100 text-red-800 border-red-200",
     icon: XCircle,
-    description: "Quality rejected",
+    description: "Batch cancelled",
   },
 };
 
@@ -92,12 +84,14 @@ export default function BatchesPage() {
 
   // Filter batches
   const filteredBatches = batches.filter((batch: ProductionBatch) => {
+    const batchId = batch.batch_id || "";
+    const productName = batch.product_name || "";
     const matchesSearch =
-      batch.batch_number.toLowerCase().includes(search.toLowerCase()) ||
-      batch.product_name?.toLowerCase().includes(search.toLowerCase());
+      batchId.toLowerCase().includes(search.toLowerCase()) ||
+      productName.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || batch.batch_status === statusFilter;
+      statusFilter === "all" || batch.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -105,15 +99,13 @@ export default function BatchesPage() {
   // Calculate stats
   const stats = {
     total: batches.length,
+    planned: batches.filter((b: ProductionBatch) => b.status === "planned")
+      .length,
     in_progress: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "in_progress",
+      (b: ProductionBatch) => b.status === "in_progress",
     ).length,
-    quality_check: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "quality_check",
-    ).length,
-    approved: batches.filter(
-      (b: ProductionBatch) => b.batch_status === "approved",
-    ).length,
+    completed: batches.filter((b: ProductionBatch) => b.status === "completed")
+      .length,
   };
 
   return (
@@ -179,30 +171,30 @@ export default function BatchesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Quality Check
+              Planned
             </CardTitle>
-            <AlertCircle className="w-4 h-4 text-yellow-500" />
+            <Calendar className="w-4 h-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.quality_check}
+            <div className="text-2xl font-bold text-slate-600">
+              {stats.planned}
             </div>
-            <p className="text-xs text-gray-500 mt-1">Under inspection</p>
+            <p className="text-xs text-gray-500 mt-1">Scheduled batches</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Approved
+              Completed
             </CardTitle>
             <CheckCircle className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {stats.approved}
+              {stats.completed}
             </div>
-            <p className="text-xs text-gray-500 mt-1">Quality approved</p>
+            <p className="text-xs text-gray-500 mt-1">Finished batches</p>
           </CardContent>
         </Card>
       </motion.div>
@@ -215,14 +207,14 @@ export default function BatchesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Production Workflow</CardTitle>
-            <CardDescription>5-stage batch status progression</CardDescription>
+            <CardDescription>4-stage batch status progression</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-center justify-between gap-2">
               {Object.entries(statusConfig).map(([key, config], index) => {
                 const Icon = config.icon;
                 const count = batches.filter(
-                  (b: ProductionBatch) => b.batch_status === key,
+                  (b: ProductionBatch) => b.status === key,
                 ).length;
 
                 return (
@@ -264,7 +256,7 @@ export default function BatchesPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search by batch number or product..."
+                    placeholder="Search by batch ID or product..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10"
@@ -325,29 +317,28 @@ export default function BatchesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Batch Number</TableHead>
+                        <TableHead>Batch ID</TableHead>
                         <TableHead>Product</TableHead>
-                        <TableHead>Production Date</TableHead>
-                        <TableHead>Quantity</TableHead>
+                        <TableHead>Batch Date</TableHead>
+                        <TableHead>Planned Qty</TableHead>
+                        <TableHead>Actual Qty</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Quality Rating</TableHead>
-                        <TableHead>Total Cost</TableHead>
+                        <TableHead>Yield %</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredBatches.map((batch: ProductionBatch) => {
-                        const status =
-                          statusConfig[
-                            batch.batch_status as keyof typeof statusConfig
-                          ];
+                        const statusKey =
+                          batch.status as keyof typeof statusConfig;
+                        const status = statusConfig[statusKey];
                         const StatusIcon = status.icon;
 
                         return (
                           <TableRow key={batch.id}>
                             <TableCell>
                               <div className="font-mono text-sm font-semibold text-[#5D4037]">
-                                {batch.batch_number}
+                                {batch.batch_id}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -358,13 +349,21 @@ export default function BatchesPage() {
                             <TableCell>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Calendar className="w-4 h-4" />
-                                {format(new Date(batch.production_date), "PPP")}
+                                {format(new Date(batch.batch_date), "PPP")}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                {batch.quantity_produced.toLocaleString()}{" "}
-                                {batch.unit}
+                                {Number(
+                                  batch.planned_quantity || 0,
+                                ).toLocaleString()}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {Number(
+                                  batch.actual_quantity || 0,
+                                ).toLocaleString()}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -374,11 +373,11 @@ export default function BatchesPage() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {batch.quality_rating ? (
+                              {batch.yield_percentage ? (
                                 <div className="flex items-center gap-1">
                                   <TrendingUp className="w-4 h-4 text-green-600" />
                                   <span className="text-sm font-medium">
-                                    {batch.quality_rating}/10
+                                    {Number(batch.yield_percentage).toFixed(2)}%
                                   </span>
                                 </div>
                               ) : (
@@ -386,12 +385,6 @@ export default function BatchesPage() {
                                   N/A
                                 </span>
                               )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1 text-sm font-medium">
-                                <DollarSign className="w-4 h-4 text-gray-400" />
-                                ₹{batch.total_cost.toLocaleString()}
-                              </div>
                             </TableCell>
                             <TableCell className="text-right">
                               <Link href={`/production/batches/${batch.id}`}>
@@ -410,10 +403,8 @@ export default function BatchesPage() {
                 {/* Mobile Card Layout */}
                 <div className="lg:hidden space-y-4">
                   {filteredBatches.map((batch: ProductionBatch) => {
-                    const status =
-                      statusConfig[
-                        batch.batch_status as keyof typeof statusConfig
-                      ];
+                    const statusKey = batch.status as keyof typeof statusConfig;
+                    const status = statusConfig[statusKey];
                     const StatusIcon = status.icon;
 
                     return (
@@ -425,7 +416,7 @@ export default function BatchesPage() {
                                 Batch Number
                               </p>
                               <p className="font-mono text-sm font-semibold text-[#5D4037]">
-                                {batch.batch_number}
+                                {batch.batch_id}
                               </p>
                             </div>
                             <Badge className={status.color}>
@@ -445,11 +436,12 @@ export default function BatchesPage() {
                             </div>
                             <div>
                               <p className="text-xs text-gray-500 mb-1">
-                                Quantity
+                                Planned Qty
                               </p>
                               <p className="text-sm">
-                                {batch.quantity_produced.toLocaleString()}{" "}
-                                {batch.unit}
+                                {Number(
+                                  batch.planned_quantity || 0,
+                                ).toLocaleString()}
                               </p>
                             </div>
                           </div>
@@ -457,41 +449,40 @@ export default function BatchesPage() {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <p className="text-xs text-gray-500 mb-1">
-                                Production Date
+                                Batch Date
                               </p>
                               <div className="flex items-center gap-1 text-sm">
                                 <Calendar className="w-3 h-3 text-gray-400" />
-                                {format(new Date(batch.production_date), "PP")}
+                                {format(new Date(batch.batch_date), "PP")}
                               </div>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500 mb-1">
-                                Quality Rating
+                                Actual Qty
                               </p>
-                              {batch.quality_rating ? (
-                                <div className="flex items-center gap-1">
-                                  <TrendingUp className="w-3 h-3 text-green-600" />
-                                  <span className="text-sm font-medium">
-                                    {batch.quality_rating}/10
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-sm text-gray-400">
-                                  N/A
-                                </span>
-                              )}
+                              <span className="text-sm text-gray-600">
+                                {Number(
+                                  batch.actual_quantity || 0,
+                                ).toLocaleString()}
+                              </span>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t">
                             <div>
                               <p className="text-xs text-gray-500 mb-1">
-                                Total Cost
+                                Yield %
                               </p>
-                              <div className="flex items-center gap-1 text-sm font-medium">
-                                <DollarSign className="w-3 h-3 text-gray-400" />
-                                ₹{batch.total_cost.toLocaleString()}
-                              </div>
+                              {batch.yield_percentage ? (
+                                <div className="flex items-center gap-1 text-sm font-medium">
+                                  <TrendingUp className="w-3 h-3 text-green-600" />
+                                  {Number(batch.yield_percentage).toFixed(2)}%
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">
+                                  N/A
+                                </span>
+                              )}
                             </div>
                             <Link href={`/production/batches/${batch.id}`}>
                               <Button variant="ghost" size="sm">

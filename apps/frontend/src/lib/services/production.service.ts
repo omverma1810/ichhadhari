@@ -45,46 +45,32 @@ export interface ProductFormData {
 
 export interface ProductionBatch {
   id: number;
-  batch_number: string;
+  batch_id: string;
   product: number;
   product_name?: string;
-  production_date: string;
-  quantity_produced: number;
-  unit: string;
-  raw_material_used: number;
-  expiry_date: string;
-  batch_status:
-    | "in_progress"
-    | "completed"
-    | "quality_check"
-    | "approved"
-    | "rejected";
-  quality_rating?: number;
-  supervisor: number;
-  supervisor_name?: string;
-  cost_per_unit: number;
-  total_cost: number;
-  remarks?: string;
-  created_at: string;
-  updated_at: string;
+  product_id?: string;
+  batch_date: string;
+  planned_quantity: number;
+  actual_quantity?: number;
+  milk_allocated?: number;
+  milk_used?: number;
+  status: "planned" | "in_progress" | "completed" | "cancelled";
+  yield_percentage?: number;
+  supervisor?: number | null;
+  supervisor_name?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductionBatchFormData {
   product: number;
-  production_date: string;
-  quantity_produced: number;
-  raw_material_used: number;
-  expiry_date: string;
-  supervisor: number;
-  cost_per_unit: number;
-  batch_status?:
-    | "in_progress"
-    | "completed"
-    | "quality_check"
-    | "approved"
-    | "rejected";
-  quality_rating?: number;
-  remarks?: string;
+  batch_date: string;
+  planned_quantity: number;
+  milk_allocated: number;
+  status?: "planned" | "in_progress" | "completed" | "cancelled";
+  supervisor?: number;
+  notes?: string;
 }
 
 export interface ProductionSchedule {
@@ -184,7 +170,7 @@ const createSchedule = (data: ProductionScheduleFormData) =>
 
 const updateSchedule = (
   id: number,
-  data: Partial<ProductionScheduleFormData>
+  data: Partial<ProductionScheduleFormData>,
 ) => api.patch<ProductionSchedule>(`/api/production/schedules/${id}/`, data);
 
 const deleteSchedule = (id: number) =>
