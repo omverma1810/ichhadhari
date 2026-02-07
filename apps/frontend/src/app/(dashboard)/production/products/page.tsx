@@ -64,7 +64,7 @@ export default function ProductsPage() {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-gradient-to-r from-dairy-blue to-dairy-darkBlue hover:from-dairy-darkBlue hover:to-dairy-blue h-11"
+            className="h-11 bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Product
@@ -94,7 +94,10 @@ export default function ProductsPage() {
           title="No products yet"
           description="Create your first product recipe to start production"
           action={
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Create First Product
             </Button>

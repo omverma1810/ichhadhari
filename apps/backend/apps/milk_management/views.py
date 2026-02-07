@@ -116,7 +116,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         stats = collections.aggregate(
             total_quantity=Sum('quantity'),
             avg_fat=Avg('fat'),
-            avg_snf=Avg('snf_percentage'),
+            avg_snf=Avg('snf'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),
             collection_count=Count('id')
@@ -249,7 +249,7 @@ class MilkCollectionViewSet(viewsets.ModelViewSet):
         stats = collections.aggregate(
             total_quantity=Sum('quantity'),
             avg_fat=Avg('fat'),
-            avg_snf=Avg('snf_percentage'),
+            avg_snf=Avg('snf'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),
             collection_count=Count('id'),
@@ -315,7 +315,7 @@ class MilkSegregationPlanViewSet(viewsets.ModelViewSet):
         ).annotate(
             total_quantity=Sum('quantity'),
             avg_fat=Avg('fat'),
-            avg_snf=Avg('snf_percentage'),
+            avg_snf=Avg('snf'),
             avg_quality_score=Avg('quality_score'),
             total_amount=Sum('total_amount'),
             collection_count=Count('id')

@@ -347,7 +347,7 @@ export default function StockOverviewPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
-              className="w-full sm:w-auto"
+              className="w-full bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920] sm:w-auto"
               onClick={() => setIsCreateOpen(true)}
             >
               <Plus className="w-4 h-4 mr-2" />

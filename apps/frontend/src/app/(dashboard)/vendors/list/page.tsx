@@ -51,7 +51,7 @@ export default function VendorsListPage() {
           <p className="text-gray-500 mt-1">Manage your milk suppliers</p>
         </div>
         <Link href="/vendors/new">
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2 bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]">
             <Plus className="w-4 h-4" />
             Add Vendor
           </Button>
@@ -112,7 +112,9 @@ export default function VendorsListPage() {
         <div className="text-center py-12">
           <p className="text-gray-500">No vendors found</p>
           <Link href="/vendors/new">
-            <Button className="mt-4">Add Your First Vendor</Button>
+            <Button className="mt-4 bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]">
+              Add Your First Vendor
+            </Button>
           </Link>
         </div>
       )}

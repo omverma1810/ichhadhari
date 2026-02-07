@@ -317,7 +317,10 @@ export default function VendorOrdersPage() {
             </p>
             {!searchQuery && statusFilter === "all" && (
               <Link href="/vendors/orders/create" className="mt-4">
-                <Button size="sm">
+                <Button
+                  size="sm"
+                  className="bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]"
+                >
                   <Plus className="mr-1 h-4 w-4" />
                   Create Purchase Order
                 </Button>

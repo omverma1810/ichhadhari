@@ -130,7 +130,7 @@ export default function InventoryItemsPage() {
         </div>
         <Button
           onClick={() => router.push("/inventory/items/create")}
-          className="w-full bg-[#F4A920] hover:bg-[#F4A920]/90 sm:w-auto"
+          className="w-full bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920] sm:w-auto"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Item

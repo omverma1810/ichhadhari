@@ -132,7 +132,7 @@ export default function VendorPaymentsPage() {
           </p>
         </div>
         <Link href="/vendors/payments/create">
-          <Button className="bg-[#8B5A3C] hover:bg-[#5D4037] h-11">
+          <Button className="h-11 bg-linear-to-r from-[#F4A920] via-[#F4A920] to-[#8B5A3C] text-white shadow-[0_10px_20px_rgba(244,169,32,0.25)] transition-transform duration-200 hover:scale-[1.02] hover:from-[#8B5A3C] hover:to-[#F4A920]">
             <Plus className="w-4 h-4 mr-2" />
             Record Payment
           </Button>
