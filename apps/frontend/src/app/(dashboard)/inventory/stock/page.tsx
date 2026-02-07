@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -8,13 +11,32 @@ import {
   TrendingDown,
   Filter,
   Download,
+  Plus,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsCard } from "@/components/cards/StatsCard";
 import { DataTable, type Column } from "@/components/tables/DataTable";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useStock,
   useInventoryStats,
@@ -25,6 +47,23 @@ import { Warehouse, BoxStack, AlertIcon } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
 import type { InventoryItem } from "@/lib/services/inventory.service";
 import { toast } from "sonner";
+import { useCreateInventoryItem } from "@/hooks/api/useInventory";
+
+const createStockSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  item_type: z.enum(["raw_milk", "raw_material", "finished_good", "packaging"]),
+  unit: z.enum(["kg", "liter", "piece", "pack", "bag", "box"]),
+  cost_per_unit: z.coerce.number().min(0, "Cost must be 0 or more"),
+  current_stock: z.coerce.number().min(0, "Stock cannot be negative"),
+  min_stock_level: z.coerce.number().min(0, "Minimum stock cannot be negative"),
+  max_stock_level: z.coerce.number().min(0, "Maximum stock cannot be negative"),
+  reorder_point: z.coerce.number().min(0, "Reorder point cannot be negative"),
+  storage_location: z.string().optional(),
+  storage_temperature: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type CreateStockFormData = z.infer<typeof createStockSchema>;
 
 // Local types for the page
 interface StockItem extends InventoryItem {
@@ -33,6 +72,15 @@ interface StockItem extends InventoryItem {
   batchNumber?: string;
   locationName?: string;
   quantity?: number;
+  item_id?: string;
+  item_type?: string;
+  current_quantity?: number;
+  min_stock_level?: number;
+  max_stock_level?: number;
+  reorder_point?: number;
+  storage_location?: string;
+  storage_temperature?: string;
+  updated_at?: string;
   expiryDate?: string;
   expiryStatus?: "fresh" | "expiring_soon" | "critical" | "expired";
   daysToExpiry?: number;
@@ -53,6 +101,24 @@ export default function StockOverviewPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const createItem = useCreateInventoryItem();
+  const form = useForm<CreateStockFormData>({
+    resolver: zodResolver(createStockSchema),
+    defaultValues: {
+      item_type: "raw_material",
+      unit: "kg",
+      cost_per_unit: 0,
+      current_stock: 0,
+      min_stock_level: 0,
+      max_stock_level: 0,
+      reorder_point: 0,
+      storage_location: "",
+      storage_temperature: "",
+      description: "",
+    },
+  });
 
   const { data: stockData, isLoading } = useStock({ page, limit: 10, search });
   const { data: stats } = useInventoryStats();
@@ -75,15 +141,17 @@ export default function StockOverviewPage() {
       // Export functionality - CSV format
       const csvData = filteredData.map((item: StockItem) => ({
         Name: item.name,
-        Code: item.item_code,
-        Category: item.category,
-        Stock: item.current_stock,
-        Unit: item.unit,
-        Status: item.status,
-        Location: item.storage_location,
-        "Reorder Level": item.reorder_level,
-        "Unit Price": item.unit_price,
-        "Total Value": item.total_value,
+        Code: item.item_code ?? item.item_id ?? "-",
+        Category: item.category ?? item.item_type ?? "-",
+        Stock: getNumericValue(item.current_stock ?? item.current_quantity),
+        Unit: item.unit ?? "-",
+        Status: getNormalizedStatus(item),
+        Location: item.storage_location ?? item.locationName ?? "-",
+        "Reorder Level": getNumericValue(
+          item.reorder_level ?? item.reorder_point,
+        ),
+        "Unit Price": getNumericValue(item.unit_price ?? item.cost_per_unit),
+        "Total Value": getNumericValue(item.total_value),
       }));
 
       const csvContent = [
@@ -114,6 +182,28 @@ export default function StockOverviewPage() {
     }
   };
 
+  const handleCreateStock = async (values: CreateStockFormData) => {
+    await createItem.mutateAsync({
+      name: values.name,
+      item_type: values.item_type,
+      unit: values.unit,
+      cost_per_unit: values.cost_per_unit,
+      current_stock: values.current_stock,
+      min_stock_level: values.min_stock_level,
+      max_stock_level: values.max_stock_level,
+      reorder_point: values.reorder_point,
+      storage_location: values.storage_location || undefined,
+      storage_temperature: values.storage_temperature || undefined,
+      description: values.description || undefined,
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["inventory-stock"] });
+    queryClient.invalidateQueries({ queryKey: ["inventory-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["expiry-alerts"] });
+    form.reset();
+    setIsCreateOpen(false);
+  };
+
   const getStatusBadge = (status: InventoryItem["status"] | undefined) => {
     if (!status) {
       return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
@@ -133,6 +223,26 @@ export default function StockOverviewPage() {
     return <Badge className={color}>{label}</Badge>;
   };
 
+  const getNumericValue = (value?: number | string | null) => {
+    if (value == null) return 0;
+    const parsed = typeof value === "string" ? Number(value) : value;
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const getNormalizedStatus = (item: StockItem) => {
+    if (item.status) return item.status;
+    const current = getNumericValue(
+      item.current_stock ?? item.current_quantity,
+    );
+    const min = getNumericValue(item.min_stock_level ?? item.reorder_level);
+    const max = getNumericValue(item.max_stock_level ?? item.maximum_stock);
+
+    if (current <= 0) return "out_of_stock" as const;
+    if (min > 0 && current < min) return "low_stock" as const;
+    if (max > 0 && current > max) return "overstocked" as const;
+    return "in_stock" as const;
+  };
+
   const filteredData = useMemo(() => {
     if (!stockData?.results) {
       return [] as StockItem[];
@@ -143,7 +253,7 @@ export default function StockOverviewPage() {
       case "low_stock":
       case "out_of_stock":
         return stockData.results.filter(
-          (item) => (item as any).status === activeTab,
+          (item) => getNormalizedStatus(item as StockItem) === activeTab,
         ) as unknown as StockItem[];
       case "expiring":
         return stockData.results.filter(
@@ -163,46 +273,53 @@ export default function StockOverviewPage() {
       render: (value, row) => (
         <div>
           <p className="font-semibold text-dairy-charcoal">{value as string}</p>
-          <p className="text-xs text-gray-500">{row.category}</p>
+          <p className="text-xs text-gray-500">
+            {row.category ?? row.item_type ?? "-"}
+          </p>
         </div>
       ),
     },
     {
       key: "item_code",
       label: "Code",
-      render: (value) => (
+      render: (value, row) => (
         <span className="font-mono text-xs font-semibold text-dairy-blue">
-          {value as string}
+          {(value as string) || row.item_id || "-"}
         </span>
       ),
     },
     {
       key: "storage_location",
       label: "Location",
+      render: (value, row) => (value as string) || row.locationName || "-",
     },
     {
       key: "current_stock",
       label: "Stock",
       render: (value, row) => (
         <span className="font-semibold">
-          {formatNumber(value as number)} {row.unit}
+          {formatNumber(getNumericValue(value ?? row.current_quantity))}{" "}
+          {row.unit}
         </span>
       ),
     },
     {
       key: "status",
       label: "Status",
-      render: (value) => getStatusBadge(value as InventoryItem["status"]),
+      render: (_, row) => getStatusBadge(getNormalizedStatus(row)),
     },
     {
       key: "last_restocked_date",
       label: "Last Restocked",
-      render: (value) =>
-        value ? (
-          <div className="text-sm">{formatDate(value as string)}</div>
+      render: (value, row) => {
+        const dateValue =
+          (value as string) || row.updated_at || row.created_at || undefined;
+        return dateValue ? (
+          <div className="text-sm">{formatDate(dateValue)}</div>
         ) : (
           <span className="text-sm text-gray-400">Never</span>
-        ),
+        );
+      },
     },
   ];
 
@@ -229,6 +346,15 @@ export default function StockOverviewPage() {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Stock
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button variant="outline" className="w-full sm:w-auto">
               <Filter className="w-4 h-4 mr-2" />
               Filters
@@ -247,6 +373,191 @@ export default function StockOverviewPage() {
           </motion.div>
         </div>
       </motion.div>
+
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Add New Stock</DialogTitle>
+            <DialogDescription>
+              Create a new stock item and set its initial quantity.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={form.handleSubmit(handleCreateStock)}
+            className="space-y-6"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Item Name *</Label>
+                <Input id="name" {...form.register("name")} />
+                {form.formState.errors.name && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Item Type *</Label>
+                <Select
+                  value={form.watch("item_type")}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      "item_type",
+                      value as CreateStockFormData["item_type"],
+                      {
+                        shouldValidate: true,
+                      },
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select item type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="raw_milk">Raw Milk</SelectItem>
+                    <SelectItem value="raw_material">Raw Material</SelectItem>
+                    <SelectItem value="finished_good">Finished Good</SelectItem>
+                    <SelectItem value="packaging">Packaging</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Unit *</Label>
+                <Select
+                  value={form.watch("unit")}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      "unit",
+                      value as CreateStockFormData["unit"],
+                      {
+                        shouldValidate: true,
+                      },
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                    <SelectItem value="liter">Liter (L)</SelectItem>
+                    <SelectItem value="piece">Piece</SelectItem>
+                    <SelectItem value="pack">Pack</SelectItem>
+                    <SelectItem value="bag">Bag</SelectItem>
+                    <SelectItem value="box">Box</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cost_per_unit">Cost per Unit *</Label>
+                <Input
+                  id="cost_per_unit"
+                  type="number"
+                  step="0.01"
+                  {...form.register("cost_per_unit", { valueAsNumber: true })}
+                />
+                {form.formState.errors.cost_per_unit && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.cost_per_unit.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current_stock">Current Stock *</Label>
+                <Input
+                  id="current_stock"
+                  type="number"
+                  step="0.01"
+                  {...form.register("current_stock", { valueAsNumber: true })}
+                />
+                {form.formState.errors.current_stock && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.current_stock.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="min_stock_level">Minimum Stock *</Label>
+                <Input
+                  id="min_stock_level"
+                  type="number"
+                  step="0.01"
+                  {...form.register("min_stock_level", { valueAsNumber: true })}
+                />
+                {form.formState.errors.min_stock_level && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.min_stock_level.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reorder_point">Reorder Point *</Label>
+                <Input
+                  id="reorder_point"
+                  type="number"
+                  step="0.01"
+                  {...form.register("reorder_point", { valueAsNumber: true })}
+                />
+                {form.formState.errors.reorder_point && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.reorder_point.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="max_stock_level">Maximum Stock *</Label>
+                <Input
+                  id="max_stock_level"
+                  type="number"
+                  step="0.01"
+                  {...form.register("max_stock_level", { valueAsNumber: true })}
+                />
+                {form.formState.errors.max_stock_level && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.max_stock_level.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="storage_location">Storage Location</Label>
+                <Input
+                  id="storage_location"
+                  {...form.register("storage_location")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="storage_temperature">Storage Temperature</Label>
+                <Input
+                  id="storage_temperature"
+                  placeholder="e.g., 4C"
+                  {...form.register("storage_temperature")}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  rows={3}
+                  {...form.register("description")}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateOpen(false)}
+                disabled={createItem.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createItem.isPending}>
+                {createItem.isPending ? "Saving..." : "Add Stock"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"

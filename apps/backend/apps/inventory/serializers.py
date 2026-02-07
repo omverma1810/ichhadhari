@@ -10,6 +10,7 @@ class InventoryItemSerializer(serializers.ModelSerializer):
     """
     Complete serializer for InventoryItem with computed fields.
     """
+    item_id = serializers.CharField(required=False, allow_blank=True)
     is_below_min_stock = serializers.BooleanField(read_only=True)
     is_below_reorder_point = serializers.BooleanField(read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True, allow_null=True)

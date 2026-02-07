@@ -40,6 +40,67 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return InventoryItemListSerializer
         return InventoryItemSerializer
+
+    def _generate_item_id(self, item_type: str) -> str:
+        prefix_map = {
+            'raw_milk': 'MILK',
+            'raw_material': 'RM',
+            'finished_good': 'FG',
+            'packaging': 'PKG',
+        }
+        prefix = prefix_map.get(item_type, 'INV')
+        last_item = InventoryItem.objects.filter(
+            item_id__startswith=f"{prefix}-"
+        ).order_by('-item_id').first()
+        if last_item and last_item.item_id:
+            try:
+                last_seq = int(last_item.item_id.split('-')[-1])
+            except ValueError:
+                last_seq = 0
+        else:
+            last_seq = 0
+        return f"{prefix}-{last_seq + 1:03d}"
+
+    def _generate_transaction_id(self, date_value):
+        date_str = date_value.strftime('%Y%m%d')
+        last_transaction = StockTransaction.objects.filter(
+            transaction_id__startswith=f'ST{date_str}'
+        ).order_by('-transaction_id').first()
+        if last_transaction:
+            last_number = int(last_transaction.transaction_id[-4:])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        return f'ST{date_str}{new_number:04d}'
+
+    def perform_create(self, serializer):
+        item_id = serializer.validated_data.get('item_id')
+        item_type = serializer.validated_data.get('item_type')
+
+        if not item_id:
+            item_id = self._generate_item_id(item_type)
+
+        item = serializer.save(item_id=item_id)
+
+        if item.current_stock > 0:
+            transaction_date = timezone.now()
+            transaction_id = self._generate_transaction_id(transaction_date)
+            unit_cost = item.cost_per_unit or Decimal('0.00')
+            total_cost = item.current_stock * unit_cost
+            StockTransaction.objects.create(
+                transaction_id=transaction_id,
+                item=item,
+                transaction_type='adjustment',
+                transaction_date=transaction_date,
+                quantity=item.current_stock,
+                is_addition=True,
+                stock_before=Decimal('0.00'),
+                stock_after=item.current_stock,
+                unit_cost=unit_cost,
+                total_cost=total_cost,
+                performed_by=self.request.user,
+                notes='Initial stock on item creation',
+            )
     
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
