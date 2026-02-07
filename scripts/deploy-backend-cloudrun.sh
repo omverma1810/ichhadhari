@@ -57,7 +57,7 @@ gcloud run deploy "${SERVICE_NAME}" \
     --port 8000 \
     --memory 512Mi \
     --cpu 1 \
-    --timeout 300 \
+    --timeout 600 \
     --max-instances 10 \
     --min-instances 0 \
     --set-env-vars "DJANGO_SETTINGS_MODULE=dairy.settings.production,ENVIRONMENT=production" \
