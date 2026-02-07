@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
     VendorPayment, GoodsReceiptNote, GRNItem,
@@ -7,11 +8,54 @@ from .models import (
 from decimal import Decimal
 
 
+class AddressField(serializers.CharField):
+    """Coerce address objects into a single string."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            parts = [
+                str(data.get("street", "")).strip(),
+                str(data.get("city", "")).strip(),
+                str(data.get("state", "")).strip(),
+                str(data.get("postal_code", "")).strip(),
+                str(data.get("country", "")).strip(),
+            ]
+            normalized = ", ".join([part for part in parts if part])
+            return super().to_internal_value(normalized)
+        return super().to_internal_value(data)
+
+
 class VendorSerializer(serializers.ModelSerializer):
     """
     Complete serializer for Vendor model.
     """
     
+    contact_persons = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False,
+    )
+    bank_details = serializers.DictField(write_only=True, required=False)
+    payment_methods = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=False,
+    )
+    preferred_payment_method = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    registration_number = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+    )
+    warehouse_address = serializers.DictField(write_only=True, required=False)
+    billing_address = AddressField()
+    shipping_address = AddressField(required=False, allow_blank=True)
+
     class Meta:
         model = Vendor
         fields = [
@@ -22,9 +66,116 @@ class VendorSerializer(serializers.ModelSerializer):
             'ifsc_code', 'account_holder_name', 'credit_period_days',
             'credit_limit', 'payment_method', 'discount_percentage', 'rating',
             'total_purchases', 'total_payments', 'outstanding_balance',
-            'documents', 'notes', 'created_at', 'updated_at'
+            'documents', 'notes', 'created_at', 'updated_at',
+            'contact_persons', 'bank_details', 'payment_methods',
+            'preferred_payment_method', 'registration_number', 'warehouse_address'
         ]
         read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'vendor_id': {'required': False, 'allow_blank': True},
+            'contact_person': {'required': False, 'allow_blank': True},
+        }
+
+    def _generate_vendor_id(self):
+        prefix = "VND"
+        last_vendor = (
+            Vendor.objects
+            .filter(vendor_id__startswith=prefix)
+            .order_by("-vendor_id")
+            .first()
+        )
+        if last_vendor:
+            suffix = last_vendor.vendor_id.replace(prefix, "")
+            if suffix.isdigit():
+                next_number = int(suffix) + 1
+            else:
+                next_number = Vendor.objects.count() + 1
+        else:
+            next_number = 1
+        return f"{prefix}{next_number:04d}"
+
+    def _normalize_contact_person(self, validated_data):
+        contact_person = validated_data.get("contact_person")
+        if contact_person:
+            return contact_person
+        contact_persons = self.initial_data.get("contact_persons")
+        if isinstance(contact_persons, list) and contact_persons:
+            primary = contact_persons[0]
+            if isinstance(primary, dict):
+                name = str(primary.get("name", "")).strip()
+                if name:
+                    return name
+        company_name = validated_data.get("company_name")
+        if company_name:
+            return company_name
+        return "Unknown"
+
+    def _normalize_bank_details(self, validated_data):
+        bank_details = self.initial_data.get("bank_details")
+        if not isinstance(bank_details, dict):
+            return
+        if "bank_name" in bank_details:
+            validated_data.setdefault("bank_name", bank_details.get("bank_name") or "")
+        if "account_number" in bank_details:
+            validated_data.setdefault(
+                "account_number",
+                bank_details.get("account_number") or "",
+            )
+        if "ifsc_code" in bank_details:
+            validated_data.setdefault("ifsc_code", bank_details.get("ifsc_code") or "")
+        if "account_holder" in bank_details:
+            validated_data.setdefault(
+                "account_holder_name",
+                bank_details.get("account_holder") or "",
+            )
+
+    def _normalize_payment_method(self, validated_data):
+        preferred = self.initial_data.get("preferred_payment_method")
+        payment_methods = self.initial_data.get("payment_methods")
+        if preferred:
+            validated_data.setdefault("payment_method", preferred)
+        elif isinstance(payment_methods, list) and payment_methods:
+            validated_data.setdefault("payment_method", payment_methods[0])
+
+    def _normalize_registration_number(self, validated_data):
+        registration_number = self.initial_data.get("registration_number")
+        if registration_number and not validated_data.get("company_registration_number"):
+            validated_data["company_registration_number"] = registration_number
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if not validated_data.get("vendor_id"):
+            validated_data["vendor_id"] = self._generate_vendor_id()
+        validated_data["contact_person"] = self._normalize_contact_person(validated_data)
+        self._normalize_bank_details(validated_data)
+        self._normalize_payment_method(validated_data)
+        self._normalize_registration_number(validated_data)
+        validated_data.pop("contact_persons", None)
+        validated_data.pop("bank_details", None)
+        validated_data.pop("payment_methods", None)
+        validated_data.pop("preferred_payment_method", None)
+        validated_data.pop("registration_number", None)
+        validated_data.pop("warehouse_address", None)
+        return super().create(validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        if "vendor_id" in validated_data and not validated_data.get("vendor_id"):
+            validated_data.pop("vendor_id", None)
+        if "contact_person" not in validated_data:
+            validated_data["contact_person"] = self._normalize_contact_person(
+                {**validated_data, "company_name": instance.company_name}
+            )
+        self._normalize_bank_details(validated_data)
+        self._normalize_payment_method(validated_data)
+        self._normalize_registration_number(validated_data)
+        validated_data.pop("contact_persons", None)
+        validated_data.pop("bank_details", None)
+        validated_data.pop("payment_methods", None)
+        validated_data.pop("preferred_payment_method", None)
+        validated_data.pop("registration_number", None)
+        validated_data.pop("warehouse_address", None)
+        return super().update(instance, validated_data)
 
 
 class VendorListSerializer(serializers.ModelSerializer):
