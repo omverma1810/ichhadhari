@@ -72,7 +72,7 @@ export default function SuppliersPage() {
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
 
   const queryFilters = useMemo<SupplierFilters>(
@@ -87,7 +87,7 @@ export default function SuppliersPage() {
         filters.payment_cycle !== "all" ? filters.payment_cycle : undefined,
       page_size: PAGE_SIZE,
     }),
-    [page, searchTerm, filters]
+    [page, searchTerm, filters],
   );
 
   const { data, isLoading, isFetching, error, refetch } =
@@ -256,12 +256,13 @@ export default function SuppliersPage() {
         ),
       },
     ],
-    [router]
+    [router],
   );
 
   const handleCreate = async (formValues: SupplierFormValues) => {
     try {
       await createSupplier.mutateAsync({
+        supplier_id: formValues.supplier_id,
         name: formValues.name,
         supplier_type: formValues.supplier_type,
         phone: formValues.phone,
@@ -286,7 +287,7 @@ export default function SuppliersPage() {
 
   const handleUpdate = async (
     supplier: Supplier,
-    formValues: SupplierFormValues
+    formValues: SupplierFormValues,
   ) => {
     try {
       await updateSupplier.mutateAsync({
@@ -587,10 +588,10 @@ function QualityIndicator({ score }: { score: number }) {
     score >= 90
       ? "bg-emerald-500"
       : score >= 75
-      ? "bg-blue-500"
-      : score >= 60
-      ? "bg-amber-500"
-      : "bg-red-500";
+        ? "bg-blue-500"
+        : score >= 60
+          ? "bg-amber-500"
+          : "bg-red-500";
   return <span className={cn("h-2.5 w-2.5 rounded-full", color)} />;
 }
 

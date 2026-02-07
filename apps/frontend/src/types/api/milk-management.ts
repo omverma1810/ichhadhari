@@ -38,6 +38,7 @@ export interface Supplier extends AuditFields {
 }
 
 export interface CreateSupplierPayload {
+  supplier_id: string;
   name: string;
   supplier_type: SupplierType;
   phone: string;

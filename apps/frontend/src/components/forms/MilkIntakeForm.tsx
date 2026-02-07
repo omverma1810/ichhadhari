@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import {
   FileText,
   Milk as MilkIcon,
   IndianRupee,
+  Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,15 +35,22 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils/cn";
+import { useCreateCollection } from "@/hooks/api/useMilkManagement";
 import {
-  useCreateCollection,
+  useCreateSupplier,
   useSuppliers,
-} from "@/hooks/api/useMilkManagement";
+} from "@/hooks/api/milk-management/suppliers";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { MilkDrop } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
+import {
+  SupplierFormModal,
+  type SupplierFormValues,
+} from "@/components/milk-management/suppliers/SupplierFormModal";
 import type { CreateMilkCollectionPayload, MilkType } from "@/types/api";
 import type { MilkIntakeFormData } from "@/types/milk";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils/api-helpers";
 
 const milkIntakeSchema = z.object({
   supplierId: z
@@ -76,15 +84,24 @@ interface MilkIntakeFormProps {
   initialData?: Partial<MilkIntakeFormData>;
 }
 
+const normalizeOptional = (value?: string | null) => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 export function MilkIntakeForm({
   onSuccess,
   initialData,
 }: MilkIntakeFormProps) {
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const createCollectionMutation = useCreateCollection();
+  const createSupplier = useCreateSupplier();
   const {
     data: suppliersData,
     isLoading: suppliersLoading,
     error: suppliersError,
+    refetch: refetchSuppliers,
   } = useSuppliers({
     page_size: 100,
     ordering: "name",
@@ -195,6 +212,34 @@ export function MilkIntakeForm({
     onSuccess?.();
   };
 
+  const handleCreateSupplier = async (values: SupplierFormValues) => {
+    try {
+      const created = await createSupplier.mutateAsync({
+        supplier_id: values.supplier_id,
+        name: values.name,
+        supplier_type: values.supplier_type,
+        status: values.status,
+        phone: values.phone,
+        alternate_phone: normalizeOptional(values.alternate_phone),
+        email: normalizeOptional(values.email),
+        address: values.address,
+        route_name: values.route_name,
+        collection_time: values.collection_time,
+        payment_cycle: values.payment_cycle,
+        bank_name: normalizeOptional(values.bank_name),
+        account_number: normalizeOptional(values.account_number),
+        ifsc_code: normalizeOptional(values.ifsc_code),
+        notes: normalizeOptional(values.notes),
+      });
+      toast.success("Supplier created successfully");
+      setIsSupplierModalOpen(false);
+      await refetchSuppliers();
+      setValue("supplierId", created.id, { shouldDirty: true });
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
   return (
     <motion.form
       onSubmit={handleSubmit(onSubmit)}
@@ -227,10 +272,22 @@ export function MilkIntakeForm({
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <motion.div className="space-y-2" variants={staggerItem}>
-          <Label className="flex items-center gap-2">
-            <MilkIcon className="h-4 w-4 text-dairy-blue" />
-            Supplier *
-          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label className="flex items-center gap-2">
+              <MilkIcon className="h-4 w-4 text-dairy-blue" />
+              Supplier *
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1"
+              onClick={() => setIsSupplierModalOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add supplier
+            </Button>
+          </div>
           <Controller
             name="supplierId"
             control={control}
@@ -258,7 +315,7 @@ export function MilkIntakeForm({
                     <div className="p-4 text-center text-sm text-muted-foreground">
                       <p className="font-medium">No suppliers available</p>
                       <p className="text-xs mt-1">
-                        Go to Milk Management → Suppliers to add suppliers
+                        Use "Add supplier" to create one now
                       </p>
                     </div>
                   )}
@@ -528,6 +585,13 @@ export function MilkIntakeForm({
           ) : null}
         </motion.div>
       </div>
+
+      <SupplierFormModal
+        isOpen={isSupplierModalOpen}
+        onClose={() => setIsSupplierModalOpen(false)}
+        onSubmit={handleCreateSupplier}
+        loading={createSupplier.isPending}
+      />
 
       <motion.div className="flex gap-3 pt-4" variants={staggerItem}>
         <motion.div
