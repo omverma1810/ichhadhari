@@ -44,6 +44,7 @@ import {
   useVendors,
   useCreatePurchaseOrder,
 } from "@/hooks/api/useVendorsEmployees";
+import { useVendorPrices } from "@/hooks/api/useVendorPricing";
 import { useProducts } from "@/lib/hooks/useProduction";
 import type { CreatePurchaseOrderPayload } from "@/types/api/vendors";
 
@@ -86,14 +87,6 @@ export default function CreateOrderPage() {
   const vendors = vendorsData?.results ?? [];
   const products = productsData?.results ?? [];
 
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => String(p.id) === productId);
-    if (product) {
-      setValue(`items.${index}.item_name` as const, product.name);
-      setValue(`items.${index}.unit` as const, product.unit);
-    }
-  };
-
   const {
     register,
     handleSubmit,
@@ -117,6 +110,31 @@ export default function CreateOrderPage() {
       ],
     },
   });
+
+  const selectedVendorId = watch("vendor");
+  const { data: vendorPricesData } = useVendorPrices(
+    selectedVendorId ? parseInt(selectedVendorId) : 0,
+  );
+  const vendorPrices = vendorPricesData?.prices ?? [];
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find((p) => String(p.id) === productId);
+    if (product) {
+      setValue(`items.${index}.item_name` as const, product.name);
+      setValue(`items.${index}.unit` as const, product.unit);
+
+      // Auto-fill vendor-specific price if available
+      const vendorPrice = vendorPrices.find(
+        (vp) => vp.product === product.id && vp.is_active,
+      );
+      if (vendorPrice) {
+        setValue(
+          `items.${index}.unit_price` as const,
+          vendorPrice.vendor_price,
+        );
+      }
+    }
+  };
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -440,7 +458,7 @@ export default function CreateOrderPage() {
                   </div>
                   <div className="flex items-end">
                     <p className="text-sm font-medium pb-2">
-                      Line: \u20b9
+                      Line: ₹
                       {(
                         (Number(items[index]?.quantity) || 0) *
                         (Number(items[index]?.unit_price) || 0)
@@ -459,7 +477,7 @@ export default function CreateOrderPage() {
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Subtotal</p>
                 <p className="text-xl font-bold">
-                  \u20b9{subtotal.toLocaleString("en-IN")}
+                  ₹{subtotal.toLocaleString("en-IN")}
                 </p>
               </div>
             </div>
