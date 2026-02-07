@@ -386,7 +386,9 @@ export default function VendorOrdersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={() =>
-                              router.push("/vendors/orders/" + order.id)
+                              router.push(
+                                "/vendors/purchase-orders/" + order.id,
+                              )
                             }
                           >
                             View Details
