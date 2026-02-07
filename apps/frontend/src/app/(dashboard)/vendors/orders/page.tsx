@@ -23,12 +23,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -140,7 +135,9 @@ export default function VendorOrdersPage() {
 
   const filters: PurchaseOrderFilters = {
     ...(searchQuery && { search: searchQuery }),
-    ...(statusFilter !== "all" && { status: statusFilter as PurchaseOrderStatus }),
+    ...(statusFilter !== "all" && {
+      status: statusFilter as PurchaseOrderStatus,
+    }),
     ordering: "-po_date",
     page_size: 50,
   };
@@ -260,7 +257,9 @@ export default function VendorOrdersPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Total Value</p>
-            <p className="text-lg font-bold">{formatCurrency(stats.totalValue)}</p>
+            <p className="text-lg font-bold">
+              {formatCurrency(stats.totalValue)}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -288,7 +287,9 @@ export default function VendorOrdersPage() {
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="sent">Sent</SelectItem>
             <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="partially_received">Partially Received</SelectItem>
+            <SelectItem value="partially_received">
+              Partially Received
+            </SelectItem>
             <SelectItem value="fully_received">Fully Received</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
@@ -374,7 +375,11 @@ export default function VendorOrdersPage() {
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
