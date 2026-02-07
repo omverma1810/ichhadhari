@@ -22,6 +22,7 @@ import {
   useProducts,
   useWorkers,
 } from "@/lib/hooks/useProduction";
+import { useSegregationPlans } from "@/hooks/api/useMilkManagement";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { BatchIcon, MilkDrop } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
@@ -60,7 +61,12 @@ const toDateTimeLocal = (date: Date | undefined): string => {
 export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
   const createMutation = useCreateBatch();
   const { data: productsData } = useProducts({ limit: 100 });
+  const { data: segregationPlans } = useSegregationPlans({
+    page_size: 1,
+    ordering: "-plan_date",
+  });
   const { data: workers } = useWorkers();
+  const latestPlan = segregationPlans?.results?.[0];
 
   type BatchFormValues = z.infer<typeof batchSchema>;
 
@@ -68,6 +74,7 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
     register,
     handleSubmit,
     control,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<BatchFormValues>({
@@ -98,6 +105,21 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
       ? ((selectedProduct as any).milkRequirementPerUnit ?? 0) * quantity
       : 0;
 
+  const handleUseSuggestion = (item: {
+    product: number;
+    planned_units: number | string;
+  }) => {
+    setValue("productId", String(item.product), { shouldValidate: true });
+    const plannedUnits = Math.max(1, Number(item.planned_units) || 0);
+    setValue("quantity", plannedUnits, { shouldValidate: true });
+    if (latestPlan?.plan_date) {
+      const planDate = new Date(`${latestPlan.plan_date}T08:00:00`);
+      if (!Number.isNaN(planDate.getTime())) {
+        setValue("scheduledStartDate", planDate, { shouldValidate: true });
+      }
+    }
+  };
+
   const onSubmit = async (data: BatchFormValues) => {
     const payload: BatchFormData = {
       productId: data.productId,
@@ -120,6 +142,56 @@ export function BatchForm({ onSuccess, initialData }: BatchFormProps) {
       initial="hidden"
       animate="show"
     >
+      <motion.div
+        className="rounded-xl border border-dashed border-blue-100 bg-blue-50/60 p-4"
+        variants={staggerItem}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-blue-900">
+              Auto-suggest from segregation plan
+            </p>
+            <p className="text-xs text-blue-700">
+              Quickly prefill the product and quantity using the latest plan.
+            </p>
+          </div>
+          {latestPlan && (
+            <span className="text-xs text-blue-600">
+              {latestPlan.plan_date}
+            </span>
+          )}
+        </div>
+        <div className="mt-3 space-y-2">
+          {latestPlan ? (
+            latestPlan.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-2 rounded-lg border border-blue-100 bg-white/80 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-sm font-semibold">{item.product_name}</p>
+                  <p className="text-xs text-blue-700">
+                    {formatNumber(item.planned_units)} {item.product_unit}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleUseSuggestion(item)}
+                >
+                  Use suggestion
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-blue-700">
+              No segregation plan found yet.
+            </p>
+          )}
+        </div>
+      </motion.div>
+
       <motion.div className="space-y-2" variants={staggerItem}>
         <Label htmlFor="productId" className="flex items-center gap-2">
           <BatchIcon className="w-4 h-4 text-dairy-blue" />

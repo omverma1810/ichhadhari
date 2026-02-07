@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,13 +35,32 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useProducts, useCreateBatch } from "@/hooks/api/useProduction";
+import {
+  useProducts,
+  useCreateBatch,
+  productionKeys,
+} from "@/hooks/api/useProduction";
+import { useSegregationPlans } from "@/hooks/api/useMilkManagement";
 import type { CreateProductionBatchPayload } from "@/types/api/production";
+import { formatNumber } from "@/lib/utils/formatters";
+import { batchesService } from "@/services/api";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils/api-helpers";
 
 const batchSchema = z.object({
   product: z.string().min(1, "Product is required"),
@@ -93,11 +113,22 @@ type BatchFormData = z.infer<typeof batchSchema>;
 export default function CreateBatchPage() {
   const router = useRouter();
   const [batchDate, setBatchDate] = useState<Date>();
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const [confirmBulkOpen, setConfirmBulkOpen] = useState(false);
+  const [bulkFailures, setBulkFailures] = useState<
+    Array<{ name: string; reason: string }>
+  >([]);
+  const queryClient = useQueryClient();
 
   const { data: productsData, isLoading: loadingProducts } = useProducts();
+  const { data: segregationPlans } = useSegregationPlans({
+    page_size: 1,
+    ordering: "-plan_date",
+  });
   const createBatch = useCreateBatch();
 
   const products = productsData?.results || [];
+  const latestPlan = segregationPlans?.results?.[0];
 
   const {
     register,
@@ -135,6 +166,77 @@ export default function CreateBatchPage() {
     });
   };
 
+  const handleUseSuggestion = (item: {
+    product: number;
+    allocated_liters: number | string;
+    planned_units: number | string;
+  }) => {
+    setValue("product", String(item.product), { shouldValidate: true });
+    setValue("planned_quantity", Number(item.planned_units) || 0, {
+      shouldValidate: true,
+    });
+    setValue("milk_allocated", Number(item.allocated_liters) || 0, {
+      shouldValidate: true,
+    });
+    if (latestPlan?.plan_date) {
+      const planDate = new Date(latestPlan.plan_date);
+      if (!Number.isNaN(planDate.getTime())) {
+        setBatchDate(planDate);
+        setValue("batch_date", planDate, { shouldValidate: true });
+      }
+    }
+  };
+
+  const handleCreateAllFromPlan = async () => {
+    if (!latestPlan?.items?.length || bulkCreating) return;
+    setBulkCreating(true);
+    setBulkFailures([]);
+
+    const planDate = latestPlan.plan_date || format(new Date(), "yyyy-MM-dd");
+    const payloads = latestPlan.items
+      .map((item) => ({
+        product: item.product,
+        batch_date: planDate,
+        planned_quantity: Number(item.planned_units) || 0,
+        milk_allocated: Number(item.allocated_liters) || 0,
+        product_name: item.product_name,
+      }))
+      .filter(
+        (payload) => payload.planned_quantity > 0 && payload.milk_allocated > 0,
+      );
+
+    let successCount = 0;
+    const failures: Array<{ name: string; reason: string }> = [];
+
+    for (const payload of payloads) {
+      try {
+        await batchesService.createBatch({
+          product: payload.product,
+          batch_date: payload.batch_date,
+          planned_quantity: payload.planned_quantity,
+          milk_allocated: payload.milk_allocated,
+        });
+        successCount += 1;
+      } catch (error) {
+        failures.push({
+          name: payload.product_name || String(payload.product),
+          reason: getErrorMessage(error),
+        });
+      }
+    }
+
+    if (successCount > 0) {
+      queryClient.invalidateQueries({ queryKey: productionKeys.batches() });
+      toast.success(`Created ${successCount} batches from plan`);
+    }
+    if (failures.length > 0) {
+      setBulkFailures(failures);
+      toast.error(`Failed to create ${failures.length} batches`);
+    }
+
+    setBulkCreating(false);
+  };
+
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -158,6 +260,85 @@ export default function CreateBatchPage() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle className="text-base">Auto-suggest batches</CardTitle>
+            <CardDescription>
+              Use the latest milk segregation plan to prefill batch details.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {latestPlan ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>Plan date: {latestPlan.plan_date}</span>
+                  <span>•</span>
+                  <span>
+                    Total milk: {formatNumber(latestPlan.total_liters)} L
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setConfirmBulkOpen(true)}
+                    disabled={bulkCreating}
+                  >
+                    {bulkCreating
+                      ? "Creating batches..."
+                      : "Create all batches"}
+                  </Button>
+                </div>
+                {bulkFailures.length > 0 && (
+                  <div className="rounded-lg border border-red-100 bg-red-50/70 p-3">
+                    <p className="text-sm font-semibold text-red-700">
+                      Failed batches
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-red-700">
+                      {bulkFailures.map((failure) => (
+                        <li key={`${failure.name}-${failure.reason}`}>
+                          {failure.name}: {failure.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {latestPlan.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-3 rounded-lg border border-gray-100 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {item.product_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatNumber(item.allocated_liters)} L allocated •{" "}
+                          {formatNumber(item.planned_units)} {item.product_unit}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUseSuggestion(item)}
+                      >
+                        Use suggestion
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No segregation plan found yet. Create one to auto-suggest
+                batches.
+              </div>
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Batch Information</CardTitle>
@@ -501,6 +682,29 @@ export default function CreateBatchPage() {
           </Button>
         </div>
       </form>
+
+      <AlertDialog open={confirmBulkOpen} onOpenChange={setConfirmBulkOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create all batches?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create production batches for every item in the latest
+              segregation plan. You can still edit any batch afterwards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkCreating}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCreateAllFromPlan}
+              disabled={bulkCreating}
+            >
+              {bulkCreating ? "Creating..." : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
