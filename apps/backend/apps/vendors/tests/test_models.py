@@ -27,7 +27,7 @@ def vendor(db):
     return Vendor.objects.create(
         vendor_id='VEN-001',
         company_name='Test Supplier Ltd',
-        category='raw_material',
+        category='dairy_counter',
         status='active',
         contact_person='John Doe',
         phone='9876543210',

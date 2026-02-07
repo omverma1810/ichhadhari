@@ -45,13 +45,7 @@ import type {
 
 const vendorSchema = z.object({
   company_name: z.string().min(2, "Company name is required"),
-  category: z.enum([
-    "raw_material",
-    "packaging",
-    "equipment",
-    "service",
-    "other",
-  ]),
+  category: z.enum(["dairy_counter", "hotel", "cafe", "restaurant"]),
   contact_person: z.string().min(2, "Contact person is required"),
   phone: z.string().min(10, "Phone must be at least 10 digits"),
   alternate_phone: z.string().optional(),
@@ -77,11 +71,10 @@ const vendorSchema = z.object({
 type VendorFormData = z.infer<typeof vendorSchema>;
 
 const categoryLabels: Record<string, string> = {
-  raw_material: "Raw Material",
-  packaging: "Packaging",
-  equipment: "Equipment",
-  service: "Service",
-  other: "Other",
+  dairy_counter: "Dairy Counter",
+  hotel: "Hotel",
+  cafe: "Cafe",
+  restaurant: "Restaurant",
 };
 
 const paymentMethodLabels: Record<string, string> = {

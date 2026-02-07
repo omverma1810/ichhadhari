@@ -24,8 +24,11 @@ class Supplier(TimeStampedModel):
     """
     
     SUPPLIER_TYPE_CHOICES = [
-        ('farmer', 'Farmer'),
-        ('cooperative', 'Cooperative'),
+        ('milk_supplier', 'Milk Supplier'),
+        ('equipment', 'Equipment'),
+        ('packaging', 'Packaging'),
+        ('chemical', 'Chemical'),
+        ('other', 'Other'),
     ]
     
     STATUS_CHOICES = [

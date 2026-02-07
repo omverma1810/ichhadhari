@@ -228,7 +228,7 @@ const mockSuppliers = {
       id: 1,
       supplier_id: "SUP001",
       name: "Ramesh Kumar",
-      supplier_type: "farmer" as const,
+      supplier_type: "milk_supplier" as const,
       status: "active" as const,
       phone: "+91-9876543210",
       email: "ramesh@example.com",
@@ -315,7 +315,7 @@ export const handlers = [
     async ({ request, params }) => {
       const body = (await request.json()) as Record<string, unknown>;
       return HttpResponse.json({ ...mockSuppliers.results[0], ...body });
-    }
+    },
   ),
 
   http.delete(`${API_BASE_URL}/milk/suppliers/:id/`, () => {
@@ -335,7 +335,7 @@ export const handlers = [
     const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json(
       { ...body, id: 999, collection_id: "COL999" },
-      { status: 201 }
+      { status: 201 },
     );
   }),
 
@@ -353,7 +353,7 @@ export const handlers = [
     const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json(
       { ...body, id: 999, payment_id: "PAY999" },
-      { status: 201 }
+      { status: 201 },
     );
   }),
 

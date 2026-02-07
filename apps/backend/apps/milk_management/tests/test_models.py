@@ -22,7 +22,7 @@ class SupplierModelTest(TestCase):
         self.supplier_data = {
             'supplier_id': 'SUP001',
             'name': 'Test Farmer',
-            'supplier_type': 'farmer',
+            'supplier_type': 'milk_supplier',
             'status': 'active',
             'phone': '+1234567890',
             'address': '123 Farm Road',
@@ -88,7 +88,7 @@ class MilkCollectionModelTest(TestCase):
         self.supplier = Supplier.objects.create(
             supplier_id='SUP001',
             name='Test Farmer',
-            supplier_type='farmer',
+            supplier_type='milk_supplier',
             status='active',
             phone='+1234567890',
             address='123 Farm Road',
@@ -227,7 +227,7 @@ class MilkPaymentModelTest(TestCase):
         self.supplier = Supplier.objects.create(
             supplier_id='SUP001',
             name='Test Farmer',
-            supplier_type='farmer',
+            supplier_type='milk_supplier',
             status='active',
             phone='+1234567890',
             address='123 Farm Road',

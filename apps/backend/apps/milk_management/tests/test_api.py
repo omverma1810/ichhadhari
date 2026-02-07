@@ -33,7 +33,7 @@ class SupplierAPITest(APITestCase):
         self.supplier = Supplier.objects.create(
             supplier_id='SUP001',
             name='Test Farmer',
-            supplier_type='farmer',
+            supplier_type='milk_supplier',
             status='active',
             phone='+1234567890',
             address='123 Farm Road',
@@ -58,7 +58,7 @@ class SupplierAPITest(APITestCase):
         data = {
             'supplier_id': 'SUP002',
             'name': 'New Farmer',
-            'supplier_type': 'farmer',
+            'supplier_type': 'milk_supplier',
             'status': 'active',
             'phone': '+9876543210',
             'address': '456 Farm Road',
@@ -165,7 +165,7 @@ class MilkCollectionAPITest(APITestCase):
         self.supplier = Supplier.objects.create(
             supplier_id='SUP001',
             name='Test Farmer',
-            supplier_type='farmer',
+            supplier_type='milk_supplier',
             status='active',
             phone='+1234567890',
             address='123 Farm Road',
@@ -313,7 +313,7 @@ class MilkPaymentAPITest(APITestCase):
         self.supplier = Supplier.objects.create(
             supplier_id='SUP001',
             name='Test Farmer',
-            supplier_type='farmer',
+            supplier_type='milk_supplier',
             status='active',
             phone='+1234567890',
             address='123 Farm Road',

@@ -6,7 +6,12 @@ import { AuditFields, CommonFilters } from "./common";
 
 // ============ SUPPLIERS ============
 
-export type SupplierType = "farmer" | "cooperative";
+export type SupplierType =
+  | "milk_supplier"
+  | "equipment"
+  | "packaging"
+  | "chemical"
+  | "other";
 export type SupplierStatus = "active" | "inactive" | "suspended";
 export type PaymentCycle = "daily" | "weekly" | "fortnightly" | "monthly";
 

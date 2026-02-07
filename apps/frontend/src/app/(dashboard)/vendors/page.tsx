@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Coffee,
   Download,
   Droplet,
   Eye,
@@ -27,6 +28,7 @@ import {
   Star,
   Store,
   Trash2,
+  Utensils,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -164,31 +166,32 @@ const vendorTypeMeta: Record<
     className: string;
   }
 > = {
-  raw_material: {
-    label: "Raw Material",
-    icon: Droplet,
+  dairy_counter: {
+    label: "Dairy Counter",
+    icon: Store,
     className: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
-  equipment: {
-    label: "Equipment",
-    icon: Factory,
+  hotel: {
+    label: "Hotel",
+    icon: Building2,
     className: "border-blue-200 bg-blue-50 text-blue-700",
   },
-  packaging: {
-    label: "Packaging",
-    icon: Package,
+  cafe: {
+    label: "Cafe",
+    icon: Coffee,
+    className: "border-amber-200 bg-amber-50 text-amber-700",
+  },
+  restaurant: {
+    label: "Restaurant",
+    icon: Utensils,
     className: "border-purple-200 bg-purple-50 text-purple-700",
   },
-  service: {
-    label: "Service",
-    icon: Flame,
-    className: "border-orange-200 bg-orange-50 text-orange-700",
-  },
-  other: {
-    label: "Other",
-    icon: Store,
-    className: "border-slate-200 bg-slate-50 text-slate-600",
-  },
+};
+
+const fallbackVendorTypeMeta = {
+  label: "Other",
+  icon: Store,
+  className: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
 // Safe accessor for vendorTypeMeta - falls back to 'other' for unknown types
@@ -198,7 +201,7 @@ const getVendorTypeMeta = (
   if (vendorType && vendorType in vendorTypeMeta) {
     return vendorTypeMeta[vendorType as VendorType];
   }
-  return vendorTypeMeta.other;
+  return fallbackVendorTypeMeta;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -690,11 +693,10 @@ export default function VendorsOverviewPage() {
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-[#F4A920]/30 bg-white/95 text-[#5D4037] shadow-lg">
                 <SelectItem value="all">All Vendor Types</SelectItem>
-                <SelectItem value="milk_supplier">Milk Supplier</SelectItem>
-                <SelectItem value="equipment">Equipment</SelectItem>
-                <SelectItem value="packaging">Packaging</SelectItem>
-                <SelectItem value="chemical">Chemical</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="dairy_counter">Dairy Counter</SelectItem>
+                <SelectItem value="hotel">Hotel</SelectItem>
+                <SelectItem value="cafe">Cafe</SelectItem>
+                <SelectItem value="restaurant">Restaurant</SelectItem>
               </SelectContent>
             </Select>
             <Select

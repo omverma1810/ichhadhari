@@ -64,12 +64,18 @@ const paymentMethodOptions = [
   "bank_transfer",
 ] as const satisfies readonly PaymentMethod[];
 const vendorTypeOptions = [
-  "milk_supplier",
-  "equipment",
-  "packaging",
-  "chemical",
-  "other",
+  "dairy_counter",
+  "hotel",
+  "cafe",
+  "restaurant",
 ] as const satisfies readonly VendorType[];
+
+const vendorTypeLabels: Record<VendorType, string> = {
+  dairy_counter: "Dairy Counter",
+  hotel: "Hotel",
+  cafe: "Cafe",
+  restaurant: "Restaurant",
+};
 const vendorStatusOptions = [
   "active",
   "inactive",
@@ -219,7 +225,10 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
   const initialValues = useMemo<VendorFormValues>(
     () => ({
       company_name: vendor?.company_name ?? "",
-      vendor_type: vendor?.vendor_type ?? "milk_supplier",
+      vendor_type:
+        (vendor as Vendor | null | undefined)?.vendor_type ??
+        (vendor as any)?.category ??
+        "dairy_counter",
       status: vendor?.status ?? "active",
       phone: vendor?.phone ?? "",
       email: vendor?.email ?? "",
@@ -393,7 +402,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
 
         const vendorPayload: any = {
           company_name: values.company_name,
-          vendor_type: values.vendor_type,
+          category: values.vendor_type,
           status: values.status,
           contact_persons: preparedContacts,
           phone: values.phone,
@@ -523,8 +532,8 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
               className="h-11 w-full rounded-xl border border-[#F4A920]/50 bg-white px-3 text-sm text-[#5D4037]"
             >
               {vendorTypeOptions.map((option) => (
-                <option key={option} value={option} className="capitalize">
-                  {option.replace("_", " ")}
+                <option key={option} value={option}>
+                  {vendorTypeLabels[option]}
                 </option>
               ))}
             </select>

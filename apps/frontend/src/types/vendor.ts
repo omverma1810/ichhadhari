@@ -1,11 +1,6 @@
 export type VendorStatus = "active" | "inactive" | "suspended" | "blocked";
 
-export type VendorType =
-  | "milk_supplier"
-  | "equipment"
-  | "packaging"
-  | "chemical"
-  | "other";
+export type VendorType = "dairy_counter" | "hotel" | "cafe" | "restaurant";
 
 export type PaymentMethod = "cheque" | "neft" | "cash" | "bank_transfer";
 

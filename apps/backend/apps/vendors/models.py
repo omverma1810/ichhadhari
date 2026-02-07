@@ -15,11 +15,10 @@ class Vendor(TimeStampedModel):
     """
     
     CATEGORY_CHOICES = [
-        ('raw_material', 'Raw Material'),
-        ('packaging', 'Packaging'),
-        ('equipment', 'Equipment'),
-        ('service', 'Service'),
-        ('other', 'Other'),
+        ('dairy_counter', 'Dairy Counter'),
+        ('hotel', 'Hotel'),
+        ('cafe', 'Cafe'),
+        ('restaurant', 'Restaurant'),
     ]
     
     STATUS_CHOICES = [

@@ -43,7 +43,7 @@ def vendor(db):
     return Vendor.objects.create(
         vendor_id='VEN-001',
         company_name='Test Supplier Ltd',
-        category='raw_material',
+        category='dairy_counter',
         status='active',
         contact_person='John Doe',
         phone='9876543210',
@@ -82,7 +82,7 @@ class TestVendorAPI:
         data = {
             'vendor_id': 'VEN-002',
             'company_name': 'New Supplier Co',
-            'category': 'packaging',
+            'category': 'restaurant',
             'status': 'active',
             'contact_person': 'Jane Smith',
             'phone': '9876543211',

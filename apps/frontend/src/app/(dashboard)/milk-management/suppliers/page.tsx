@@ -448,8 +448,11 @@ export default function SuppliersPage() {
             }
             options={[
               { label: "All Types", value: "all" },
-              { label: "Farmer", value: "farmer" },
-              { label: "Cooperative", value: "cooperative" },
+              { label: "Milk Supplier", value: "milk_supplier" },
+              { label: "Equipment", value: "equipment" },
+              { label: "Packaging", value: "packaging" },
+              { label: "Chemical", value: "chemical" },
+              { label: "Other", value: "other" },
             ]}
           />
 

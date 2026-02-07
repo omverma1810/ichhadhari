@@ -6,12 +6,7 @@ import { AuditFields, CommonFilters } from "./common";
 
 // ============ VENDORS ============
 
-export type VendorCategory =
-  | "raw_material"
-  | "packaging"
-  | "equipment"
-  | "service"
-  | "other";
+export type VendorCategory = "dairy_counter" | "hotel" | "cafe" | "restaurant";
 
 export type VendorStatus = "active" | "inactive" | "suspended";
 

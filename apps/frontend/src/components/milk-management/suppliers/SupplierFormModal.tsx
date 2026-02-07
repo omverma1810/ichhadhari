@@ -38,7 +38,21 @@ const paymentCycleOptions: PaymentCycle[] = [
   "monthly",
 ];
 
-const supplierTypeOptions: SupplierType[] = ["farmer", "cooperative"];
+const supplierTypeOptions: SupplierType[] = [
+  "milk_supplier",
+  "equipment",
+  "packaging",
+  "chemical",
+  "other",
+];
+
+const supplierTypeLabels: Record<SupplierType, string> = {
+  milk_supplier: "Milk Supplier",
+  equipment: "Equipment",
+  packaging: "Packaging",
+  chemical: "Chemical",
+  other: "Other",
+};
 
 const supplierStatusOptions: SupplierStatus[] = [
   "active",
@@ -60,13 +74,13 @@ const supplierSchema = z
       .string()
       .refine(
         (value) => !value || /^\+?[0-9]{10,15}$/u.test(value),
-        "Alternate phone must be 10-15 digits"
+        "Alternate phone must be 10-15 digits",
       ),
     email: z
       .string()
       .refine(
         (value) => !value || z.string().email().safeParse(value).success,
-        "Invalid email address"
+        "Invalid email address",
       ),
     address: z.string().min(1, "Address is required"),
     route_name: z.string().min(1, "Route is required"),
@@ -89,7 +103,7 @@ const supplierSchema = z
     {
       path: ["bank_name"],
       message: "Bank details required for selected payment cycle",
-    }
+    },
   );
 
 export type SupplierFormValues = z.infer<typeof supplierSchema>;
@@ -105,7 +119,7 @@ export interface SupplierFormModalProps {
 const defaultValues: SupplierFormValues = {
   supplier_id: "",
   name: "",
-  supplier_type: "farmer",
+  supplier_type: "milk_supplier",
   status: "active",
   phone: "",
   alternate_phone: "",
@@ -246,7 +260,7 @@ export function SupplierFormModal({
                 <SelectContent>
                   {supplierTypeOptions.map((option) => (
                     <SelectItem key={option} value={option}>
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                      {supplierTypeLabels[option]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -422,8 +436,8 @@ export function SupplierFormModal({
               {isSubmitting
                 ? "Saving..."
                 : isEditMode
-                ? "Update Supplier"
-                : "Create Supplier"}
+                  ? "Update Supplier"
+                  : "Create Supplier"}
             </Button>
           </div>
         </form>
