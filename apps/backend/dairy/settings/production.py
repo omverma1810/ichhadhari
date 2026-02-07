@@ -90,6 +90,29 @@ if IS_CLOUD_RUN:
             ssl_require=True,
         )
     }
+
+    # ==============================================================================
+    # CACHE - Use Redis only if configured, otherwise fall back to local memory
+    # ==============================================================================
+
+    REDIS_URL = os.getenv('REDIS_URL')
+    if REDIS_URL:
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': REDIS_URL,
+                'KEY_PREFIX': 'dairy',
+                'TIMEOUT': 300,
+            }
+        }
+    else:
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'dairy-local-cache',
+                'TIMEOUT': 300,
+            }
+        }
     
     # ==============================================================================
     # STATIC & MEDIA FILES - Cloud Run with WhiteNoise

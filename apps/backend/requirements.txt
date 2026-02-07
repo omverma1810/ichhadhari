@@ -42,7 +42,7 @@ pandas==2.1.4
 
 # Task Queue (optional, for background jobs)
 # celery==5.3.4
-# redis==5.0.1
+redis==5.0.1
 
 # Testing
 pytest==7.4.3
