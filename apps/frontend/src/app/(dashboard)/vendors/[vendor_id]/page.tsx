@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Building2,
@@ -75,11 +75,24 @@ const statusBadgeStyles: Record<VendorStatus, string> = {
 export default function VendorDetailPage() {
   const params = useParams<{ vendor_id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const vendorId = Number(params?.vendor_id);
   const isValidId = Number.isFinite(vendorId) && vendorId > 0;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    if (
+      requestedTab === "overview" ||
+      requestedTab === "orders" ||
+      requestedTab === "payments" ||
+      requestedTab === "pricing"
+    ) {
+      setActiveTab(requestedTab);
+    }
+  }, [searchParams]);
 
   const {
     data: vendor,

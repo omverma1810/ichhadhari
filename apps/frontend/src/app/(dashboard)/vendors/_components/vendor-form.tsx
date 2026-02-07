@@ -426,7 +426,7 @@ export function VendorForm({ mode, vendor }: VendorFormProps) {
           const result = await createVendor.mutateAsync(vendorPayload);
           toast.success("Vendor created successfully");
           localStorage.removeItem(LOCAL_STORAGE_KEY);
-          router.push(`/vendors/${(result as any)?.id ?? ""}`);
+          router.push(`/vendors/${(result as any)?.id ?? ""}?tab=pricing`);
         } else if (mode === "edit" && vendor) {
           await updateVendor.mutateAsync({
             id: vendor.id as any,

@@ -15,6 +15,7 @@ import {
   Calendar as CalendarIcon,
   Package,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,12 +133,22 @@ export default function CreateOrderPage() {
           `items.${index}.unit_price` as const,
           vendorPrice.vendor_price,
         );
-      } else if (product.selling_price) {
-        setValue(
-          `items.${index}.unit_price` as const,
-          Number(product.selling_price),
-        );
+        return;
       }
+
+      const fallbackPrice =
+        Number(product.selling_price) || Number(product.cost_price) || 0;
+      if (selectedVendorId) {
+        toast.message("No special price found", {
+          description:
+            "Using the standard product price for this vendor instead.",
+        });
+      } else {
+        toast.message("Select a vendor to apply special pricing", {
+          description: "Using the standard product price for now.",
+        });
+      }
+      setValue(`items.${index}.unit_price` as const, fallbackPrice);
     }
   };
 

@@ -21,6 +21,7 @@ import {
   Package,
 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,7 @@ import { useVendors } from "@/lib/hooks/api/useProcurement";
 import { useCreatePurchaseOrder } from "@/lib/hooks/api/useProcurement";
 import { useProducts } from "@/lib/hooks/api/useProduction";
 import { formatNumber } from "@/lib/utils/formatters";
+import { useVendorPrices } from "@/hooks/api/useVendorPricing";
 
 // Schema for items
 const purchaseOrderItemSchema = z.object({
@@ -116,6 +118,11 @@ export default function CreatePurchaseOrderPage() {
 
   const isRecurring = watch("is_recurring");
   const recurrenceFrequency = watch("recurrence_frequency");
+  const selectedVendorId = watch("vendor");
+  const { data: vendorPricesData } = useVendorPrices(
+    selectedVendorId ? parseInt(selectedVendorId) : 0,
+  );
+  const vendorPrices = vendorPricesData?.prices ?? [];
   const watchedItems = watch("items") || [];
 
   // Calculate totals
@@ -153,7 +160,28 @@ export default function CreatePurchaseOrderPage() {
       setValue(`items.${index}.product_id`, productId);
       setValue(`items.${index}.item_name`, product.name);
       setValue(`items.${index}.unit`, product.unit);
-      setValue(`items.${index}.unit_price`, product.cost_price || 0);
+
+      const vendorPrice = vendorPrices.find(
+        (vp) => vp.product === product.id && vp.is_active,
+      );
+      if (vendorPrice) {
+        setValue(`items.${index}.unit_price`, vendorPrice.vendor_price);
+        return;
+      }
+
+      const fallbackPrice =
+        Number(product.selling_price) || Number(product.cost_price) || 0;
+      if (selectedVendorId) {
+        toast.message("No special price found", {
+          description:
+            "Using the standard product price for this vendor instead.",
+        });
+      } else {
+        toast.message("Select a vendor to apply special pricing", {
+          description: "Using the standard product price for now.",
+        });
+      }
+      setValue(`items.${index}.unit_price`, fallbackPrice);
     }
   };
 
