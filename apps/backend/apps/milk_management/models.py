@@ -263,13 +263,13 @@ class MilkCollection(TimeStampedModel):
     rate_per_fat = models.DecimalField(
         max_digits=8,
         decimal_places=2,
-        help_text="Rate per kg of fat"
+        help_text="Fat rate - price per kg of fat content (₹)"
     )
     rate_per_snf = models.DecimalField(
         max_digits=8,
         decimal_places=2,
         default=Decimal('0.00'),
-        help_text="Rate per kg of SNF"
+        help_text="SNF rate - price per kg of SNF content (₹)"
     )
     price_per_liter = models.DecimalField(
         max_digits=10,

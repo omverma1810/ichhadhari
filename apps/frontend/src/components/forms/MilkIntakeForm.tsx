@@ -13,6 +13,7 @@ import {
   Scale,
   FileText,
   Milk as MilkIcon,
+  IndianRupee,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,27 @@ export function MilkIntakeForm({
   });
 
   const fat = watch("fat");
+  const snf = watch("snf");
+  const quantity = watch("quantity");
+  const ratePerFat = watch("ratePerFat");
+  const ratePerSnf = watch("ratePerSnf");
   const recordedAt = watch("recordedAt");
+
+  // Milk price calculation (same formula as backend):
+  // price_per_liter = (fat × rate_per_fat) + (snf × rate_per_snf)
+  // total_amount = quantity × price_per_liter
+  const pricePerLiter = useMemo(() => {
+    const f = Number(fat) || 0;
+    const s = Number(snf) || 0;
+    const rpf = Number(ratePerFat) || 0;
+    const rps = Number(ratePerSnf) || 0;
+    return f * rpf + s * rps;
+  }, [fat, snf, ratePerFat, ratePerSnf]);
+
+  const totalAmount = useMemo(() => {
+    const q = Number(quantity) || 0;
+    return q * pricePerLiter;
+  }, [quantity, pricePerLiter]);
 
   const category = useMemo(() => {
     if (!fat) {
@@ -309,7 +330,7 @@ export function MilkIntakeForm({
         <motion.div className="space-y-2" variants={staggerItem}>
           <Label htmlFor="ratePerFat" className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-dairy-charcoal" />
-            Rate per kg fat (₹) *
+            Fat Rate (₹) *
           </Label>
           <Input
             id="ratePerFat"
@@ -327,7 +348,7 @@ export function MilkIntakeForm({
         <motion.div className="space-y-2" variants={staggerItem}>
           <Label htmlFor="ratePerSnf" className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-dairy-charcoal" />
-            Rate per kg SNF (₹) *
+            SNF Rate (₹) *
           </Label>
           <Input
             id="ratePerSnf"
@@ -395,6 +416,52 @@ export function MilkIntakeForm({
             <p className="text-sm text-red-600">{errors.clr.message}</p>
           ) : null}
         </motion.div>
+
+        {/* Calculated Price Preview */}
+        {(pricePerLiter > 0 || totalAmount > 0) && (
+          <motion.div
+            className="md:col-span-2"
+            variants={staggerItem}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <IndianRupee className="h-5 w-5 text-green-700" />
+                <span className="text-sm font-semibold text-green-800">
+                  Milk Price Calculation
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-md bg-white p-3 text-center shadow-sm">
+                  <p className="text-xs text-muted-foreground">
+                    Price per Liter
+                  </p>
+                  <p className="text-lg font-bold text-green-700">
+                    ₹{pricePerLiter.toFixed(2)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    ({Number(fat) || 0} × ₹{Number(ratePerFat) || 0})
+                    {(Number(snf) || 0) > 0 &&
+                      ` + (${Number(snf) || 0} × ₹${Number(ratePerSnf) || 0})`}
+                  </p>
+                </div>
+                <div className="rounded-md bg-white p-3 text-center shadow-sm">
+                  <p className="text-xs text-muted-foreground">Quantity</p>
+                  <p className="text-lg font-bold text-blue-700">
+                    {(Number(quantity) || 0).toFixed(2)} L
+                  </p>
+                </div>
+                <div className="rounded-md bg-white p-3 text-center shadow-sm border-2 border-green-300">
+                  <p className="text-xs text-muted-foreground">Total Amount</p>
+                  <p className="text-xl font-bold text-green-800">
+                    ₹{totalAmount.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div className="space-y-2 md:col-span-2" variants={staggerItem}>
           <Label className="flex items-center gap-2">
