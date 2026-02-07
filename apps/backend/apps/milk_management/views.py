@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import Supplier, MilkCollection, MilkPayment
+from .models import Supplier, MilkCollection, MilkPayment, MilkSegregationPlan
 from .serializers import (
     SupplierSerializer,
     SupplierListSerializer,
@@ -26,6 +26,7 @@ from .serializers import (
     MilkCollectionListSerializer,
     MilkPaymentSerializer,
     MilkPaymentListSerializer,
+    MilkSegregationPlanSerializer,
 )
 from .permissions import MilkManagementPermission
 
@@ -264,6 +265,23 @@ class MilkCollectionViewSet(viewsets.ModelViewSet):
         stats['end_date'] = end_date
         
         return Response(stats)
+
+
+class MilkSegregationPlanViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for manual milk segregation plans.
+    """
+
+    queryset = MilkSegregationPlan.objects.prefetch_related('items', 'items__product').all()
+    serializer_class = MilkSegregationPlanSerializer
+    permission_classes = [IsAuthenticated, MilkManagementPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['plan_date']
+    ordering_fields = ['plan_date', 'created_at', 'total_liters']
+    ordering = ['-plan_date', '-created_at']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
     
     @action(detail=False, methods=['get'])
     def by_supplier(self, request):

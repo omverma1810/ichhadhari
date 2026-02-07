@@ -233,6 +233,45 @@ export interface TodayCollections {
   total_amount: number;
 }
 
+// ============ MILK SEGREGATION PLANS ============
+
+export interface MilkSegregationItem {
+  id: number;
+  product: number;
+  product_name: string;
+  product_unit: string;
+  allocated_liters: number | string;
+  planned_units: number | string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MilkSegregationPlan extends AuditFields {
+  id: number;
+  plan_date: string;
+  total_liters: number | string;
+  notes?: string | null;
+  created_by?: number | null;
+  created_by_name?: string | null;
+  items: MilkSegregationItem[];
+}
+
+export interface CreateMilkSegregationPlanPayload {
+  plan_date: string;
+  total_liters: number | string;
+  notes?: string;
+  items: Array<{
+    product: number;
+    allocated_liters: number | string;
+    notes?: string;
+  }>;
+}
+
+export interface MilkSegregationPlanFilters extends CommonFilters {
+  plan_date?: string;
+}
+
 // ============ PAYMENTS ============
 
 export type PaymentMethod =

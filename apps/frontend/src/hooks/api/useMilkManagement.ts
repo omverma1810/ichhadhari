@@ -5,11 +5,17 @@
 
 "use client";
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   suppliersService,
   collectionsService,
   paymentsService,
+  segregationPlansService,
 } from "@/services/api";
 import { getErrorMessage } from "@/lib/utils/api-helpers";
 import { toast } from "sonner";
@@ -25,6 +31,8 @@ import type {
   UpdatePaymentPayload,
   SupplierCollectionFilters,
   MilkCollection,
+  MilkSegregationPlanFilters,
+  CreateMilkSegregationPlanPayload,
 } from "@/types/api";
 import type { SegregationStats, MilkTrendData } from "@/types/milk";
 
@@ -70,6 +78,14 @@ export const milkManagementKeys = {
   pendingPayments: () => [...milkManagementKeys.payments(), "pending"] as const,
   paymentStats: (days?: number) =>
     [...milkManagementKeys.payments(), "stats", days] as const,
+
+  // Segregation Plans
+  segregationPlans: () =>
+    [...milkManagementKeys.all, "segregation-plans"] as const,
+  segregationPlansList: (filters?: MilkSegregationPlanFilters) =>
+    [...milkManagementKeys.segregationPlans(), "list", filters] as const,
+  segregationPlan: (id: number) =>
+    [...milkManagementKeys.segregationPlans(), "detail", id] as const,
 };
 
 // ============ SUPPLIERS - QUERIES ============
@@ -411,6 +427,43 @@ export const usePaymentStats = (days: number = 30) => {
     queryKey: milkManagementKeys.paymentStats(days),
     queryFn: () => paymentsService.getPaymentStats(days),
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+// ============ SEGREGATION PLANS ============
+
+export const useSegregationPlans = (filters?: MilkSegregationPlanFilters) => {
+  return useQuery({
+    queryKey: milkManagementKeys.segregationPlansList(filters),
+    queryFn: () => segregationPlansService.getPlans(filters),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const useSegregationPlan = (id: number, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: milkManagementKeys.segregationPlan(id),
+    queryFn: () => segregationPlansService.getPlan(id),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const useCreateSegregationPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateMilkSegregationPlanPayload) =>
+      segregationPlansService.createPlan(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: milkManagementKeys.segregationPlans(),
+      });
+      toast.success("Segregation plan saved");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
   });
 };
 

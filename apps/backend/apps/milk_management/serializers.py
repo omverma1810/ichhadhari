@@ -9,7 +9,8 @@ Provides serialization/deserialization for:
 
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Supplier, MilkCollection, MilkPayment
+from django.db import transaction
+from .models import Supplier, MilkCollection, MilkPayment, MilkSegregationPlan, MilkSegregationItem
 
 
 class SupplierSerializer(serializers.ModelSerializer):
@@ -282,6 +283,98 @@ class MilkPaymentSerializer(serializers.ModelSerializer):
     def get_collections_count(self, obj):
         """Get the count of collections covered by this payment."""
         return obj.collections.count()
+
+
+class MilkSegregationItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for product-level allocations within a segregation plan.
+    """
+
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_unit = serializers.CharField(source='product.unit', read_only=True)
+
+    class Meta:
+        model = MilkSegregationItem
+        fields = [
+            'id',
+            'product',
+            'product_name',
+            'product_unit',
+            'allocated_liters',
+            'planned_units',
+            'notes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['planned_units', 'created_at', 'updated_at']
+
+
+class MilkSegregationPlanSerializer(serializers.ModelSerializer):
+    """
+    Serializer for milk segregation plans with nested items.
+    """
+
+    items = MilkSegregationItemSerializer(many=True)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MilkSegregationPlan
+        fields = [
+            'id',
+            'plan_date',
+            'total_liters',
+            'notes',
+            'created_by',
+            'created_by_name',
+            'items',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_by', 'created_by_name', 'created_at', 'updated_at']
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return None
+
+    def validate(self, attrs):
+        items = self.initial_data.get('items', [])
+        total_liters = attrs.get('total_liters')
+        if items and total_liters:
+            allocated_sum = Decimal('0.00')
+            for item in items:
+                allocated_sum += Decimal(str(item.get('allocated_liters', 0) or 0))
+            if allocated_sum > total_liters:
+                raise serializers.ValidationError(
+                    {
+                        'items': 'Allocated liters cannot exceed total available liters.'
+                    }
+                )
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
+        plan = MilkSegregationPlan.objects.create(**validated_data)
+
+        for item_data in items_data:
+            product = item_data['product']
+            allocated_liters = item_data['allocated_liters']
+            milk_required = product.milk_required_per_unit or Decimal('0.00')
+            planned_units = (
+                allocated_liters / milk_required
+                if milk_required > 0
+                else Decimal('0.00')
+            )
+            MilkSegregationItem.objects.create(
+                plan=plan,
+                product=product,
+                allocated_liters=allocated_liters,
+                planned_units=planned_units,
+                notes=item_data.get('notes', '')
+            )
+
+        return plan
     
     def validate_amount(self, value):
         """Validate amount is positive."""

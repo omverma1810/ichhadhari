@@ -6,3 +6,4 @@
 export * from "./suppliers.service";
 export * from "./collections.service";
 export * from "./payments.service";
+export * from "./segregation-plans.service";

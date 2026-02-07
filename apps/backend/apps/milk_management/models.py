@@ -331,6 +331,7 @@ class MilkCollection(TimeStampedModel):
         # SNF score (max 30 points, optimal at 9.0 kg/L or higher)
         snf_score = min(
             (float(self.snf) / 9.0) * 30,
+        from apps.production.models import Product
             30.0
         )
         
@@ -458,6 +459,83 @@ class MilkCollection(TimeStampedModel):
                 "CLR value seems unusually high. Please verify."
             )
 
+    class MilkSegregationPlan(TimeStampedModel):
+        """
+        Manual milk segregation plan into finished products.
+        """
+
+        plan_date = models.DateField(
+            db_index=True,
+            help_text="Segregation plan date"
+        )
+        total_liters = models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+            validators=[MinValueValidator(Decimal('0.01'))],
+            help_text="Total liters available for segregation"
+        )
+        notes = models.TextField(blank=True, help_text="Optional notes")
+        created_by = models.ForeignKey(
+            User,
+            on_delete=models.SET_NULL,
+            null=True,
+            blank=True,
+            related_name="milk_segregation_plans",
+            help_text="User who created the segregation plan"
+        )
+
+        class Meta:
+            db_table = 'milk_segregation_plans'
+            ordering = ['-plan_date', '-created_at']
+            indexes = [
+                models.Index(fields=['plan_date']),
+                models.Index(fields=['created_by']),
+            ]
+
+        def __str__(self):
+            return f"Segregation {self.plan_date} - {self.total_liters}L"
+
+    class MilkSegregationItem(TimeStampedModel):
+        """
+        Product-level allocation for a segregation plan.
+        """
+
+        plan = models.ForeignKey(
+            MilkSegregationPlan,
+            on_delete=models.CASCADE,
+            related_name="items",
+            help_text="Segregation plan"
+        )
+        product = models.ForeignKey(
+            Product,
+            on_delete=models.PROTECT,
+            related_name="milk_segregation_items",
+            help_text="Product receiving allocation"
+        )
+        allocated_liters = models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+            validators=[MinValueValidator(Decimal('0.01'))],
+            help_text="Milk allocated to this product (liters)"
+        )
+        planned_units = models.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+            default=Decimal('0.00'),
+            help_text="Planned units based on milk requirement"
+        )
+        notes = models.TextField(blank=True, help_text="Optional item notes")
+
+        class Meta:
+            db_table = 'milk_segregation_items'
+            ordering = ['product__name']
+            unique_together = ['plan', 'product']
+            indexes = [
+                models.Index(fields=['plan', 'product']),
+            ]
+
+        def __str__(self):
+            return f"{self.product.name} - {self.allocated_liters}L"
 
 class MilkPayment(TimeStampedModel):
     """

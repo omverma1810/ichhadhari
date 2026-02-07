@@ -3,7 +3,7 @@ Admin configuration for Milk Management System
 """
 
 from django.contrib import admin
-from .models import Supplier, MilkCollection, MilkPayment
+from .models import Supplier, MilkCollection, MilkPayment, MilkSegregationPlan, MilkSegregationItem
 
 
 @admin.register(Supplier)
@@ -289,6 +289,20 @@ class MilkPaymentAdmin(admin.ModelAdmin):
     filter_horizontal = ['collections']
     ordering = ['-payment_date']
     date_hierarchy = 'payment_date'
+
+
+class MilkSegregationItemInline(admin.TabularInline):
+    model = MilkSegregationItem
+    extra = 0
+
+
+@admin.register(MilkSegregationPlan)
+class MilkSegregationPlanAdmin(admin.ModelAdmin):
+    list_display = ['plan_date', 'total_liters', 'created_by', 'created_at']
+    list_filter = ['plan_date', 'created_at']
+    search_fields = ['notes']
+    ordering = ['-plan_date', '-created_at']
+    inlines = [MilkSegregationItemInline]
     
     def get_readonly_fields(self, request, obj=None):
         """Make payment_id readonly only when editing."""
