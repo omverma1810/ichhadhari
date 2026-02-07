@@ -229,6 +229,40 @@ class ProductionBatch(TimeStampedModel):
         ],
         help_text="Corrected Lactometer Reading for milk density (normal range: 25-32)"
     )
+    # Product quality parameters
+    product_fat = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('15.00'))
+        ],
+        help_text="Product fat content (kg per liter)"
+    )
+    product_snf = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.00')),
+            MaxValueValidator(Decimal('15.00'))
+        ],
+        help_text="Product SNF - Solids Not Fat (kg per liter)"
+    )
+    product_clr = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0.0')),
+            MaxValueValidator(Decimal('50.0'))
+        ],
+        help_text="Product Corrected Lactometer Reading for density (normal range: 25-32)"
+    )
     yield_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,

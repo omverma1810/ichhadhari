@@ -74,6 +74,9 @@ export interface ProductionBatch extends AuditFields {
   fat?: number | null;
   snf?: number | null;
   clr?: number | null;
+  product_fat?: number | null;
+  product_snf?: number | null;
+  product_clr?: number | null;
   yield_percentage: number; // read-only
   efficiency_score: number; // read-only
   supervisor?: number;
@@ -93,6 +96,9 @@ export interface CreateProductionBatchPayload {
   fat?: number | null;
   snf?: number | null;
   clr?: number | null;
+  product_fat?: number | null;
+  product_snf?: number | null;
+  product_clr?: number | null;
   supervisor?: number;
   operators?: number[];
   notes?: string;

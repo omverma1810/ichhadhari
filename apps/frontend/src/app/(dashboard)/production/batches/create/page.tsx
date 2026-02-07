@@ -59,6 +59,27 @@ const batchSchema = z.object({
     .union([z.coerce.number().min(0).max(50, "CLR must be 0-50"), z.nan()])
     .optional()
     .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
+  productFat: z
+    .union([
+      z.coerce.number().min(0).max(15, "Product fat must be 0-15"),
+      z.nan(),
+    ])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
+  productSnf: z
+    .union([
+      z.coerce.number().min(0).max(15, "Product SNF must be 0-15"),
+      z.nan(),
+    ])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
+  productClr: z
+    .union([
+      z.coerce.number().min(0).max(50, "Product CLR must be 0-50"),
+      z.nan(),
+    ])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
   status: z.enum(["planned", "in_progress", "completed", "cancelled"]),
   supervisor: z
     .union([z.coerce.number().positive(), z.nan(), z.literal("")])
@@ -100,6 +121,9 @@ export default function CreateBatchPage() {
       fat: data.fat ?? null,
       snf: data.snf ?? null,
       clr: data.clr ?? null,
+      product_fat: data.productFat ?? null,
+      product_snf: data.productSnf ?? null,
+      product_clr: data.productClr ?? null,
       supervisor: data.supervisor || undefined,
       notes: data.notes,
     };
@@ -341,6 +365,90 @@ export default function CreateBatchPage() {
                 />
                 {errors.clr && (
                   <p className="text-sm text-red-500">{errors.clr.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Normal range: 25-32
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Droplet className="h-5 w-5" />
+              Product Quality Parameters
+            </CardTitle>
+            <CardDescription>
+              Record fat, SNF, and CLR of the product quality
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="product_fat"
+                  className="flex items-center gap-2"
+                >
+                  <Droplet className="h-4 w-4 text-orange-500" />
+                  Fat (kg/L)
+                </Label>
+                <Input
+                  id="product_fat"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 4.5"
+                  {...register("productFat", { valueAsNumber: true })}
+                />
+                {errors.productFat && (
+                  <p className="text-sm text-red-500">
+                    {errors.productFat.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="product_snf"
+                  className="flex items-center gap-2"
+                >
+                  <Droplet className="h-4 w-4 text-green-500" />
+                  SNF (kg/L)
+                </Label>
+                <Input
+                  id="product_snf"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 8.5"
+                  {...register("productSnf", { valueAsNumber: true })}
+                />
+                {errors.productSnf && (
+                  <p className="text-sm text-red-500">
+                    {errors.productSnf.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="product_clr"
+                  className="flex items-center gap-2"
+                >
+                  <Thermometer className="h-4 w-4 text-blue-500" />
+                  CLR (Density)
+                </Label>
+                <Input
+                  id="product_clr"
+                  type="number"
+                  step="0.1"
+                  placeholder="e.g., 28.0"
+                  {...register("productClr", { valueAsNumber: true })}
+                />
+                {errors.productClr && (
+                  <p className="text-sm text-red-500">
+                    {errors.productClr.message}
+                  </p>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Normal range: 25-32
