@@ -60,7 +60,7 @@ gcloud run deploy "${SERVICE_NAME}" \
     --timeout 300 \
     --max-instances 10 \
     --min-instances 0 \
-    --set-env-vars "DJANGO_SETTINGS_MODULE=dairy.settings.production" \
+    --set-env-vars "DJANGO_SETTINGS_MODULE=dairy.settings.production,ENVIRONMENT=production" \
     --project "${PROJECT_ID}"
 
 echo ""

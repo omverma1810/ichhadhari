@@ -93,7 +93,7 @@ export const navigationItems: NavigationItem[] = [
       },
       {
         title: "Purchase Orders",
-        href: "/inventory/orders",
+        href: "/inventory/purchase-orders",
         icon: ShoppingCart,
       },
     ],
@@ -139,7 +139,7 @@ export const navigationItems: NavigationItem[] = [
 
 export function filterNavigationByRole(
   items: NavigationItem[],
-  userRole: string
+  userRole: string,
 ): NavigationItem[] {
   return items
     .map((item) => ({ ...item }))

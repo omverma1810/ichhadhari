@@ -22,6 +22,7 @@ import {
 import { useVendors } from "@/lib/hooks/api/useProcurement";
 import { useCreatePurchaseOrder } from "@/lib/hooks/api/useProcurement";
 import { useProducts } from "@/lib/hooks/useProduction";
+import { useVendorPrices } from "@/hooks/api/useVendorPricing";
 
 const poItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
@@ -56,14 +57,6 @@ export default function CreatePurchaseOrderPage() {
   const products = productsData?.results || [];
   const createPoMutation = useCreatePurchaseOrder();
 
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => String(p.id) === productId);
-    if (product) {
-      setValue(`items.${index}.item_name`, product.name);
-      setValue(`items.${index}.unit`, product.unit);
-    }
-  };
-
   const {
     register,
     handleSubmit,
@@ -87,6 +80,30 @@ export default function CreatePurchaseOrderPage() {
       ],
     },
   });
+
+  const selectedVendorId = watch("vendor");
+  const { data: vendorPricesData } = useVendorPrices(
+    selectedVendorId ? parseInt(selectedVendorId) : 0,
+  );
+  const vendorPrices = vendorPricesData?.prices ?? [];
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find((p) => String(p.id) === productId);
+    if (product) {
+      setValue(`items.${index}.item_name`, product.name);
+      setValue(`items.${index}.unit`, product.unit);
+
+      // Auto-fill vendor-specific price if available, otherwise fall back to product selling price
+      const vendorPrice = vendorPrices.find(
+        (vp) => vp.product === product.id && vp.is_active,
+      );
+      if (vendorPrice) {
+        setValue(`items.${index}.unit_price`, vendorPrice.vendor_price);
+      } else if (product.selling_price) {
+        setValue(`items.${index}.unit_price`, Number(product.selling_price));
+      }
+    }
+  };
 
   const { fields, append, remove } = useFieldArray({
     control,

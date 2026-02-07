@@ -123,7 +123,7 @@ export default function CreateOrderPage() {
       setValue(`items.${index}.item_name` as const, product.name);
       setValue(`items.${index}.unit` as const, product.unit);
 
-      // Auto-fill vendor-specific price if available
+      // Auto-fill vendor-specific price if available, otherwise fall back to product selling price
       const vendorPrice = vendorPrices.find(
         (vp) => vp.product === product.id && vp.is_active,
       );
@@ -131,6 +131,11 @@ export default function CreateOrderPage() {
         setValue(
           `items.${index}.unit_price` as const,
           vendorPrice.vendor_price,
+        );
+      } else if (product.selling_price) {
+        setValue(
+          `items.${index}.unit_price` as const,
+          Number(product.selling_price),
         );
       }
     }

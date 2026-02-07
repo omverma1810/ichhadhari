@@ -45,13 +45,25 @@ import type { CreateProductionBatchPayload } from "@/types/api/production";
 const batchSchema = z.object({
   product: z.string().min(1, "Product is required"),
   batch_date: z.date({ message: "Batch date is required" }),
-  planned_quantity: z.number().min(0.01, "Planned quantity must be > 0"),
-  milk_allocated: z.number().min(0.01, "Milk allocated must be > 0"),
-  fat: z.number().min(0).max(15, "Fat must be 0-15").optional(),
-  snf: z.number().min(0).max(15, "SNF must be 0-15").optional(),
-  clr: z.number().min(0).max(50, "CLR must be 0-50").optional(),
+  planned_quantity: z.coerce.number().min(0.01, "Planned quantity must be > 0"),
+  milk_allocated: z.coerce.number().min(0.01, "Milk allocated must be > 0"),
+  fat: z
+    .union([z.coerce.number().min(0).max(15, "Fat must be 0-15"), z.nan()])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
+  snf: z
+    .union([z.coerce.number().min(0).max(15, "SNF must be 0-15"), z.nan()])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
+  clr: z
+    .union([z.coerce.number().min(0).max(50, "CLR must be 0-50"), z.nan()])
+    .optional()
+    .transform((v) => (v !== undefined && !isNaN(v) ? v : undefined)),
   status: z.enum(["planned", "in_progress", "completed", "cancelled"]),
-  supervisor: z.number().optional(),
+  supervisor: z
+    .union([z.coerce.number().positive(), z.nan(), z.literal("")])
+    .optional()
+    .transform((v) => (typeof v === "number" && !isNaN(v) ? v : undefined)),
   notes: z.string().optional(),
 });
 
@@ -262,7 +274,7 @@ export default function CreateBatchPage() {
                   id="supervisor"
                   type="number"
                   placeholder="Enter supervisor ID"
-                  {...register("supervisor")}
+                  {...register("supervisor", { valueAsNumber: true })}
                 />
               </div>
             </div>

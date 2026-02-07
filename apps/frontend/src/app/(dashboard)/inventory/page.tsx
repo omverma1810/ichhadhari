@@ -59,7 +59,9 @@ export default function InventoryDashboard() {
               <div className="text-2xl font-bold text-[#5D4037]">
                 {stats.totalItems}
               </div>
-              <p className="text-xs text-gray-500 mt-1">Active inventory items</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Active inventory items
+              </p>
             </CardContent>
           </Card>
         </motion.div>
@@ -76,7 +78,9 @@ export default function InventoryDashboard() {
               <div className="text-2xl font-bold text-orange-600">
                 {stats.lowStockItems}
               </div>
-              <p className="text-xs text-orange-700 mt-1">Items need restocking</p>
+              <p className="text-xs text-orange-700 mt-1">
+                Items need restocking
+              </p>
             </CardContent>
           </Card>
         </motion.div>
@@ -145,7 +149,7 @@ export default function InventoryDashboard() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/inventory/orders">
+            <Link href="/inventory/purchase-orders">
               <Button
                 variant="outline"
                 className="w-full justify-between hover:bg-[#8B5A3C] hover:text-white transition-colors"
