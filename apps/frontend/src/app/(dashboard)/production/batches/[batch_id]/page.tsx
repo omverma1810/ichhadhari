@@ -11,9 +11,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  TrendingUp,
-  DollarSign,
   User,
   Edit,
   Trash2,
@@ -45,8 +42,14 @@ import {
 } from "@/lib/hooks/api/useProduction";
 import Link from "next/link";
 
-// Status configuration
+// Status configuration matching backend values
 const statusConfig = {
+  planned: {
+    label: "Planned",
+    color: "bg-slate-100 text-slate-800 border-slate-200",
+    icon: Calendar,
+    description: "Scheduled to start",
+  },
   in_progress: {
     label: "In Progress",
     color: "bg-blue-100 text-blue-800 border-blue-200",
@@ -55,27 +58,15 @@ const statusConfig = {
   },
   completed: {
     label: "Completed",
-    color: "bg-purple-100 text-purple-800 border-purple-200",
-    icon: Package,
-    description: "Production finished",
-  },
-  quality_check: {
-    label: "Quality Check",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: AlertCircle,
-    description: "Under quality inspection",
-  },
-  approved: {
-    label: "Approved",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle,
-    description: "Quality approved",
+    description: "Production finished",
   },
-  rejected: {
-    label: "Rejected",
+  cancelled: {
+    label: "Cancelled",
     color: "bg-red-100 text-red-800 border-red-200",
     icon: XCircle,
-    description: "Quality rejected",
+    description: "Batch cancelled",
   },
 };
 
@@ -125,25 +116,24 @@ export default function BatchDetailPage() {
     );
   }
 
-  const status = statusConfig[batch.batch_status as keyof typeof statusConfig];
+  const status = statusConfig[batch.status as keyof typeof statusConfig];
   const StatusIcon = status.icon;
 
   // Status transition logic
   const canTransitionTo = (newStatus: string) => {
     const transitions: Record<string, string[]> = {
-      in_progress: ["completed", "quality_check"],
-      completed: ["quality_check"],
-      quality_check: ["approved", "rejected"],
-      approved: [],
-      rejected: [],
+      planned: ["in_progress", "cancelled"],
+      in_progress: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
     };
-    return transitions[batch.batch_status]?.includes(newStatus) || false;
+    return transitions[batch.status]?.includes(newStatus) || false;
   };
 
   const handleStatusUpdate = (newStatus: string) => {
     updateBatch.mutate({
       id: batchId,
-      data: { batch_status: newStatus as any },
+      data: { status: newStatus as any },
     });
   };
 
@@ -178,7 +168,7 @@ export default function BatchDetailPage() {
           <div>
             <h1 className="text-3xl font-bold text-[#5D4037] flex items-center gap-3">
               <Package className="w-8 h-8 text-[#8B5A3C]" />
-              {batch.batch_number}
+              {batch.batch_id}
             </h1>
             <p className="text-gray-600 mt-1">{batch.product_name}</p>
           </div>
@@ -205,7 +195,7 @@ export default function BatchDetailPage() {
               <DialogHeader>
                 <DialogTitle>Delete Production Batch?</DialogTitle>
                 <DialogDescription>
-                  This will permanently delete batch {batch.batch_number}. This
+                  This will permanently delete batch {batch.batch_id}. This
                   action cannot be undone.
                 </DialogDescription>
               </DialogHeader>
@@ -257,10 +247,10 @@ export default function BatchDetailPage() {
                 <div className="flex items-center justify-between">
                   {Object.entries(statusConfig).map(([key, config], index) => {
                     const Icon = config.icon;
-                    const isActive = key === batch.batch_status;
+                    const isActive = key === batch.status;
                     const isPast =
                       Object.keys(statusConfig).indexOf(key) <
-                      Object.keys(statusConfig).indexOf(batch.batch_status);
+                      Object.keys(statusConfig).indexOf(batch.status);
 
                     return (
                       <div key={key} className="flex items-center flex-1">
@@ -270,8 +260,8 @@ export default function BatchDetailPage() {
                               isActive
                                 ? config.color
                                 : isPast
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-gray-100 text-gray-400 border-gray-200"
+                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  : "bg-gray-100 text-gray-400 border-gray-200"
                             }`}
                           >
                             <Icon className="w-6 h-6" />
@@ -304,10 +294,9 @@ export default function BatchDetailPage() {
           </motion.div>
 
           {/* Status Transition Actions */}
-          {(canTransitionTo("completed") ||
-            canTransitionTo("quality_check") ||
-            canTransitionTo("approved") ||
-            canTransitionTo("rejected")) && (
+          {(canTransitionTo("in_progress") ||
+            canTransitionTo("completed") ||
+            canTransitionTo("cancelled")) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -324,45 +313,35 @@ export default function BatchDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-3">
+                    {canTransitionTo("in_progress") && (
+                      <Button
+                        onClick={() => handleStatusUpdate("in_progress")}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        disabled={updateBatch.isPending}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Start Batch
+                      </Button>
+                    )}
                     {canTransitionTo("completed") && (
                       <Button
                         onClick={() => handleStatusUpdate("completed")}
-                        className="bg-purple-600 hover:bg-purple-700"
-                        disabled={updateBatch.isPending}
-                      >
-                        <Package className="w-4 h-4 mr-2" />
-                        Mark as Completed
-                      </Button>
-                    )}
-                    {canTransitionTo("quality_check") && (
-                      <Button
-                        onClick={() => handleStatusUpdate("quality_check")}
-                        className="bg-yellow-600 hover:bg-yellow-700"
-                        disabled={updateBatch.isPending}
-                      >
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        Move to Quality Check
-                      </Button>
-                    )}
-                    {canTransitionTo("approved") && (
-                      <Button
-                        onClick={() => handleStatusUpdate("approved")}
                         className="bg-green-600 hover:bg-green-700"
                         disabled={updateBatch.isPending}
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Approve Batch
+                        Mark as Completed
                       </Button>
                     )}
-                    {canTransitionTo("rejected") && (
+                    {canTransitionTo("cancelled") && (
                       <Button
-                        onClick={() => handleStatusUpdate("rejected")}
+                        onClick={() => handleStatusUpdate("cancelled")}
                         variant="outline"
                         className="border-red-200 text-red-600 hover:bg-red-50"
                         disabled={updateBatch.isPending}
                       >
                         <XCircle className="w-4 h-4 mr-2" />
-                        Reject Batch
+                        Cancel Batch
                       </Button>
                     )}
                   </div>
@@ -387,9 +366,9 @@ export default function BatchDetailPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Batch Number</p>
+                    <p className="text-sm text-gray-500 mb-1">Batch ID</p>
                     <p className="font-mono font-semibold text-[#5D4037]">
-                      {batch.batch_number}
+                      {batch.batch_id}
                     </p>
                   </div>
                   <div>
@@ -397,93 +376,60 @@ export default function BatchDetailPage() {
                     <p className="font-medium">{batch.product_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">
-                      Production Date
-                    </p>
+                    <p className="text-sm text-gray-500 mb-1">Batch Date</p>
                     <p className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      {format(new Date(batch.production_date), "PPP")}
+                      {format(new Date(batch.batch_date), "PPP")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Expiry Date</p>
-                    <p className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      {format(new Date(batch.expiry_date), "PPP")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">
-                      Quantity Produced
-                    </p>
+                    <p className="text-sm text-gray-500 mb-1">Planned Qty</p>
                     <p className="font-semibold text-lg">
-                      {batch.quantity_produced.toLocaleString()} {batch.unit}
+                      {Number(batch.planned_quantity || 0).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">
-                      Raw Material Used
-                    </p>
+                    <p className="text-sm text-gray-500 mb-1">Actual Qty</p>
                     <p className="font-semibold text-lg">
-                      {batch.raw_material_used.toLocaleString()} Liters
+                      {Number(batch.actual_quantity || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Milk Allocated</p>
+                    <p className="font-semibold text-lg">
+                      {Number(batch.milk_allocated || 0).toLocaleString()} L
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Milk Used</p>
+                    <p className="font-semibold text-lg">
+                      {Number(batch.milk_used || 0).toLocaleString()} L
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Yield %</p>
+                    <p className="font-semibold text-lg">
+                      {batch.yield_percentage
+                        ? `${Number(batch.yield_percentage).toFixed(2)}%`
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
 
-                {batch.remarks && (
+                {batch.notes && (
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-500 mb-1">Remarks</p>
-                    <p className="text-gray-700">{batch.remarks}</p>
+                    <p className="text-sm text-gray-500 mb-1">Notes</p>
+                    <p className="text-gray-700">{batch.notes}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </motion.div>
-
-          {/* Quality Information */}
-          {batch.quality_rating && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                    Quality Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-500 mb-2">
-                        Quality Rating
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-3">
-                          <div
-                            className="bg-green-600 h-3 rounded-full"
-                            style={{
-                              width: `${(batch.quality_rating / 10) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="text-2xl font-bold text-green-600">
-                          {batch.quality_rating}/10
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
         </div>
 
         {/* Sidebar - 1 column */}
         <div className="space-y-6">
-          {/* Cost Breakdown */}
+          {/* Yield Summary */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -492,28 +438,30 @@ export default function BatchDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-gray-400" />
-                  Cost Breakdown
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  Yield Summary
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Cost per Unit</span>
+                  <span className="text-sm text-gray-600">Planned Qty</span>
                   <span className="font-medium">
-                    ₹{batch.cost_per_unit.toFixed(2)}
+                    {Number(batch.planned_quantity || 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Quantity</span>
+                  <span className="text-sm text-gray-600">Actual Qty</span>
                   <span className="font-medium">
-                    {batch.quantity_produced.toLocaleString()}
+                    {Number(batch.actual_quantity || 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="border-t pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold">Total Cost</span>
+                    <span className="font-semibold">Yield %</span>
                     <span className="text-xl font-bold text-[#8B5A3C]">
-                      ₹{batch.total_cost.toLocaleString()}
+                      {batch.yield_percentage
+                        ? `${Number(batch.yield_percentage).toFixed(2)}%`
+                        : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -540,7 +488,7 @@ export default function BatchDetailPage() {
                     {batch.supervisor_name || "Not assigned"}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Supervisor ID: {batch.supervisor}
+                    Supervisor ID: {batch.supervisor ?? "N/A"}
                   </p>
                 </div>
               </CardContent>
@@ -564,13 +512,17 @@ export default function BatchDetailPage() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Created</p>
                   <p className="text-sm">
-                    {format(new Date(batch.created_at), "PPp")}
+                    {batch.created_at
+                      ? format(new Date(batch.created_at), "PPp")
+                      : "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Last Updated</p>
                   <p className="text-sm">
-                    {format(new Date(batch.updated_at), "PPp")}
+                    {batch.updated_at
+                      ? format(new Date(batch.updated_at), "PPp")
+                      : "N/A"}
                   </p>
                 </div>
               </CardContent>

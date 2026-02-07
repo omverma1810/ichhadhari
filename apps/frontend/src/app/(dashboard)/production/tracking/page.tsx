@@ -1,14 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Clock, AlertCircle, CheckCircle, Package, Calendar } from "lucide-react";
+import {
+  Activity,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  Package,
+  Calendar,
+} from "lucide-react";
 import { useBatches } from "@/lib/hooks/useProduction";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Factory } from "@/components/icons";
 import { staggerContainer, staggerItem } from "@/lib/utils/animations";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime, formatNumber } from "@/lib/utils/formatters";
-import type { ProductionBatch } from "@/lib/api/production";
+import type { ProductionBatch } from "@/lib/services/production.service";
 
 const columns = [
   {
@@ -57,7 +64,7 @@ function SimpleBatchCard({ batch }: { batch: ProductionBatch }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-mono text-xs font-semibold text-dairy-blue">
-            {batch.batch_number}
+            {batch.batch_id}
           </p>
           <h3 className="font-semibold text-dairy-charcoal">
             {batch.product_name || `Product #${batch.product}`}
@@ -71,15 +78,19 @@ function SimpleBatchCard({ batch }: { batch: ProductionBatch }) {
           <Package className="w-4 h-4 text-gray-400" />
           <div>
             <p className="text-xs text-gray-500">Quantity</p>
-            <p className="font-semibold">{formatNumber(batch.planned_quantity)}</p>
+            <p className="font-semibold">
+              {formatNumber(batch.planned_quantity || 0)}
+            </p>
           </div>
         </div>
-        {batch.start_date && (
+        {batch.batch_date && (
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
             <div>
-              <p className="text-xs text-gray-500">Started</p>
-              <p className="font-semibold text-sm">{formatDateTime(batch.start_date)}</p>
+              <p className="text-xs text-gray-500">Batch Date</p>
+              <p className="font-semibold text-sm">
+                {formatDateTime(batch.batch_date)}
+              </p>
             </div>
           </div>
         )}
@@ -177,4 +188,3 @@ export default function ProductionTrackingPage() {
     </div>
   );
 }
-
