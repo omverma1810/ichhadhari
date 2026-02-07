@@ -35,15 +35,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -116,8 +115,20 @@ export default function CreateBatchPage() {
   const [bulkCreating, setBulkCreating] = useState(false);
   const [confirmBulkOpen, setConfirmBulkOpen] = useState(false);
   const [bulkFailures, setBulkFailures] = useState<
-    Array<{ name: string; reason: string }>
+    Array<{
+      name: string;
+      reason: string;
+      product: number;
+      planned_quantity: number;
+      milk_allocated: number;
+      batch_date: string;
+    }>
   >([]);
+  const [bulkSummary, setBulkSummary] = useState<{
+    total: number;
+    succeeded: number;
+    failed: number;
+  } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: productsData, isLoading: loadingProducts } = useProducts();
@@ -187,13 +198,10 @@ export default function CreateBatchPage() {
     }
   };
 
-  const handleCreateAllFromPlan = async () => {
-    if (!latestPlan?.items?.length || bulkCreating) return;
-    setBulkCreating(true);
-    setBulkFailures([]);
-
+  const buildPlanPayloads = () => {
+    if (!latestPlan?.items?.length) return [];
     const planDate = latestPlan.plan_date || format(new Date(), "yyyy-MM-dd");
-    const payloads = latestPlan.items
+    return latestPlan.items
       .map((item) => ({
         product: item.product,
         batch_date: planDate,
@@ -204,9 +212,30 @@ export default function CreateBatchPage() {
       .filter(
         (payload) => payload.planned_quantity > 0 && payload.milk_allocated > 0,
       );
+  };
+
+  const createBatchesFromPayloads = async (
+    payloads: Array<{
+      product: number;
+      batch_date: string;
+      planned_quantity: number;
+      milk_allocated: number;
+      product_name?: string;
+    }>,
+  ) => {
+    setBulkCreating(true);
+    setBulkFailures([]);
+    setBulkSummary(null);
 
     let successCount = 0;
-    const failures: Array<{ name: string; reason: string }> = [];
+    const failures: Array<{
+      name: string;
+      reason: string;
+      product: number;
+      planned_quantity: number;
+      milk_allocated: number;
+      batch_date: string;
+    }> = [];
 
     for (const payload of payloads) {
       try {
@@ -221,6 +250,10 @@ export default function CreateBatchPage() {
         failures.push({
           name: payload.product_name || String(payload.product),
           reason: getErrorMessage(error),
+          product: payload.product,
+          planned_quantity: payload.planned_quantity,
+          milk_allocated: payload.milk_allocated,
+          batch_date: payload.batch_date,
         });
       }
     }
@@ -234,7 +267,31 @@ export default function CreateBatchPage() {
       toast.error(`Failed to create ${failures.length} batches`);
     }
 
+    setBulkSummary({
+      total: payloads.length,
+      succeeded: successCount,
+      failed: failures.length,
+    });
     setBulkCreating(false);
+  };
+
+  const handleCreateAllFromPlan = async () => {
+    if (bulkCreating) return;
+    const payloads = buildPlanPayloads();
+    if (!payloads.length) return;
+    await createBatchesFromPayloads(payloads);
+  };
+
+  const handleRetryFailed = async () => {
+    if (!bulkFailures.length || bulkCreating) return;
+    const payloads = bulkFailures.map((failure) => ({
+      product: failure.product,
+      batch_date: failure.batch_date,
+      planned_quantity: failure.planned_quantity,
+      milk_allocated: failure.milk_allocated,
+      product_name: failure.name,
+    }));
+    await createBatchesFromPayloads(payloads);
   };
 
   return (
@@ -683,28 +740,68 @@ export default function CreateBatchPage() {
         </div>
       </form>
 
-      <AlertDialog open={confirmBulkOpen} onOpenChange={setConfirmBulkOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Create all batches?</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog
+        open={confirmBulkOpen}
+        onOpenChange={(open) => {
+          if (bulkCreating) return;
+          setConfirmBulkOpen(open);
+          if (!open) {
+            setBulkSummary(null);
+          }
+        }}
+      >
+        <DialogContent showCloseButton={!bulkCreating}>
+          <DialogHeader>
+            <DialogTitle>Create all batches?</DialogTitle>
+            <DialogDescription>
               This will create production batches for every item in the latest
               segregation plan. You can still edit any batch afterwards.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkCreating}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCreateAllFromPlan}
-              disabled={bulkCreating}
-            >
-              {bulkCreating ? "Creating..." : "Confirm"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          {bulkSummary && (
+            <div className="rounded-lg border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-900">
+              Created {bulkSummary.succeeded} of {bulkSummary.total} batches.
+              {bulkSummary.failed > 0
+                ? ` ${bulkSummary.failed} failed.`
+                : " All batches created successfully."}
+            </div>
+          )}
+          <DialogFooter>
+            {!bulkSummary && (
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={bulkCreating}>
+                  Cancel
+                </Button>
+              </DialogClose>
+            )}
+            {bulkSummary && bulkFailures.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleRetryFailed}
+                disabled={bulkCreating}
+              >
+                Retry failed only
+              </Button>
+            )}
+            {bulkSummary ? (
+              <DialogClose asChild>
+                <Button type="button" disabled={bulkCreating}>
+                  Done
+                </Button>
+              </DialogClose>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleCreateAllFromPlan}
+                disabled={bulkCreating}
+              >
+                {bulkCreating ? "Creating..." : "Confirm"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
