@@ -136,6 +136,14 @@ const updateProduct = (id: number, data: Partial<ProductFormData>) =>
 const deleteProduct = (id: number) =>
   api.delete<void>(`/api/production/products/${id}/`);
 
+const getProductsForVendor = (vendorId: number) =>
+  api.get<{ vendor_id: string; count: number; results: Product[] }>(
+    "/api/production/products/for_vendor/",
+    {
+      params: { vendor_id: vendorId },
+    },
+  );
+
 // ==================== PRODUCTION BATCHES ====================
 
 const getBatches = (filters?: ProductionFilters) =>
@@ -193,6 +201,7 @@ export const productionService = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getProductsForVendor,
 
   // Batches
   getBatches,

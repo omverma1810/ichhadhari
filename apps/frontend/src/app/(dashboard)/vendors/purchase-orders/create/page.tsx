@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/popover";
 import { useVendors } from "@/lib/hooks/api/useProcurement";
 import { useCreatePurchaseOrder } from "@/lib/hooks/api/useProcurement";
-import { useProducts } from "@/lib/hooks/api/useProduction";
+import { useProductsForVendor } from "@/lib/hooks/api/useProduction";
 import { formatNumber } from "@/lib/utils/formatters";
 import { useVendorPrices } from "@/hooks/api/useVendorPricing";
 
@@ -90,11 +90,9 @@ export default function CreatePurchaseOrderPage() {
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date>();
 
   const { data: vendorsData } = useVendors({ status: "active" });
-  const { data: productsData } = useProducts();
   const createPO = useCreatePurchaseOrder();
 
   const vendors = vendorsData?.results || [];
-  const allProducts = productsData?.results || [];
 
   const {
     register,
@@ -119,18 +117,18 @@ export default function CreatePurchaseOrderPage() {
   const isRecurring = watch("is_recurring");
   const recurrenceFrequency = watch("recurrence_frequency");
   const selectedVendorId = watch("vendor");
+
+  // Fetch products specific to the selected vendor
+  const { data: vendorProductsData } = useProductsForVendor(
+    selectedVendorId ? parseInt(selectedVendorId) : 0,
+  );
+  const products = vendorProductsData?.results || [];
+
   const { data: vendorPricesData } = useVendorPrices(
     selectedVendorId ? parseInt(selectedVendorId) : 0,
   );
   const vendorPrices = vendorPricesData?.prices ?? [];
   const watchedItems = watch("items") || [];
-
-  // Filter products to only show those with vendor pricing
-  const products = selectedVendorId
-    ? allProducts.filter((product) =>
-        vendorPrices.some((vp) => vp.product === product.id && vp.is_active),
-      )
-    : [];
 
   // Calculate totals
   const calculateLineTotal = useCallback((item: (typeof watchedItems)[0]) => {
@@ -162,7 +160,7 @@ export default function CreatePurchaseOrderPage() {
   const grandTotal = subtotal - totalDiscount + totalTax;
 
   const handleProductSelect = (index: number, productId: string) => {
-    const product = allProducts.find((p) => p.id.toString() === productId);
+    const product = products.find((p) => p.id.toString() === productId);
     if (product) {
       setValue(`items.${index}.product_id`, productId);
       setValue(`items.${index}.item_name`, product.name);

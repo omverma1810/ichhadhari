@@ -132,6 +132,51 @@ class ProductViewSet(viewsets.ModelViewSet):
         stats['days'] = days
         
         return Response(stats)
+    
+    @action(detail=False, methods=['get'])
+    def for_vendor(self, request):
+        """
+        Get all products available for a specific vendor.
+        
+        Returns only products that have active VendorProductPrice records
+        for the specified vendor.
+        
+        Query Params:
+            vendor_id (required): The vendor ID to filter products by
+        
+        Returns:
+            List of products with their vendor-specific pricing information
+        """
+        vendor_id = request.query_params.get('vendor_id')
+        
+        if not vendor_id:
+            return Response(
+                {'error': 'vendor_id query parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Import VendorProductPrice model
+        from apps.vendors.models import VendorProductPrice
+        
+        # Get product IDs that have active pricing for this vendor
+        product_ids = VendorProductPrice.objects.filter(
+            vendor_id=vendor_id,
+            is_active=True
+        ).values_list('product_id', flat=True)
+        
+        # Filter products
+        products = self.get_queryset().filter(
+            id__in=product_ids,
+            is_active=True
+        )
+        
+        # Serialize and return
+        serializer = ProductListSerializer(products, many=True)
+        return Response({
+            'vendor_id': vendor_id,
+            'count': products.count(),
+            'results': serializer.data
+        })
 
 
 class ProductionBatchViewSet(viewsets.ModelViewSet):

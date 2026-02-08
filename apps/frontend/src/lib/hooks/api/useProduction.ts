@@ -24,6 +24,8 @@ export const productionKeys = {
   product: (id: number) => [...productionKeys.products(), id] as const,
   productsList: (filters?: ProductionFilters) =>
     [...productionKeys.products(), "list", filters] as const,
+  productsForVendor: (vendorId: number) =>
+    [...productionKeys.products(), "vendor", vendorId] as const,
   batches: () => [...productionKeys.all, "batches"] as const,
   batch: (id: number) => [...productionKeys.batches(), id] as const,
   batchesList: (filters?: ProductionFilters) =>
@@ -65,6 +67,23 @@ export function useProduct(id: number) {
       }
     },
     enabled: !!id && id > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useProductsForVendor(vendorId: number) {
+  return useQuery({
+    queryKey: productionKeys.productsForVendor(vendorId),
+    queryFn: async () => {
+      try {
+        const response = await productionService.getProductsForVendor(vendorId);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch products for vendor:", error);
+        throw error;
+      }
+    },
+    enabled: !!vendorId && vendorId > 0,
     staleTime: 5 * 60 * 1000,
   });
 }
