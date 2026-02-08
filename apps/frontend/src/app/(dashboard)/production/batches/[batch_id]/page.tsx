@@ -39,8 +39,11 @@ import {
   useBatch,
   useUpdateBatch,
   useDeleteBatch,
+  useUpdateActualQuantity,
 } from "@/lib/hooks/api/useProduction";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 // Status configuration matching backend values
 const statusConfig = {
@@ -78,9 +81,12 @@ export default function BatchDetailPage() {
   const { data: batch, isLoading, error } = useBatch(batchId);
   const updateBatch = useUpdateBatch();
   const deleteBatch = useDeleteBatch();
+  const updateActualQuantity = useUpdateActualQuantity();
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showActualQtyDialog, setShowActualQtyDialog] = useState(false);
+  const [actualQtyInput, setActualQtyInput] = useState("");
 
   if (isLoading) {
     return (
@@ -387,9 +393,105 @@ export default function BatchDetailPage() {
                     <p className="font-semibold text-lg">
                       {Number(batch.planned_quantity || 0).toLocaleString()}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Actual Qty</p>
+                  </ddiv className="flex items-center gap-2">
+                      <p className="font-semibold text-lg">
+                        {Number(batch.actual_quantity || 0).toLocaleString()}
+                      </p>
+                      <Dialog
+                        open={showActualQtyDialog}
+                        onOpenChange={setShowActualQtyDialog}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => {
+                              setActualQtyInput(
+                                String(batch.actual_quantity || "")
+                              );
+                            }}
+                          >
+                            Update
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Update Actual Quantity</DialogTitle>
+                            <DialogDescription>
+                              Enter the actual quantity produced in this batch.
+                              This will update your inventory stock.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="actualQty">
+                                Actual Quantity Produced
+                              </Label>
+                              <Input
+                                id="actualQty"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={actualQtyInput}
+                                onChange={(e) =>
+                                  setActualQtyInput(e.target.value)
+                                }
+                                placeholder="Enter quantity"
+                              />
+                              <p className="text-xs text-gray-500">
+                                Current inventory will be incremented by the
+                                difference
+                              </p>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowActualQtyDialog(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                const qty = parseFloat(actualQtyInput);
+                                if (
+                                  !isNaN(qty) &&
+                                  qty >= 0 &&
+                                  actualQtyInput.trim() !== ""
+                                ) {
+                                  updateActualQuantity.mutate(
+                                    {
+                                      id: batchId,
+                                      actualQuantity: qty,
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        setShowActualQtyDialog(false);
+                                      },
+                                    }
+                                  );
+                                } else {
+                                  toast.error(
+                                    "Please enter a valid quantity"
+                                  );
+                                }
+                              }}
+                              disabled={updateActualQuantity.isPending}
+                            >
+                              {updateActualQuantity.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Updating...
+                                </>
+                              ) : (
+                                "Update Quantity"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </divclassName="text-sm text-gray-500 mb-1">Actual Qty</p>
                     <p className="font-semibold text-lg">
                       {Number(batch.actual_quantity || 0).toLocaleString()}
                     </p>

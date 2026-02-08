@@ -213,6 +213,111 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
+    def update_actual_quantity(self, request, pk=None):
+        """
+        Update actual quantity produced and create inventory stock transaction.
+        
+        Expects: actual_quantity
+        
+        This will:
+        1. Update the batch actual_quantity
+        2. Calculate yield_percentage
+        3. Create a stock transaction to increment inventory
+        """
+        batch = self.get_object()
+        
+        # Get actual_quantity from request
+        actual_quantity = request.data.get('actual_quantity')
+        
+        if actual_quantity is None:
+            return Response(
+                {'error': 'actual_quantity is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            actual_quantity = Decimal(str(actual_quantity))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid numeric value for actual_quantity'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if actual_quantity < 0:
+            return Response(
+                {'error': 'actual_quantity cannot be negative'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Store previous quantity to calculate delta
+        previous_quantity = batch.actual_quantity or Decimal('0.00')
+        quantity_delta = actual_quantity - previous_quantity
+        
+        # Update batch actual_quantity (yield_percentage will be calculated in save)
+        batch.actual_quantity = actual_quantity
+        batch.save()
+        
+        # Create stock transaction if there's a positive delta
+        if quantity_delta > 0:
+            self._create_stock_transaction_for_production(batch, quantity_delta)
+        
+        serializer = self.get_serializer(batch)
+        return Response(serializer.data)
+    
+    def _create_stock_transaction_for_production(self, batch, quantity):
+        """Create a stock transaction for produced goods."""
+        from apps.inventory.models import StockTransaction, InventoryItem
+        from django.db.models import F
+        
+        # Get or create inventory item for the product
+        try:
+            inventory_item = InventoryItem.objects.get(name=batch.product.name)
+        except InventoryItem.DoesNotExist:
+            return  # Skip if inventory item doesn't exist
+        
+        # Get current stock
+        stock_before = inventory_item.current_stock
+        stock_after = stock_before + quantity
+        
+        # Generate transaction ID
+        today = timezone.now().date()
+        date_str = today.strftime('%Y%m%d')
+        
+        last_transaction = StockTransaction.objects.filter(
+            transaction_id__startswith=f'ST{date_str}'
+        ).order_by('-transaction_id').first()
+        
+        if last_transaction:
+            last_number = int(last_transaction.transaction_id[-4:])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        
+        transaction_id = f'ST{date_str}{new_number:04d}'
+        
+        # Create stock transaction
+        StockTransaction.objects.create(
+            transaction_id=transaction_id,
+            item=inventory_item,
+            transaction_type='production',
+            transaction_date=timezone.now(),
+            quantity=quantity,
+            is_addition=True,
+            stock_before=stock_before,
+            stock_after=stock_after,
+            unit_cost=batch.product.cost_price,
+            total_cost=quantity * batch.product.cost_price,
+            reference_type='Production Batch',
+            reference_id=batch.batch_id,
+            performed_by=self.request.user,
+            notes=f"Production from batch {batch.batch_id}"
+        )
+        
+        # Update inventory stock
+        inventory_item.current_stock = stock_after
+        inventory_item.save(update_fields=['current_stock', 'updated_at'])
+    
+    @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         """
         Complete a production batch.
@@ -266,6 +371,10 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Store previous quantity to calculate delta
+        previous_quantity = batch.actual_quantity or Decimal('0.00')
+        quantity_delta = actual_quantity - previous_quantity
+        
         # Update batch
         batch.status = 'completed'
         batch.end_time = timezone.now()
@@ -277,6 +386,10 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
         
         # Save (yield_percentage will be calculated in save method)
         batch.save()
+        
+        # Create stock transaction for production
+        if quantity_delta > 0:
+            self._create_stock_transaction_for_production(batch, quantity_delta)
         
         serializer = self.get_serializer(batch)
         return Response(serializer.data)

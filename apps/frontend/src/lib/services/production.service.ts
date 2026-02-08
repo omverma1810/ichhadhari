@@ -155,6 +155,14 @@ const updateBatch = (id: number, data: Partial<ProductionBatchFormData>) =>
 const deleteBatch = (id: number) =>
   api.delete<void>(`/api/production/batches/${id}/`);
 
+const updateActualQuantity = (id: number, actualQuantity: number) =>
+  api.post<ProductionBatch>(
+    `/api/production/batches/${id}/update_actual_quantity/`,
+    {
+      actual_quantity: actualQuantity,
+    },
+  );
+
 // ==================== PRODUCTION SCHEDULES ====================
 
 const getSchedules = (filters?: ProductionFilters) =>
@@ -192,6 +200,7 @@ export const productionService = {
   createBatch,
   updateBatch,
   deleteBatch,
+  updateActualQuantity,
 
   // Schedules
   getSchedules,

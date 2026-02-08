@@ -201,6 +201,31 @@ export function useDeleteBatch() {
   });
 }
 
+export function useUpdateActualQuantity() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      actualQuantity,
+    }: {
+      id: number;
+      actualQuantity: number;
+    }) => productionService.updateActualQuantity(id, actualQuantity),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.batches() });
+      queryClient.invalidateQueries({
+        queryKey: productionKeys.batch(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Actual quantity updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update actual quantity");
+    },
+  });
+}
+
 // ==================== PRODUCTION SCHEDULES ====================
 
 export function useSchedules(filters?: ProductionFilters) {
