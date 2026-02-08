@@ -46,7 +46,7 @@ import {
   useCreatePurchaseOrder,
 } from "@/hooks/api/useVendorsEmployees";
 import { useVendorPrices } from "@/hooks/api/useVendorPricing";
-import { useProducts } from "@/lib/hooks/useProduction";
+import { useProductsForVendor } from "@/lib/hooks/api/useProduction";
 import type { CreatePurchaseOrderPayload } from "@/types/api/vendors";
 
 const itemSchema = z.object({
@@ -82,11 +82,9 @@ export default function CreateOrderPage() {
     page_size: 200,
     status: "active",
   });
-  const { data: productsData } = useProducts();
   const createOrder = useCreatePurchaseOrder();
 
   const vendors = vendorsData?.results ?? [];
-  const products = productsData?.results ?? [];
 
   const {
     register,
@@ -113,6 +111,10 @@ export default function CreateOrderPage() {
   });
 
   const selectedVendorId = watch("vendor");
+  const { data: vendorProductsData } = useProductsForVendor(
+    selectedVendorId ? parseInt(selectedVendorId) : 0,
+  );
+  const products = vendorProductsData?.results ?? [];
   const { data: vendorPricesData } = useVendorPrices(
     selectedVendorId ? parseInt(selectedVendorId) : 0,
   );
@@ -124,7 +126,6 @@ export default function CreateOrderPage() {
       setValue(`items.${index}.item_name` as const, product.name);
       setValue(`items.${index}.unit` as const, product.unit);
 
-      // Auto-fill vendor-specific price if available, otherwise fall back to product selling price
       const vendorPrice = vendorPrices.find(
         (vp) => vp.product === product.id && vp.is_active,
       );
@@ -133,22 +134,15 @@ export default function CreateOrderPage() {
           `items.${index}.unit_price` as const,
           vendorPrice.vendor_price,
         );
-        return;
-      }
-
-      const fallbackPrice =
-        Number(product.selling_price) || Number(product.cost_price) || 0;
-      if (selectedVendorId) {
-        toast.message("No special price found", {
-          description:
-            "Using the standard product price for this vendor instead.",
+        toast.success("Price applied", {
+          description: `Special vendor price: ₹${vendorPrice.vendor_price}/${product.unit}`,
         });
       } else {
-        toast.message("Select a vendor to apply special pricing", {
-          description: "Using the standard product price for now.",
+        setValue(`items.${index}.unit_price` as const, 0);
+        toast.warning("No special price set", {
+          description: "Please enter the price manually for this product.",
         });
       }
-      setValue(`items.${index}.unit_price` as const, fallbackPrice);
     }
   };
 
@@ -398,19 +392,42 @@ export default function CreateOrderPage() {
                       onValueChange={(value) =>
                         handleProductSelect(index, value)
                       }
+                      disabled={!selectedVendorId}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a product" />
+                        <SelectValue
+                          placeholder={
+                            !selectedVendorId
+                              ? "Select a vendor first"
+                              : products.length === 0
+                                ? "No products for this vendor"
+                                : "Select a product"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem
-                            key={product.id}
-                            value={String(product.id)}
-                          >
-                            {product.name} ({product.unit})
-                          </SelectItem>
-                        ))}
+                        {products.length === 0 ? (
+                          <div className="p-3 text-center text-sm text-muted-foreground">
+                            No products with pricing for this vendor.
+                          </div>
+                        ) : (
+                          products.map((product) => {
+                            const vp = vendorPrices.find(
+                              (p) => p.product === product.id && p.is_active,
+                            );
+                            return (
+                              <SelectItem
+                                key={product.id}
+                                value={String(product.id)}
+                              >
+                                {product.name} ({product.unit})
+                                {vp
+                                  ? ` — ₹${Number(vp.vendor_price).toLocaleString()}`
+                                  : " — -"}
+                              </SelectItem>
+                            );
+                          })
+                        )}
                       </SelectContent>
                     </Select>
                     <input
