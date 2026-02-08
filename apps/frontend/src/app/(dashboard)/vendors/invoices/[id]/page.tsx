@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { invoiceService } from "@/services/invoiceService";
 import type { VendorInvoice } from "@/types/api";
 import { InvoicePrintTemplate } from "@/components/invoices/InvoicePrintTemplate";
+import { useQueryClient } from "@tanstack/react-query";
+import { vendorKeys } from "@/hooks/api/useVendorsEmployees";
 
 export default function InvoiceDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [invoice, setInvoice] = useState<VendorInvoice | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +58,7 @@ export default function InvoiceDetailPage() {
     try {
       const updated = await invoiceService.markAsPaid(invoice.id);
       setInvoice(updated);
+      queryClient.invalidateQueries({ queryKey: vendorKeys.all });
     } catch (err: any) {
       alert(err.message || "Failed to mark as paid");
     }

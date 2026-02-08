@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,7 +42,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useVendors } from "@/lib/hooks/api/useProcurement";
+import { usePurchaseOrders, useVendors } from "@/lib/hooks/api/useProcurement";
 import { invoiceService } from "@/services/invoiceService";
 import { toast } from "sonner";
 
@@ -59,6 +59,7 @@ const invoiceSchema = z.object({
   vendor: z.string().min(1, "Vendor is required"),
   invoice_date: z.string().min(1, "Invoice date is required"),
   due_date: z.string().min(1, "Due date is required"),
+  purchase_orders: z.array(z.number()).default([]),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
   notes: z.string().default(""),
   terms_and_conditions: z.string().default(""),
@@ -89,6 +90,7 @@ export default function CreateInvoicePage() {
       vendor: "",
       invoice_date: format(new Date(), "yyyy-MM-dd"),
       due_date: "",
+      purchase_orders: [],
       items: [
         {
           item_description: "",
@@ -111,6 +113,22 @@ export default function CreateInvoicePage() {
   });
 
   const items = watch("items");
+  const selectedVendor = watch("vendor");
+  const selectedPurchaseOrders = watch("purchase_orders");
+  const vendorId = Number(selectedVendor);
+
+  const { data: purchaseOrdersData, isLoading: isLoadingPurchaseOrders } =
+    usePurchaseOrders(
+      Number.isFinite(vendorId) && vendorId > 0
+        ? { vendor: vendorId }
+        : { vendor: -1 },
+    );
+
+  const purchaseOrders = purchaseOrdersData?.results || [];
+
+  useEffect(() => {
+    setValue("purchase_orders", []);
+  }, [selectedVendor, setValue]);
 
   // Calculate totals
   const calculateLineTotal = (item: (typeof items)[0]) => {
@@ -131,6 +149,22 @@ export default function CreateInvoicePage() {
     0,
   );
 
+  const formatCurrency = (value: number) =>
+    `₹${value.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const togglePurchaseOrder = (id: number) => {
+    const next = new Set(selectedPurchaseOrders || []);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setValue("purchase_orders", Array.from(next), { shouldDirty: true });
+  };
+
   const onSubmit = async (data: InvoiceFormData) => {
     setIsSubmitting(true);
     try {
@@ -139,6 +173,7 @@ export default function CreateInvoicePage() {
         invoice_date: data.invoice_date,
         due_date: data.due_date,
         total_amount: totalAmount,
+        purchase_orders: data.purchase_orders,
         items: data.items.map((item) => ({
           item_description: item.item_description,
           quantity: item.quantity,
@@ -238,6 +273,69 @@ export default function CreateInvoicePage() {
                 placeholder="e.g., PO-001 or external reference"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Link Purchase Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-[#F4A920]" />
+              Link Purchase Orders
+            </CardTitle>
+            <CardDescription>
+              Optional: link one or more purchase orders to this invoice
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!selectedVendor && (
+              <p className="text-sm text-[#8B5A3C]">
+                Select a vendor to view their purchase orders.
+              </p>
+            )}
+            {selectedVendor && isLoadingPurchaseOrders && (
+              <p className="text-sm text-[#8B5A3C]">
+                Loading purchase orders...
+              </p>
+            )}
+            {selectedVendor &&
+              !isLoadingPurchaseOrders &&
+              purchaseOrders.length === 0 && (
+                <p className="text-sm text-[#8B5A3C]">
+                  No purchase orders found.
+                </p>
+              )}
+            {selectedVendor && purchaseOrders.length > 0 && (
+              <div className="space-y-2">
+                {purchaseOrders.map((po) => (
+                  <label
+                    key={po.id}
+                    className="flex items-start gap-3 rounded-lg border border-[#F4A920]/20 p-3 hover:border-[#F4A920]/40"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 accent-[#F4A920]"
+                      checked={(selectedPurchaseOrders || []).includes(po.id)}
+                      onChange={() => togglePurchaseOrder(po.id)}
+                    />
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-semibold text-[#5D4037]">
+                          {po.po_number}
+                        </p>
+                        <span className="text-sm text-[#8B5A3C]">
+                          {formatCurrency(Number(po.total_amount) || 0)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#8B5A3C]">
+                        Date: {format(new Date(po.po_date), "dd MMM yyyy")} ·
+                        Status: {po.status}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

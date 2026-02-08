@@ -561,6 +561,48 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
     ViewSet for managing vendor invoices
     """
     permission_classes = [IsAuthenticated]
+
+    def _update_vendor_balances_from_invoice(self, invoice, previous_paid):
+        """Sync vendor totals when an invoice payment changes."""
+        vendor = invoice.vendor
+        delta_paid = invoice.amount_paid - previous_paid
+        if delta_paid == 0:
+            return
+
+        vendor.total_payments = (vendor.total_payments or Decimal('0.00')) + delta_paid
+        vendor.outstanding_balance = (vendor.outstanding_balance or Decimal('0.00')) - delta_paid
+        vendor.save(update_fields=['total_payments', 'outstanding_balance', 'updated_at'])
+
+    def _create_vendor_payment_from_invoice(self, invoice, amount, user):
+        """Create a completed VendorPayment tied to an invoice payment."""
+        if amount <= 0:
+            return
+
+        today = timezone.now().date()
+        date_str = today.strftime('%Y%m%d')
+
+        last_payment = VendorPayment.objects.filter(
+            payment_id__startswith=f'VP{date_str}'
+        ).order_by('-payment_id').first()
+
+        new_number = int(last_payment.payment_id[-4:]) + 1 if last_payment else 1
+        payment_id = f'VP{date_str}{new_number:04d}'
+
+        payment = VendorPayment.objects.create(
+            payment_id=payment_id,
+            vendor=invoice.vendor,
+            payment_date=today,
+            amount=amount,
+            payment_method=invoice.vendor.payment_method or 'bank_transfer',
+            status='completed',
+            is_advance=False,
+            transaction_reference=invoice.invoice_number,
+            processed_by=user,
+            notes=f"Payment recorded from invoice {invoice.invoice_number}",
+        )
+
+        if invoice.purchase_orders.exists():
+            payment.purchase_orders.set(invoice.purchase_orders.all())
     
     def get_queryset(self):
         queryset = VendorInvoice.objects.select_related('vendor', 'created_by').prefetch_related('items')
@@ -594,10 +636,18 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
     def mark_as_paid(self, request, pk=None):
         """Mark invoice as fully paid"""
         invoice = self.get_object()
+        previous_paid = invoice.amount_paid
         invoice.amount_paid = invoice.total_amount
         invoice.payment_status = 'paid'
         invoice.status = 'paid'
         invoice.save()
+
+        self._update_vendor_balances_from_invoice(invoice, previous_paid)
+        self._create_vendor_payment_from_invoice(
+            invoice,
+            invoice.amount_paid - previous_paid,
+            request.user,
+        )
         
         serializer = self.get_serializer(invoice)
         return Response(serializer.data)
@@ -621,7 +671,14 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
                 {'error': 'Invalid amount'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        if amount <= 0:
+            return Response(
+                {'error': 'Amount must be greater than 0'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
+        previous_paid = invoice.amount_paid
         invoice.amount_paid += amount
         if invoice.amount_paid >= invoice.total_amount:
             invoice.payment_status = 'paid'
@@ -630,6 +687,9 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
             invoice.payment_status = 'partially_paid'
         
         invoice.save()
+
+        self._update_vendor_balances_from_invoice(invoice, previous_paid)
+        self._create_vendor_payment_from_invoice(invoice, amount, request.user)
         
         serializer = self.get_serializer(invoice)
         return Response(serializer.data)

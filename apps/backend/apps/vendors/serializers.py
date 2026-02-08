@@ -499,6 +499,11 @@ class VendorInvoiceItemSerializer(serializers.ModelSerializer):
 
 class VendorInvoiceSerializer(serializers.ModelSerializer):
     items = VendorInvoiceItemSerializer(many=True, required=False)
+    purchase_orders = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=PurchaseOrder.objects.all(),
+        required=False
+    )
     vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
     created_by_name = serializers.CharField(
         source='created_by.get_full_name', 
@@ -514,7 +519,7 @@ class VendorInvoiceSerializer(serializers.ModelSerializer):
             'subtotal', 'tax_amount', 'discount_amount', 
             'total_amount', 'amount_paid', 'amount_due',
             'notes', 'terms_and_conditions', 'reference_number',
-            'items', 'created_by', 'created_by_name',
+            'items', 'purchase_orders', 'created_by', 'created_by_name',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -523,9 +528,13 @@ class VendorInvoiceSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
+        purchase_orders = validated_data.pop('purchase_orders', [])
         validated_data['created_by'] = self.context['request'].user
         
         invoice = VendorInvoice.objects.create(**validated_data)
+
+        if purchase_orders:
+            invoice.purchase_orders.set(purchase_orders)
         
         # Create invoice items
         for item_data in items_data:
@@ -539,11 +548,15 @@ class VendorInvoiceSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         items_data = validated_data.pop('items', None)
+        purchase_orders = validated_data.pop('purchase_orders', None)
         
         # Update invoice fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+
+        if purchase_orders is not None:
+            instance.purchase_orders.set(purchase_orders)
         
         # Update items if provided
         if items_data is not None:

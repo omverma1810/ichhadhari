@@ -22,7 +22,7 @@ export const invoiceService = {
     try {
       return await apiClient.get<PaginatedResponse<VendorInvoiceListItem>>(
         "/api/vendors/invoices/",
-        params
+        params,
       );
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -44,7 +44,7 @@ export const invoiceService = {
    * Create invoice
    */
   createInvoice: async (
-    data: CreateVendorInvoicePayload
+    data: CreateVendorInvoicePayload,
   ): Promise<VendorInvoice> => {
     try {
       const formattedData = {
@@ -52,6 +52,7 @@ export const invoiceService = {
         invoice_date: data.invoice_date,
         due_date: data.due_date,
         total_amount: String(data.total_amount),
+        purchase_orders: data.purchase_orders || [],
         items: data.items.map((item) => ({
           item_description: item.item_description,
           quantity: String(item.quantity),
@@ -70,7 +71,7 @@ export const invoiceService = {
       console.log("📤 Creating invoice:", formattedData);
       const response = await apiClient.post<VendorInvoice>(
         "/api/vendors/invoices/",
-        formattedData
+        formattedData,
       );
       console.log("✅ Invoice created:", response);
       return response;
@@ -85,13 +86,13 @@ export const invoiceService = {
    */
   updateInvoice: async (
     id: number,
-    data: Partial<VendorInvoice>
+    data: Partial<VendorInvoice>,
   ): Promise<VendorInvoice> => {
     try {
       console.log("📤 Updating invoice:", data);
       const response = await apiClient.put<VendorInvoice>(
         `/api/vendors/invoices/${id}/`,
-        data
+        data,
       );
       console.log("✅ Invoice updated:", response);
       return response;
@@ -121,7 +122,7 @@ export const invoiceService = {
   markAsPaid: async (id: number): Promise<VendorInvoice> => {
     try {
       return await apiClient.post<VendorInvoice>(
-        `/api/vendors/invoices/${id}/mark_as_paid/`
+        `/api/vendors/invoices/${id}/mark_as_paid/`,
       );
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -133,12 +134,12 @@ export const invoiceService = {
    */
   recordPayment: async (
     id: number,
-    amount: string | number
+    amount: string | number,
   ): Promise<VendorInvoice> => {
     try {
       return await apiClient.post<VendorInvoice>(
         `/api/vendors/invoices/${id}/record_payment/`,
-        { amount: String(amount) }
+        { amount: String(amount) },
       );
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -151,7 +152,7 @@ export const invoiceService = {
   getPrintFormat: async (id: number): Promise<{ text: string }> => {
     try {
       return await apiClient.get<{ text: string }>(
-        `/api/vendors/invoices/${id}/print_format/`
+        `/api/vendors/invoices/${id}/print_format/`,
       );
     } catch (error) {
       throw new Error(handleApiError(error));

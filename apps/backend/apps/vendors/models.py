@@ -422,6 +422,11 @@ class VendorInvoice(TimeStampedModel):
         on_delete=models.CASCADE, 
         related_name='invoices'
     )
+    purchase_orders = models.ManyToManyField(
+        PurchaseOrder,
+        related_name='invoices',
+        blank=True
+    )
     
     # Dates
     invoice_date = models.DateField(default=timezone.now)
