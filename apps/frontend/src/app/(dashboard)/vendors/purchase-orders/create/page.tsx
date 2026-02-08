@@ -94,7 +94,7 @@ export default function CreatePurchaseOrderPage() {
   const createPO = useCreatePurchaseOrder();
 
   const vendors = vendorsData?.results || [];
-  const products = productsData?.results || [];
+  const allProducts = productsData?.results || [];
 
   const {
     register,
@@ -124,6 +124,13 @@ export default function CreatePurchaseOrderPage() {
   );
   const vendorPrices = vendorPricesData?.prices ?? [];
   const watchedItems = watch("items") || [];
+
+  // Filter products to only show those with vendor pricing
+  const products = selectedVendorId
+    ? allProducts.filter((product) =>
+        vendorPrices.some((vp) => vp.product === product.id && vp.is_active),
+      )
+    : [];
 
   // Calculate totals
   const calculateLineTotal = useCallback((item: (typeof watchedItems)[0]) => {
@@ -155,7 +162,7 @@ export default function CreatePurchaseOrderPage() {
   const grandTotal = subtotal - totalDiscount + totalTax;
 
   const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id.toString() === productId);
+    const product = allProducts.find((p) => p.id.toString() === productId);
     if (product) {
       setValue(`items.${index}.product_id`, productId);
       setValue(`items.${index}.item_name`, product.name);
@@ -166,22 +173,16 @@ export default function CreatePurchaseOrderPage() {
       );
       if (vendorPrice) {
         setValue(`items.${index}.unit_price`, vendorPrice.vendor_price);
-        return;
-      }
-
-      const fallbackPrice =
-        Number(product.selling_price) || Number(product.cost_price) || 0;
-      if (selectedVendorId) {
-        toast.message("No special price found", {
-          description:
-            "Using the standard product price for this vendor instead.",
+        toast.success("Price applied", {
+          description: `Special vendor price: ₹${vendorPrice.vendor_price}/${product.unit}`,
         });
       } else {
-        toast.message("Select a vendor to apply special pricing", {
-          description: "Using the standard product price for now.",
+        // No special price - set to 0 to indicate manual entry needed
+        setValue(`items.${index}.unit_price`, 0);
+        toast.warning("No special price set", {
+          description: "Please enter the price manually for this product.",
         });
       }
-      setValue(`items.${index}.unit_price`, fallbackPrice);
     }
   };
 
@@ -442,21 +443,47 @@ export default function CreatePurchaseOrderPage() {
                           onValueChange={(value) =>
                             handleProductSelect(index, value)
                           }
+                          disabled={!selectedVendorId}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a product" />
+                            <SelectValue
+                              placeholder={
+                                !selectedVendorId
+                                  ? "Select a vendor first"
+                                  : products.length === 0
+                                    ? "No products available for this vendor"
+                                    : "Select a product"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem
-                                key={product.id}
-                                value={product.id.toString()}
-                              >
-                                {product.name} - ₹
-                                {formatNumber(product.cost_price || 0)}/
-                                {product.unit}
-                              </SelectItem>
-                            ))}
+                            {products.length === 0 ? (
+                              <div className="p-4 text-center text-sm text-gray-500">
+                                No products with special pricing for this
+                                vendor.
+                                <br />
+                                Please add product prices in vendor settings.
+                              </div>
+                            ) : (
+                              products.map((product) => {
+                                const vendorPrice = vendorPrices.find(
+                                  (vp) =>
+                                    vp.product === product.id && vp.is_active,
+                                );
+                                return (
+                                  <SelectItem
+                                    key={product.id}
+                                    value={product.id.toString()}
+                                  >
+                                    {product.name} - ₹
+                                    {vendorPrice
+                                      ? formatNumber(vendorPrice.vendor_price)
+                                      : "-"}
+                                    /{product.unit}
+                                  </SelectItem>
+                                );
+                              })
+                            )}
                           </SelectContent>
                         </Select>
                         {errors.items?.[index]?.product_id && (
