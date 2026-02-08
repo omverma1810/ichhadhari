@@ -392,6 +392,12 @@ class VendorPaymentViewSet(viewsets.ModelViewSet):
         """Update vendor aggregates based on payment status and amount."""
         vendor = payment.vendor
 
+        # Recalculate total_purchases from all invoices
+        total_invoiced = VendorInvoice.objects.filter(
+            vendor=vendor
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+        vendor.total_purchases = total_invoiced
+
         # Basic totals (idempotent-ish update using fresh aggregates)
         completed_payments = VendorPayment.objects.filter(
             vendor=vendor,
@@ -401,9 +407,9 @@ class VendorPaymentViewSet(viewsets.ModelViewSet):
         total_paid = completed_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         vendor.total_payments = total_paid
 
-        # Outstanding balance: purchases - paid (simplified)
-        vendor.outstanding_balance = (vendor.total_purchases or Decimal('0.00')) - total_paid
-        vendor.save(update_fields=['total_payments', 'outstanding_balance', 'updated_at'])
+        # Outstanding balance: purchases - paid
+        vendor.outstanding_balance = vendor.total_purchases - total_paid
+        vendor.save(update_fields=['total_purchases', 'total_payments', 'outstanding_balance', 'updated_at'])
 
 
 class GoodsReceiptNoteViewSet(viewsets.ModelViewSet):
@@ -569,9 +575,16 @@ class VendorInvoiceViewSet(viewsets.ModelViewSet):
         if delta_paid == 0:
             return
 
+        # Recalculate total_purchases from all invoices for this vendor
+        from django.db.models import Sum
+        total_invoiced = VendorInvoice.objects.filter(
+            vendor=vendor
+        ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+        vendor.total_purchases = total_invoiced
+
         vendor.total_payments = (vendor.total_payments or Decimal('0.00')) + delta_paid
-        vendor.outstanding_balance = (vendor.outstanding_balance or Decimal('0.00')) - delta_paid
-        vendor.save(update_fields=['total_payments', 'outstanding_balance', 'updated_at'])
+        vendor.outstanding_balance = vendor.total_purchases - (vendor.total_payments)
+        vendor.save(update_fields=['total_purchases', 'total_payments', 'outstanding_balance', 'updated_at'])
 
     def _create_vendor_payment_from_invoice(self, invoice, amount, user):
         """Create a completed VendorPayment tied to an invoice payment."""

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Package,
@@ -40,6 +41,7 @@ import {
   useUpdateBatch,
   useDeleteBatch,
   useUpdateActualQuantity,
+  useUpdateMilkUsed,
 } from "@/lib/hooks/api/useProduction";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -82,11 +84,14 @@ export default function BatchDetailPage() {
   const updateBatch = useUpdateBatch();
   const deleteBatch = useDeleteBatch();
   const updateActualQuantity = useUpdateActualQuantity();
+  const updateMilkUsed = useUpdateMilkUsed();
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showActualQtyDialog, setShowActualQtyDialog] = useState(false);
   const [actualQtyInput, setActualQtyInput] = useState("");
+  const [showMilkUsedDialog, setShowMilkUsedDialog] = useState(false);
+  const [milkUsedInput, setMilkUsedInput] = useState("");
 
   if (isLoading) {
     return (
@@ -502,9 +507,133 @@ export default function BatchDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Milk Used</p>
-                    <p className="font-semibold text-lg">
-                      {Number(batch.milk_used || 0).toLocaleString()} L
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-lg">
+                        {Number(batch.milk_used || 0).toLocaleString()} L
+                      </p>
+                      <Dialog
+                        open={showMilkUsedDialog}
+                        onOpenChange={setShowMilkUsedDialog}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => {
+                              setMilkUsedInput(String(batch.milk_used || ""));
+                            }}
+                          >
+                            Update
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Update Milk Used</DialogTitle>
+                            <DialogDescription>
+                              Enter the actual milk used in this batch.
+                              Inventory will be adjusted based on the difference
+                              from allocated milk (
+                              {Number(
+                                batch.milk_allocated || 0,
+                              ).toLocaleString()}{" "}
+                              L).
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="milkUsed">
+                                Actual Milk Used (L)
+                              </Label>
+                              <Input
+                                id="milkUsed"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={milkUsedInput}
+                                onChange={(e) =>
+                                  setMilkUsedInput(e.target.value)
+                                }
+                                placeholder="Enter litres used"
+                              />
+                              {milkUsedInput &&
+                                !isNaN(parseFloat(milkUsedInput)) && (
+                                  <div className="text-xs mt-1">
+                                    {parseFloat(milkUsedInput) <
+                                    Number(batch.milk_allocated || 0) ? (
+                                      <p className="text-green-600">
+                                        +
+                                        {(
+                                          Number(batch.milk_allocated || 0) -
+                                          parseFloat(milkUsedInput)
+                                        ).toFixed(2)}{" "}
+                                        L will be returned to inventory
+                                      </p>
+                                    ) : parseFloat(milkUsedInput) >
+                                      Number(batch.milk_allocated || 0) ? (
+                                      <p className="text-red-600">
+                                        -
+                                        {(
+                                          parseFloat(milkUsedInput) -
+                                          Number(batch.milk_allocated || 0)
+                                        ).toFixed(2)}{" "}
+                                        L will be deducted from inventory
+                                      </p>
+                                    ) : (
+                                      <p className="text-gray-500">
+                                        Milk used equals allocated — no
+                                        inventory change
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowMilkUsedDialog(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                const val = parseFloat(milkUsedInput);
+                                if (
+                                  !isNaN(val) &&
+                                  val >= 0 &&
+                                  milkUsedInput.trim() !== ""
+                                ) {
+                                  updateMilkUsed.mutate(
+                                    {
+                                      id: batchId,
+                                      milkUsed: val,
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        setShowMilkUsedDialog(false);
+                                      },
+                                    },
+                                  );
+                                } else {
+                                  toast.error("Please enter a valid quantity");
+                                }
+                              }}
+                              disabled={updateMilkUsed.isPending}
+                            >
+                              {updateMilkUsed.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Updating...
+                                </>
+                              ) : (
+                                "Update Milk Used"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Yield %</p>

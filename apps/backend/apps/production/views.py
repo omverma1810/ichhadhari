@@ -363,6 +363,127 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
         inventory_item.save(update_fields=['current_stock', 'updated_at'])
     
     @action(detail=True, methods=['post'])
+    def update_milk_used(self, request, pk=None):
+        """
+        Update the milk used for a batch and adjust milk inventory.
+
+        Logic:
+        - If milk_used == milk_allocated: no inventory change
+        - If milk_used < milk_allocated: increment milk inventory by difference
+        - If milk_used > milk_allocated: decrement milk inventory by difference
+        """
+        batch = self.get_object()
+
+        milk_used = request.data.get('milk_used')
+        if milk_used is None:
+            return Response(
+                {'error': 'milk_used is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            milk_used = Decimal(str(milk_used))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid numeric value for milk_used'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if milk_used < 0:
+            return Response(
+                {'error': 'milk_used cannot be negative'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        milk_allocated = batch.milk_allocated or Decimal('0.00')
+        previous_milk_used = batch.milk_used or Decimal('0.00')
+
+        # Update the batch
+        batch.milk_used = milk_used
+        batch.save(update_fields=['milk_used', 'updated_at'])
+
+        # Calculate milk difference for inventory adjustment
+        # Positive = return to inventory, Negative = deduct from inventory
+        milk_difference = milk_allocated - milk_used
+
+        # Adjust for any previous milk_used that was already recorded
+        # We need to reverse old adjustment and apply new one
+        old_difference = milk_allocated - previous_milk_used
+        # Net adjustment = new_difference - old_difference
+        # (only if previous_milk_used was > 0, i.e., already adjusted)
+        if previous_milk_used > 0:
+            net_adjustment = milk_difference - old_difference
+        else:
+            net_adjustment = milk_difference
+
+        if net_adjustment != 0:
+            self._adjust_milk_inventory(batch, net_adjustment)
+
+        serializer = self.get_serializer(batch)
+        return Response(serializer.data)
+
+    def _adjust_milk_inventory(self, batch, quantity_delta):
+        """
+        Adjust milk inventory.
+        quantity_delta > 0: return milk to inventory (used less than allocated)
+        quantity_delta < 0: deduct milk from inventory (used more than allocated)
+        """
+        from apps.inventory.models import StockTransaction, InventoryItem
+
+        # Find the milk inventory item
+        try:
+            milk_item = InventoryItem.objects.get(
+                item_type='raw_milk'
+            )
+        except InventoryItem.DoesNotExist:
+            # Try by name as fallback
+            try:
+                milk_item = InventoryItem.objects.get(
+                    name__icontains='milk'
+                )
+            except (InventoryItem.DoesNotExist, InventoryItem.MultipleObjectsReturned):
+                return  # Skip if milk inventory item not found
+
+        stock_before = milk_item.current_stock
+        abs_quantity = abs(quantity_delta)
+        is_addition = quantity_delta > 0
+        stock_after = stock_before + quantity_delta
+
+        # Generate transaction ID
+        today = timezone.now().date()
+        date_str = today.strftime('%Y%m%d')
+
+        last_transaction = StockTransaction.objects.filter(
+            transaction_id__startswith=f'ST{date_str}'
+        ).order_by('-transaction_id').first()
+
+        new_number = (int(last_transaction.transaction_id[-4:]) + 1) if last_transaction else 1
+        transaction_id = f'ST{date_str}{new_number:04d}'
+
+        action_text = 'returned to' if is_addition else 'consumed from'
+        StockTransaction.objects.create(
+            transaction_id=transaction_id,
+            item=milk_item,
+            transaction_type='adjustment',
+            transaction_date=timezone.now(),
+            quantity=abs_quantity,
+            is_addition=is_addition,
+            stock_before=stock_before,
+            stock_after=stock_after,
+            unit_cost=milk_item.cost_per_unit,
+            total_cost=abs_quantity * milk_item.cost_per_unit,
+            reference_type='Production Batch',
+            reference_id=batch.batch_id,
+            performed_by=self.request.user,
+            notes=f"Milk {action_text} inventory from batch {batch.batch_id} "
+                  f"(allocated: {batch.milk_allocated}L, used: {batch.milk_used}L)"
+        )
+
+        # Update inventory stock
+        milk_item.current_stock = stock_after
+        milk_item.save(update_fields=['current_stock', 'updated_at'])
+
+    @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         """
         Complete a production batch.

@@ -171,6 +171,11 @@ const updateActualQuantity = (id: number, actualQuantity: number) =>
     },
   );
 
+const updateMilkUsed = (id: number, milkUsed: number) =>
+  api.post<ProductionBatch>(`/api/production/batches/${id}/update_milk_used/`, {
+    milk_used: milkUsed,
+  });
+
 // ==================== PRODUCTION SCHEDULES ====================
 
 const getSchedules = (filters?: ProductionFilters) =>
@@ -210,6 +215,7 @@ export const productionService = {
   updateBatch,
   deleteBatch,
   updateActualQuantity,
+  updateMilkUsed,
 
   // Schedules
   getSchedules,

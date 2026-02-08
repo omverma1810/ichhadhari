@@ -245,6 +245,27 @@ export function useUpdateActualQuantity() {
   });
 }
 
+export function useUpdateMilkUsed() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, milkUsed }: { id: number; milkUsed: number }) =>
+      productionService.updateMilkUsed(id, milkUsed),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.batches() });
+      queryClient.invalidateQueries({
+        queryKey: productionKeys.batch(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Milk used updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update milk used");
+    },
+  });
+}
+
 // ==================== PRODUCTION SCHEDULES ====================
 
 export function useSchedules(filters?: ProductionFilters) {
