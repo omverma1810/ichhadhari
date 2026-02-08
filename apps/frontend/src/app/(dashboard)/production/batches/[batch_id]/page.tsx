@@ -393,7 +393,10 @@ export default function BatchDetailPage() {
                     <p className="font-semibold text-lg">
                       {Number(batch.planned_quantity || 0).toLocaleString()}
                     </p>
-                  </ddiv className="flex items-center gap-2">
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Actual Qty</p>
+                    <div className="flex items-center gap-2">
                       <p className="font-semibold text-lg">
                         {Number(batch.actual_quantity || 0).toLocaleString()}
                       </p>
@@ -408,7 +411,7 @@ export default function BatchDetailPage() {
                             className="h-7 px-2 text-xs"
                             onClick={() => {
                               setActualQtyInput(
-                                String(batch.actual_quantity || "")
+                                String(batch.actual_quantity || ""),
                               );
                             }}
                           >
@@ -469,12 +472,10 @@ export default function BatchDetailPage() {
                                       onSuccess: () => {
                                         setShowActualQtyDialog(false);
                                       },
-                                    }
+                                    },
                                   );
                                 } else {
-                                  toast.error(
-                                    "Please enter a valid quantity"
-                                  );
+                                  toast.error("Please enter a valid quantity");
                                 }
                               }}
                               disabled={updateActualQuantity.isPending}
@@ -491,10 +492,7 @@ export default function BatchDetailPage() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                    </divclassName="text-sm text-gray-500 mb-1">Actual Qty</p>
-                    <p className="font-semibold text-lg">
-                      {Number(batch.actual_quantity || 0).toLocaleString()}
-                    </p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Milk Allocated</p>
