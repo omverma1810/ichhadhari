@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +18,7 @@ import {
   Ban,
 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +30,25 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  procurementKeys,
   usePurchaseOrder,
   useApprovePurchaseOrder,
 } from "@/lib/hooks/api/useProcurement";
+import { procurementService } from "@/lib/services/procurement.service";
+import { invoiceService } from "@/services/invoiceService";
 import type { PurchaseOrder } from "@/lib/services/procurement.service";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Status timeline configuration
 const STATUS_TIMELINE = [
@@ -63,12 +79,80 @@ export default function PurchaseOrderDetailPage() {
   const params = useParams<{ po_id: string }>();
   const router = useRouter();
   const poId = params?.po_id ? parseInt(params.po_id) : 0;
+  const queryClient = useQueryClient();
+  const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
+  const [advanceAmount, setAdvanceAmount] = useState("");
+  const [invoiceActionLoading, setInvoiceActionLoading] = useState(false);
 
   const { data: order, isLoading, isError } = usePurchaseOrder(poId);
   const approvePO = useApprovePurchaseOrder();
 
   const handleApprove = () => {
     approvePO.mutate(poId);
+  };
+
+  const handleGenerateInvoice = async () => {
+    setInvoiceActionLoading(true);
+    try {
+      await procurementService.generatePurchaseOrderInvoice(poId);
+      await queryClient.invalidateQueries({
+        queryKey: [...procurementKeys.vendors(), "purchase-orders", poId],
+      });
+      toast.success("Invoice generated for this purchase order");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error || "Failed to generate invoice";
+      toast.error(message);
+    } finally {
+      setInvoiceActionLoading(false);
+    }
+  };
+
+  const handleMarkInvoicePaid = async (invoiceId: number) => {
+    setInvoiceActionLoading(true);
+    try {
+      await invoiceService.markAsPaid(invoiceId);
+      await queryClient.invalidateQueries({
+        queryKey: [...procurementKeys.vendors(), "purchase-orders", poId],
+      });
+      toast.success("Invoice marked as paid");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to mark invoice as paid");
+    } finally {
+      setInvoiceActionLoading(false);
+    }
+  };
+
+  const handleRecordAdvance = async (invoiceId: number) => {
+    const amount = parseFloat(advanceAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid advance amount");
+      return;
+    }
+
+    const currentInvoice = order?.invoices?.find((inv) => inv.id === invoiceId);
+    const amountDue = currentInvoice
+      ? parseFloat(currentInvoice.amount_due)
+      : 0;
+    if (amountDue > 0 && amount > amountDue) {
+      toast.error("Advance amount cannot exceed the remaining balance");
+      return;
+    }
+
+    setInvoiceActionLoading(true);
+    try {
+      await invoiceService.recordPayment(invoiceId, amount);
+      setAdvanceDialogOpen(false);
+      setAdvanceAmount("");
+      await queryClient.invalidateQueries({
+        queryKey: [...procurementKeys.vendors(), "purchase-orders", poId],
+      });
+      toast.success("Advance payment recorded");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to record advance payment");
+    } finally {
+      setInvoiceActionLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -112,8 +196,14 @@ export default function PurchaseOrderDetailPage() {
   }
 
   const currentStatusIndex = STATUS_TIMELINE.findIndex(
-    (s) => s.key === order.status
+    (s) => s.key === order.status,
   );
+  const invoice = order.invoices?.[0];
+  const formatCurrency = (value: string | number) =>
+    `₹${parseFloat(String(value)).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   return (
     <motion.section
@@ -198,8 +288,8 @@ export default function PurchaseOrderDetailPage() {
                         isCompleted
                           ? "border-[#F4A920] bg-[#F4A920] text-white"
                           : isCurrent
-                          ? "border-[#F4A920] bg-white text-[#F4A920]"
-                          : "border-gray-300 bg-white text-gray-400"
+                            ? "border-[#F4A920] bg-white text-[#F4A920]"
+                            : "border-gray-300 bg-white text-gray-400"
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -374,6 +464,120 @@ export default function PurchaseOrderDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Invoice & Payments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-[#F4A920]" />
+            Invoice & Payments
+          </CardTitle>
+          <CardDescription>
+            Generate the invoice and track payment status
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!invoice ? (
+            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-[#F4A920]/40 p-4">
+              <p className="text-sm text-[#8B5A3C]">
+                No invoice has been generated yet. Generate it once the vendor
+                approves the purchase order.
+              </p>
+              <div>
+                <Button
+                  onClick={handleGenerateInvoice}
+                  disabled={
+                    invoiceActionLoading || order.status === "cancelled"
+                  }
+                  className="bg-[#F4A920] hover:bg-[#F4A920]/90"
+                >
+                  {invoiceActionLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Invoice"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 rounded-lg border border-[#F4A920]/20 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-[#8B5A3C]">Invoice Number</p>
+                    <p className="text-lg font-semibold text-[#5D4037]">
+                      {invoice.invoice_number}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant="outline"
+                      className="border-blue-200 text-blue-700"
+                    >
+                      {invoice.status}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="border-amber-200 text-amber-700"
+                    >
+                      {invoice.payment_status.replace("_", " ")}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs text-[#8B5A3C]">Total</p>
+                    <p className="font-semibold text-[#5D4037]">
+                      {formatCurrency(invoice.total_amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#8B5A3C]">Advance Paid</p>
+                    <p className="font-semibold text-green-600">
+                      {formatCurrency(invoice.amount_paid)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#8B5A3C]">Remaining</p>
+                    <p className="font-semibold text-red-600">
+                      {formatCurrency(invoice.amount_due)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/vendors/invoices/${invoice.id}`)}
+                >
+                  View Invoice
+                </Button>
+                {invoice.payment_status !== "paid" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setAdvanceDialogOpen(true)}
+                      disabled={invoiceActionLoading}
+                    >
+                      Record Advance
+                    </Button>
+                    <Button
+                      onClick={() => handleMarkInvoicePaid(invoice.id)}
+                      disabled={invoiceActionLoading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Mark as Paid
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Recurring Order Info */}
       {order.is_recurring && (
         <Card className="border-purple-200 bg-purple-50">
@@ -428,6 +632,53 @@ export default function PurchaseOrderDetailPage() {
           )}
         </div>
       )}
+
+      <Dialog open={advanceDialogOpen} onOpenChange={setAdvanceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Advance Payment</DialogTitle>
+            <DialogDescription>
+              Enter the amount paid in advance for this purchase order invoice.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="advanceAmount">Advance Amount</Label>
+            <Input
+              id="advanceAmount"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={advanceAmount}
+              onChange={(event) => setAdvanceAmount(event.target.value)}
+              placeholder="Enter amount"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAdvanceDialogOpen(false)}
+              disabled={invoiceActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => invoice && handleRecordAdvance(invoice.id)}
+              disabled={invoiceActionLoading || !invoice}
+              className="bg-[#F4A920] hover:bg-[#F4A920]/90"
+            >
+              {invoiceActionLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Advance"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.section>
   );
 }

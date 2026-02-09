@@ -198,17 +198,28 @@ class APIClient {
 
   private getAccessToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("access_token");
+    return (
+      localStorage.getItem("access_token") ||
+      sessionStorage.getItem("access_token")
+    );
   }
 
   private getRefreshToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("refresh_token");
+    return (
+      localStorage.getItem("refresh_token") ||
+      sessionStorage.getItem("refresh_token")
+    );
   }
 
   private setAccessToken(token: string): void {
     if (typeof window !== "undefined") {
-      localStorage.setItem("access_token", token);
+      const rememberMe = localStorage.getItem("remember_me") === "true";
+      if (rememberMe) {
+        localStorage.setItem("access_token", token);
+      } else {
+        sessionStorage.setItem("access_token", token);
+      }
     }
   }
 
@@ -216,13 +227,21 @@ class APIClient {
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("refresh_token");
     }
   }
 
   public setTokens(accessToken: string, refreshToken: string): void {
     if (typeof window !== "undefined") {
-      localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("refresh_token", refreshToken);
+      const rememberMe = localStorage.getItem("remember_me") === "true";
+      if (rememberMe) {
+        localStorage.setItem("access_token", accessToken);
+        localStorage.setItem("refresh_token", refreshToken);
+      } else {
+        sessionStorage.setItem("access_token", accessToken);
+        sessionStorage.setItem("refresh_token", refreshToken);
+      }
     }
   }
 

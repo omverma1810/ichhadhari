@@ -221,8 +221,21 @@ export interface PurchaseOrder {
   is_recurring: boolean;
   recurrence_frequency?: "daily" | "weekly" | "monthly";
   items?: PurchaseOrderItem[];
+  invoices?: PurchaseOrderInvoiceSummary[];
   created_at: string;
   updated_at: string;
+}
+
+export interface PurchaseOrderInvoiceSummary {
+  id: number;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  status: "draft" | "sent" | "paid" | "overdue" | "cancelled";
+  payment_status: "unpaid" | "partially_paid" | "paid";
+  total_amount: string;
+  amount_paid: string;
+  amount_due: string;
 }
 
 export interface PurchaseOrderFormData {
@@ -509,6 +522,12 @@ export const procurementService = {
 
   cancelPurchaseOrder: (id: number): Promise<PurchaseOrder> =>
     api.post<PurchaseOrder>(`/api/vendors/purchase-orders/${id}/cancel/`, {}),
+
+  generatePurchaseOrderInvoice: (id: number): Promise<unknown> =>
+    api.post<unknown>(
+      `/api/vendors/purchase-orders/${id}/generate_invoice/`,
+      {},
+    ),
 
   getActivePurchaseOrders: (): Promise<PurchaseOrder[]> =>
     api

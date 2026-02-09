@@ -5,13 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.utils import timezone
+from datetime import timedelta
 from django.db.models import Sum, Count, Q, F
 from decimal import Decimal
 
 from .models import (
     Vendor, PurchaseOrder, PurchaseOrderItem,
     VendorPayment, GoodsReceiptNote, GRNItem,
-    VendorInvoice, VendorProductPrice
+    VendorInvoice, VendorInvoiceItem, VendorProductPrice
 )
 from .serializers import (
     VendorSerializer, VendorListSerializer,
@@ -173,6 +174,47 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
             po_number=po_number,
             created_by=self.request.user
         )
+
+    def _create_invoice_from_po(self, po: PurchaseOrder):
+        """Create a vendor invoice from a purchase order if none exists."""
+        existing_invoice = po.invoices.first()
+        if existing_invoice:
+            return existing_invoice
+
+        vendor = po.vendor
+        due_date = po.po_date + timedelta(days=vendor.credit_period_days)
+
+        invoice = VendorInvoice.objects.create(
+            vendor=vendor,
+            invoice_date=timezone.now().date(),
+            due_date=due_date,
+            status='sent',
+            payment_status='unpaid',
+            subtotal=po.subtotal,
+            tax_amount=po.tax_amount,
+            discount_amount=po.discount_amount,
+            total_amount=po.total_amount,
+            amount_paid=Decimal('0.00'),
+            notes=f"Auto-generated from PO {po.po_number}",
+            reference_number=po.po_number,
+            created_by=self.request.user,
+        )
+
+        invoice.purchase_orders.add(po)
+
+        for item in po.items.all():
+            VendorInvoiceItem.objects.create(
+                invoice=invoice,
+                item_description=item.item_name,
+                quantity=item.quantity,
+                unit=item.unit,
+                unit_price=item.unit_price,
+                tax_rate=item.tax_percentage,
+                discount_percentage=item.discount_percentage,
+            )
+
+        invoice.save()
+        return invoice
     
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -191,8 +233,25 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
         po.approved_by = request.user
         po.approved_at = timezone.now()
         po.save()
+
+        self._create_invoice_from_po(po)
         
         serializer = self.get_serializer(po)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def generate_invoice(self, request, pk=None):
+        """Generate an invoice for a purchase order on demand."""
+        po = self.get_object()
+
+        if po.status == 'cancelled':
+            return Response(
+                {'error': 'Cannot generate invoice for a cancelled PO'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        invoice = self._create_invoice_from_po(po)
+        serializer = VendorInvoiceSerializer(invoice)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])

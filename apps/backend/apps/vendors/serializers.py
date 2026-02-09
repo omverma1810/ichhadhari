@@ -243,6 +243,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     Complete serializer for PurchaseOrder with nested items.
     """
     items = PurchaseOrderItemSerializer(many=True, read_only=True)
+    invoices = serializers.SerializerMethodField()
     vendor_name = serializers.CharField(source='vendor.company_name', read_only=True)
     created_by_name = serializers.CharField(
         source='created_by.get_full_name',
@@ -264,12 +265,29 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             'approved_at', 'subtotal', 'tax_amount', 'discount_amount',
             'total_amount', 'delivery_address', 'shipping_method',
             'tracking_number', 'terms_and_conditions', 'notes',
-            'is_recurring', 'recurrence_frequency', 'items',
+            'is_recurring', 'recurrence_frequency', 'items', 'invoices',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'po_number', 'subtotal', 'tax_amount', 'discount_amount',
             'total_amount', 'approved_by', 'approved_at', 'created_at', 'updated_at'
+        ]
+
+    def get_invoices(self, obj):
+        invoices = obj.invoices.all().order_by('-invoice_date')
+        return [
+            {
+                'id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'invoice_date': invoice.invoice_date,
+                'due_date': invoice.due_date,
+                'status': invoice.status,
+                'payment_status': invoice.payment_status,
+                'total_amount': str(invoice.total_amount),
+                'amount_paid': str(invoice.amount_paid),
+                'amount_due': str(invoice.amount_due),
+            }
+            for invoice in invoices
         ]
 
 
