@@ -56,8 +56,8 @@ export const useDashboardStats = () => {
   return useQuery<DashboardStats>({
     queryKey: dashboardKeys.stats(),
     queryFn: () => dashboardService.getStats(),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
   });
 };
 

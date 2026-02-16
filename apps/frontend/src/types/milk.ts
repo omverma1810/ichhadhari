@@ -27,7 +27,7 @@ export interface MilkIntakeFormData {
   snf?: number;
   clr?: number;
   ratePerFat: number;
-  ratePerSnf: number;
+  ratePerSnf?: number;
   collectionTime?: string; // HH:MM from time input
   notes?: string;
   recordedAt: Date;

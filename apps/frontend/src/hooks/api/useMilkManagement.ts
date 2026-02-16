@@ -322,6 +322,8 @@ export const useCreateCollection = () => {
       queryClient.invalidateQueries({
         queryKey: milkManagementKeys.suppliers(),
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Collection recorded successfully");
     },
     onError: (error) => {
@@ -351,6 +353,8 @@ export const useUpdateCollection = () => {
       queryClient.invalidateQueries({
         queryKey: milkManagementKeys.collectionsList(),
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Collection updated successfully");
     },
     onError: (error) => {
@@ -374,6 +378,8 @@ export const useDeleteCollection = () => {
       queryClient.invalidateQueries({
         queryKey: milkManagementKeys.suppliers(),
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Collection deleted successfully");
     },
     onError: (error) => {
@@ -459,6 +465,8 @@ export const useCreateSegregationPlan = () => {
       queryClient.invalidateQueries({
         queryKey: milkManagementKeys.segregationPlans(),
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Segregation plan saved");
     },
     onError: (error) => {

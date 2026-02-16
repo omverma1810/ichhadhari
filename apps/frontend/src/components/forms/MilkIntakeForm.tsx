@@ -60,9 +60,7 @@ const milkIntakeSchema = z.object({
   ratePerFat: z
     .number({ message: "Rate per fat is required" })
     .positive("Rate per fat is required"),
-  ratePerSnf: z
-    .number({ message: "Rate per SNF is required" })
-    .positive("Rate per SNF is required"),
+  ratePerSnf: z.number().min(0, "Rate per SNF cannot be negative").optional(),
   collectionTime: z
     .string()
     .regex(/^[0-2]?\d:[0-5]\d$/, "Invalid time format")
@@ -137,7 +135,7 @@ export function MilkIntakeForm({
       supplierId: initialData?.supplierId,
       milkType: initialData?.milkType ?? "cow",
       ratePerFat: initialData?.ratePerFat ?? 60,
-      ratePerSnf: initialData?.ratePerSnf ?? 10,
+      ratePerSnf: initialData?.ratePerSnf,
       collectionTime:
         initialData?.collectionTime ?? format(new Date(), "HH:mm"),
       quantity: initialData?.quantity ?? 0,
@@ -204,7 +202,7 @@ export function MilkIntakeForm({
       snf: (data.snf ?? 0).toFixed(2),
       clr: (data.clr ?? 0).toFixed(1),
       rate_per_fat: data.ratePerFat.toFixed(2),
-      rate_per_snf: data.ratePerSnf.toFixed(2),
+      rate_per_snf: Number(data.ratePerSnf ?? 0).toFixed(2),
       notes: data.notes,
     };
 
@@ -405,14 +403,19 @@ export function MilkIntakeForm({
         <motion.div className="space-y-2" variants={staggerItem}>
           <Label htmlFor="ratePerSnf" className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-dairy-charcoal" />
-            SNF Rate (₹) *
+            SNF Rate (₹)
           </Label>
           <Input
             id="ratePerSnf"
             type="number"
             step="0.1"
             placeholder="10.0"
-            {...register("ratePerSnf", { valueAsNumber: true })}
+            {...register("ratePerSnf", {
+              setValueAs: (value) =>
+                value === "" || Number.isNaN(Number(value))
+                  ? undefined
+                  : Number(value),
+            })}
             className="h-12"
           />
           {errors.ratePerSnf ? (

@@ -601,6 +601,8 @@ export function useApprovePurchaseOrder() {
     mutationFn: (id: number) => procurementService.approvePurchaseOrder(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: procurementKeys.vendors() });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Purchase order approved successfully!");
     },
     onError: (error: any) => {

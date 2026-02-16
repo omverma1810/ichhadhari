@@ -233,6 +233,8 @@ export const useApprovePurchaseOrder = () => {
         queryKey: purchaseOrderKeys.detail(id),
       });
       queryClient.invalidateQueries({ queryKey: purchaseOrderKeys.list() });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Purchase order approved successfully");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -472,7 +474,7 @@ export const useEmployee = (id: number, enabled: boolean = true) => {
 
 export const useEmployeeAttendance = (
   id: number,
-  filters?: AttendanceFilters
+  filters?: AttendanceFilters,
 ) => {
   return useQuery({
     queryKey: employeeKeys.attendance(id, filters),
@@ -484,7 +486,7 @@ export const useEmployeeAttendance = (
 export const useAttendanceSummary = (
   id: number,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ) => {
   return useQuery({
     queryKey: employeeKeys.attendanceSummary(id, startDate, endDate),

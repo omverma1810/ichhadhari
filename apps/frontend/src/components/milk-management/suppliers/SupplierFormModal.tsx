@@ -60,8 +60,7 @@ const supplierStatusOptions: SupplierStatus[] = [
   "suspended",
 ];
 
-const supplierSchema = z
-  .object({
+const supplierSchema = z.object({
     supplier_id: z.string().min(1, "Supplier ID is required"),
     name: z.string().min(1, "Name is required"),
     supplier_type: z.enum(supplierTypeOptions),
@@ -92,19 +91,7 @@ const supplierSchema = z
     account_number: z.string().optional(),
     ifsc_code: z.string().optional(),
     notes: z.string().optional(),
-  })
-  .refine(
-    (values) => {
-      if (["weekly", "fortnightly", "monthly"].includes(values.payment_cycle)) {
-        return Boolean(values.bank_name) && Boolean(values.account_number);
-      }
-      return true;
-    },
-    {
-      path: ["bank_name"],
-      message: "Bank details required for selected payment cycle",
-    },
-  );
+  });
 
 export type SupplierFormValues = z.infer<typeof supplierSchema>;
 

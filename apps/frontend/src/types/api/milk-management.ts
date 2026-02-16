@@ -140,7 +140,7 @@ export interface MilkCollection extends AuditFields {
   quality_score: number | string; // Auto-calculated by backend
   rejection_reason?: string | null;
   rate_per_fat: number | string; // Rate per kg of fat
-  rate_per_snf: number | string; // Rate per kg of SNF
+  rate_per_snf?: number | string; // Optional SNF rate per kg; defaults to 0 when omitted
   price_per_liter: number | string; // Auto-calculated: (fat × rate_per_fat) + (snf × rate_per_snf)
   total_amount: number | string; // Auto-calculated by backend
   notes?: string | null;

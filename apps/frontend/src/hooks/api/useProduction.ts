@@ -268,6 +268,8 @@ export const useCompleteBatch = () => {
         queryKey: productionKeys.batch(variables.id),
       });
       queryClient.invalidateQueries({ queryKey: productionKeys.batchesList() });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Batch marked as completed");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
