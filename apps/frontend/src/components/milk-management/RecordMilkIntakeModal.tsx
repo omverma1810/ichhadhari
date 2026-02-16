@@ -75,14 +75,8 @@ export function RecordMilkIntakeModal({
       if (!formData.fat || parseFloat(formData.fat) <= 0) {
         throw new Error("Please enter a valid fat content");
       }
-      if (!formData.snf || parseFloat(formData.snf) <= 0) {
-        throw new Error("Please enter a valid SNF content");
-      }
       if (!formData.ratePerFat || parseFloat(formData.ratePerFat) <= 0) {
         throw new Error("Please enter a valid rate per fat");
-      }
-      if (!formData.ratePerSnf || parseFloat(formData.ratePerSnf) <= 0) {
-        throw new Error("Please enter a valid rate per SNF");
       }
 
       console.log("📝 Submitting milk collection form:", formData);
@@ -93,10 +87,10 @@ export function RecordMilkIntakeModal({
         milk_type: formData.milkType,
         quantity: parseFloat(formData.quantity),
         fat: parseFloat(formData.fat),
-        snf: parseFloat(formData.snf),
+        snf: formData.snf ? parseFloat(formData.snf) : 0,
         temperature: parseFloat(formData.temperature),
         rate_per_fat: parseFloat(formData.ratePerFat),
-        rate_per_snf: parseFloat(formData.ratePerSnf),
+        rate_per_snf: formData.ratePerSnf ? parseFloat(formData.ratePerSnf) : 0,
         collection_date: formData.collectionDate,
         notes: formData.notes,
       } as any);
@@ -252,19 +246,18 @@ export function RecordMilkIntakeModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              SNF (kg/L) *
+              SNF (kg/L)
             </label>
             <Input
               type="number"
               step="0.01"
               min="0"
               max="15"
-              placeholder="e.g., 8.50"
+              placeholder="e.g., 8.50 (optional)"
               value={formData.snf}
               onChange={(e) =>
                 setFormData({ ...formData, snf: e.target.value })
               }
-              required
             />
           </div>
 
@@ -308,18 +301,17 @@ export function RecordMilkIntakeModal({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <DollarSign className="inline h-4 w-4 mr-1" />
-              Rate per kg SNF (₹) *
+              Rate per kg SNF (₹)
             </label>
             <Input
               type="number"
               step="0.01"
               min="0"
-              placeholder="e.g., 10.00"
+              placeholder="e.g., 10.00 (optional)"
               value={formData.ratePerSnf}
               onChange={(e) =>
                 setFormData({ ...formData, ratePerSnf: e.target.value })
               }
-              required
             />
           </div>
           <p className="mt-1 text-sm text-gray-500">Price per liter of milk</p>

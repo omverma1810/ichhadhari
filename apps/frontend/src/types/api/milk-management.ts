@@ -154,12 +154,12 @@ export interface CreateMilkCollectionPayload {
   milk_type: MilkType;
   quantity: number | string; // Decimal value
   fat: number | string; // Fat content (kg per liter)
-  snf: number | string; // SNF content (kg per liter)
+  snf?: number | string; // SNF content (kg per liter) - optional, defaults to 0
   clr: number | string; // CLR - Corrected Lactometer Reading
   quality_status?: QualityStatus; // Defaults to 'accepted'
   rejection_reason?: string; // Required if quality_status is 'rejected'
   rate_per_fat: number | string; // Rate per kg of fat
-  rate_per_snf: number | string; // Rate per kg of SNF
+  rate_per_snf?: number | string; // Rate per kg of SNF - optional, defaults to 0
   collected_by?: number; // Optional, defaults to current user
   notes?: string;
   bmc_integration_data?: any;

@@ -160,6 +160,10 @@ class MilkCollectionSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        extra_kwargs = {
+            'snf': {'required': False},
+            'rate_per_snf': {'required': False},
+        }
     
     def get_collected_by_name(self, obj):
         """Get the name of the staff member who collected the milk."""

@@ -228,6 +228,7 @@ class MilkCollection(TimeStampedModel):
     snf = models.DecimalField(
         max_digits=4,
         decimal_places=2,
+        default=Decimal('0.00'),
         validators=[
             MinValueValidator(Decimal('0.00')),
             MaxValueValidator(Decimal('15.00'))

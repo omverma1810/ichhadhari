@@ -206,6 +206,7 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Create a new batch with auto-generated batch_id.
+        Deducts milk_allocated from milk inventory.
         
         Batch ID format: PB{YYYYMMDD}{0001}
         """
@@ -231,7 +232,12 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
         batch_id = f'{prefix}{new_seq:04d}'
         
         # Save with generated batch_id
-        serializer.save(batch_id=batch_id)
+        batch = serializer.save(batch_id=batch_id)
+        
+        # Deduct milk_allocated from milk inventory
+        milk_allocated = batch.milk_allocated
+        if milk_allocated and milk_allocated > 0:
+            self._deduct_milk_from_inventory(batch, milk_allocated)
     
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
@@ -358,9 +364,64 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
             notes=f"Production from batch {batch.batch_id}"
         )
         
-        # Update inventory stock
+        # Update inventory stock and cost_per_unit
         inventory_item.current_stock = stock_after
-        inventory_item.save(update_fields=['current_stock', 'updated_at'])
+        update_fields = ['current_stock', 'updated_at']
+        if batch.product.cost_price > 0 and (inventory_item.cost_per_unit == 0 or inventory_item.cost_per_unit is None):
+            inventory_item.cost_per_unit = batch.product.cost_price
+            update_fields.append('cost_per_unit')
+        inventory_item.save(update_fields=update_fields)
+    
+    def _deduct_milk_from_inventory(self, batch, milk_quantity):
+        """
+        Deduct allocated milk from inventory when a production batch is created.
+        This ensures that milk used for production is reflected in the inventory.
+        """
+        from apps.inventory.models import StockTransaction, InventoryItem
+        
+        # Find the milk inventory item
+        try:
+            milk_item = InventoryItem.objects.get(item_type='raw_milk')
+        except InventoryItem.DoesNotExist:
+            try:
+                milk_item = InventoryItem.objects.get(name__icontains='milk', item_type__in=['raw_milk', 'raw_material'])
+            except (InventoryItem.DoesNotExist, InventoryItem.MultipleObjectsReturned):
+                return  # Skip if milk inventory item not found
+        
+        stock_before = milk_item.current_stock
+        stock_after = max(stock_before - milk_quantity, Decimal('0.00'))
+        
+        # Generate transaction ID
+        today = timezone.now().date()
+        date_str = today.strftime('%Y%m%d')
+        
+        last_transaction = StockTransaction.objects.filter(
+            transaction_id__startswith=f'ST{date_str}'
+        ).order_by('-transaction_id').first()
+        
+        new_number = (int(last_transaction.transaction_id[-4:]) + 1) if last_transaction else 1
+        transaction_id = f'ST{date_str}{new_number:04d}'
+        
+        StockTransaction.objects.create(
+            transaction_id=transaction_id,
+            item=milk_item,
+            transaction_type='production',
+            transaction_date=timezone.now(),
+            quantity=milk_quantity,
+            is_addition=False,
+            stock_before=stock_before,
+            stock_after=stock_after,
+            unit_cost=milk_item.cost_per_unit,
+            total_cost=milk_quantity * milk_item.cost_per_unit,
+            reference_type='Production Batch',
+            reference_id=batch.batch_id,
+            performed_by=self.request.user,
+            notes=f"Milk allocated for production batch {batch.batch_id} - {batch.product.name}"
+        )
+        
+        # Update milk inventory stock
+        milk_item.current_stock = stock_after
+        milk_item.save(update_fields=['current_stock', 'updated_at'])
     
     @action(detail=True, methods=['post'])
     def update_milk_used(self, request, pk=None):
@@ -550,12 +611,22 @@ class ProductionBatchViewSet(viewsets.ModelViewSet):
         batch.quality_check_passed = quality_check_passed
         batch.quality_notes = quality_notes
         
+        # Calculate milk adjustment before saving
+        milk_allocated = batch.milk_allocated or Decimal('0.00')
+        previous_milk_used = Decimal('0.00')  # On complete, we set final values
+        
         # Save (yield_percentage will be calculated in save method)
         batch.save()
         
         # Create stock transaction for production
         if quantity_delta > 0:
             self._create_stock_transaction_for_production(batch, quantity_delta)
+        
+        # Adjust milk inventory if milk_used differs from milk_allocated
+        # (milk_allocated was already deducted at batch creation)
+        milk_difference = milk_allocated - milk_used
+        if milk_difference != 0:
+            self._adjust_milk_inventory(batch, milk_difference)
         
         serializer = self.get_serializer(batch)
         return Response(serializer.data)

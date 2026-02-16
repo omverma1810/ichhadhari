@@ -101,17 +101,22 @@ const contactPersonSchema = z.object({
 
 const bankDetailsSchema = z
   .object({
-    bank_name: z.string().min(2, "Bank name is required"),
-    account_number: z.string().min(6, "Account number is required"),
-    ifsc_code: z
-      .string()
-      .toUpperCase()
-      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/i, "Enter a valid IFSC code"),
-    account_holder: z.string().min(2, "Account holder name is required"),
-    account_type: z.enum(["savings", "current"]),
+    bank_name: z.string().optional().default(""),
+    account_number: z.string().optional().default(""),
+    ifsc_code: z.string().optional().default(""),
+    account_holder: z.string().optional().default(""),
+    account_type: z.enum(["savings", "current"]).optional().default("current"),
   })
   .nullable()
-  .optional();
+  .optional()
+  .transform((val) => {
+    // If all bank fields are empty, treat as null (no bank details provided)
+    if (!val) return null;
+    const { bank_name, account_number, ifsc_code, account_holder } = val;
+    if (!bank_name && !account_number && !ifsc_code && !account_holder)
+      return null;
+    return val;
+  });
 
 const vendorFormSchema = z
   .object({

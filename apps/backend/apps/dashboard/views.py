@@ -4,7 +4,7 @@ Provides aggregated data endpoints for the frontend dashboard
 """
 
 from datetime import datetime, timedelta
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -68,20 +68,40 @@ class DashboardViewSet(viewsets.ViewSet):
         production_trend = self._calculate_trend(production_today, production_yesterday)
 
         # Total inventory value
+        # Calculate using cost_per_unit; fallback to product selling_price if cost_per_unit is 0
+        from django.db.models import Case, When, Value, DecimalField as DField
+        from django.db.models.functions import Coalesce
+
         inventory_value = InventoryItem.objects.filter(
             is_active=True
         ).aggregate(
-            total=Sum(F('current_stock') * F('cost_per_unit'))
+            total=Sum(
+                F('current_stock') * Case(
+                    When(cost_per_unit__gt=0, then=F('cost_per_unit')),
+                    When(product__isnull=False, product__selling_price__gt=0, then=F('product__selling_price')),
+                    default=Value(0),
+                    output_field=DField(),
+                )
+            )
         )['total'] or 0
 
-        inventory_value_last_week = InventoryItem.objects.filter(
-            is_active=True,
-            updated_at__lte=timezone.now() - timedelta(days=7)
+        # For trend, compare against stock transactions from 7 days ago
+        # Use the current inventory value as-is and estimate previous value
+        # by looking at what stock was a week ago from transactions
+        from apps.inventory.models import StockTransaction
+        
+        week_ago = timezone.now() - timedelta(days=7)
+        net_change_last_week = StockTransaction.objects.filter(
+            transaction_date__gte=week_ago
         ).aggregate(
-            total=Sum(F('current_stock') * F('cost_per_unit'))
-        )['total'] or 0
+            additions=Sum('total_cost', filter=Q(is_addition=True)),
+            deductions=Sum('total_cost', filter=Q(is_addition=False)),
+        )
+        additions = float(net_change_last_week['additions'] or 0)
+        deductions = float(net_change_last_week['deductions'] or 0)
+        inventory_value_last_week = float(inventory_value) - additions + deductions
 
-        inventory_trend = self._calculate_trend(inventory_value, inventory_value_last_week)
+        inventory_trend = self._calculate_trend(float(inventory_value), inventory_value_last_week)
 
         # Additional metrics
         active_employees = Employee.objects.filter(

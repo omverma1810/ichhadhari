@@ -234,10 +234,68 @@ class PurchaseOrderViewSet(viewsets.ModelViewSet):
         po.approved_at = timezone.now()
         po.save()
 
+        # Deduct inventory for each PO item with a linked inventory item
+        self._deduct_inventory_for_po(po)
+
         self._create_invoice_from_po(po)
         
         serializer = self.get_serializer(po)
         return Response(serializer.data)
+
+    def _deduct_inventory_for_po(self, po):
+        """Deduct inventory stock for approved purchase order items."""
+        from apps.inventory.models import StockTransaction, InventoryItem
+        
+        for po_item in po.items.all():
+            # Try to find inventory item by linked FK or by name
+            inventory_item = po_item.inventory_item
+            if not inventory_item:
+                try:
+                    inventory_item = InventoryItem.objects.get(
+                        name__iexact=po_item.item_name,
+                        is_active=True
+                    )
+                except (InventoryItem.DoesNotExist, InventoryItem.MultipleObjectsReturned):
+                    continue
+            
+            quantity = po_item.quantity
+            if quantity <= 0:
+                continue
+            
+            stock_before = inventory_item.current_stock
+            stock_after = max(stock_before - quantity, Decimal('0.00'))
+            
+            # Generate transaction ID
+            today = timezone.now().date()
+            date_str = today.strftime('%Y%m%d')
+            
+            last_transaction = StockTransaction.objects.filter(
+                transaction_id__startswith=f'ST{date_str}'
+            ).order_by('-transaction_id').first()
+            
+            new_number = (int(last_transaction.transaction_id[-4:]) + 1) if last_transaction else 1
+            transaction_id = f'ST{date_str}{new_number:04d}'
+            
+            StockTransaction.objects.create(
+                transaction_id=transaction_id,
+                item=inventory_item,
+                transaction_type='sale',
+                transaction_date=timezone.now(),
+                quantity=quantity,
+                is_addition=False,
+                stock_before=stock_before,
+                stock_after=stock_after,
+                unit_cost=po_item.unit_price,
+                total_cost=quantity * po_item.unit_price,
+                reference_type='Purchase Order',
+                reference_id=po.po_number,
+                performed_by=self.request.user,
+                notes=f"Inventory deducted for approved PO {po.po_number} - {po_item.item_name}"
+            )
+            
+            # Update inventory stock
+            inventory_item.current_stock = stock_after
+            inventory_item.save(update_fields=['current_stock', 'updated_at'])
 
     @action(detail=True, methods=['post'])
     def generate_invoice(self, request, pk=None):
@@ -616,9 +674,13 @@ class GoodsReceiptNoteViewSet(viewsets.ModelViewSet):
             notes=f"Received via GRN {grn_item.grn.grn_number} - PO {grn_item.grn.purchase_order.po_number}"
         )
         
-        # Update inventory item stock
+        # Update inventory item stock and cost_per_unit
         item.current_stock = stock_after
-        item.save(update_fields=['current_stock', 'updated_at'])
+        update_fields = ['current_stock', 'updated_at']
+        if po_item.unit_price > 0 and (item.cost_per_unit == 0 or item.cost_per_unit is None):
+            item.cost_per_unit = po_item.unit_price
+            update_fields.append('cost_per_unit')
+        item.save(update_fields=update_fields)
 
 
 class VendorInvoiceViewSet(viewsets.ModelViewSet):
